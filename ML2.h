@@ -1,6 +1,12 @@
 #ifndef _ML2_H
 #define _ML2_H
 
+/*
+    minimal memory allocations
+
+    *New calls allocate memory, so use *Destroy to free the memory
+*/
+
 #ifndef ML2_DEF
 #    define ML2_DEF static inline
 #endif // ML2_DEF
@@ -88,22 +94,22 @@ typedef struct {
     ML2_Scalar *values;
 } ML2_Matrix;
 
-typedef int ML2_Arch[][2];
+// TODO: this struct is pretty useless, it should have more stuff
+typedef struct {
+    int nodes;
+    ML2_ActType actType;
+} ML2_Layer;
 
-#define ML2_ArchNew(...)                                         \
-    {                                                            \
-        {(sizeof((ML2_Arch){__VA_ARGS__}) / sizeof(int[2])), 0}, \
-        __VA_ARGS__}
-/*
-    Example:
-        ML2_Arch arch = ML2_ArchNew(
-            { 2, ML2_ActSigmoid },
-            { 1, ML2_ActNone },
-        );
-    Try to understand it as a fun exercise
-*/
+typedef struct {
+    int count;
+    ML2_Layer *layers;
+} ML2_Arch;
 
-// ML2_Arch ML2_ArchNew_()
+#define ML2_ArchMake(...)                                                \
+    (ML2_Arch) {                                                         \
+        .count = (sizeof((ML2_Layer[])__VA_ARGS__) / sizeof(ML2_Layer)), \
+        .layers = (ML2_Layer[])__VA_ARGS__,                              \
+    }
 
 typedef struct {
     int layers;
@@ -347,26 +353,31 @@ ML2_DEF void ML2_MatrixActivate(ML2_Matrix dest, ML2_Act f) {
 // ML2_Model ⬇️
 
 ML2_DEF ML2_Model ML2_ModelNew(ML2_Arch arch) {
-    int layers = arch[0][0];
-    ML2_Model model = {.layers = layers};
-    model.values = ML2_RELIABLE_CALLOC(layers, sizeof(*model.values));
-    model.weights = ML2_RELIABLE_CALLOC(layers - 1, sizeof(*model.weights));
-    model.biases = ML2_RELIABLE_CALLOC(layers - 1, sizeof(*model.biases));
-    model.activations = ML2_RELIABLE_CALLOC(layers - 1, sizeof(*model.activations));
+    int layerCount = arch.count;
+    ML2_Model model = {.layers = layerCount};
+    model.values = ML2_RELIABLE_CALLOC(layerCount, sizeof(*model.values));
+    model.weights = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.weights));
+    model.biases = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.biases));
+    model.activations = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.activations));
 
-    model.valuesGradient = ML2_RELIABLE_CALLOC(layers, sizeof(*model.valuesGradient));
-    model.weightsGradient = ML2_RELIABLE_CALLOC(layers - 1, sizeof(*model.weightsGradient));
-    model.biasesGradient = ML2_RELIABLE_CALLOC(layers - 1, sizeof(*model.biasesGradient));
-    for (int i = 0; i < layers; i++) {
-        model.values[i] = ML2_MatrixNew(arch[i + 1][0], 1);
-        model.valuesGradient[i] = ML2_MatrixNew(arch[i + 1][0], 1);
-        if (i < layers - 1) {
-            model.weights[i] = ML2_MatrixNew(arch[i + 2][0], arch[i + 1][0]);
-            model.biases[i] = ML2_MatrixNew(arch[i + 2][0], 1);
-            model.activations[i] = (ML2_ActType)(arch[i + 1][1]);
+    model.valuesGradient = ML2_RELIABLE_CALLOC(layerCount, sizeof(*model.valuesGradient));
+    model.weightsGradient = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.weightsGradient));
+    model.biasesGradient = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.biasesGradient));
+    for (int i = 0; i < layerCount; i++) {
+        int nodes = arch.layers[i].nodes;
+        ML2_ASSERT(nodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
+        model.values[i] = ML2_MatrixNew(nodes, 1);
+        model.valuesGradient[i] = ML2_MatrixNew(nodes, 1);
+        if (i < layerCount - 1) {
+            int nextNodes = arch.layers[i + 1].nodes;
+            // TODO: this assert runs twice on the same values, problematic but not really
+            ML2_ASSERT(nextNodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
+            model.weights[i] = ML2_MatrixNew(nextNodes, nodes);
+            model.biases[i] = ML2_MatrixNew(nextNodes, 1);
+            model.activations[i] = arch.layers[i].actType;
 
-            model.weightsGradient[i] = ML2_MatrixNew(arch[i + 2][0], arch[i + 1][0]);
-            model.biasesGradient[i] = ML2_MatrixNew(arch[i + 2][0], 1);
+            model.weightsGradient[i] = ML2_MatrixNew(nextNodes, nodes);
+            model.biasesGradient[i] = ML2_MatrixNew(nextNodes, 1);
         }
     }
     return model;
@@ -651,7 +662,8 @@ ML2_DEF ML2_Matrix ML2_DataSampleOutput(ML2_Data data, int sample) {
 #    define Act ML2_Act
 #    define Matrix ML2_Matrix
 #    define Arch ML2_Arch
-#    define ArchNew ML2_ArchNew
+#    define Layer ML2_Layer
+#    define ArchMake ML2_ArchMake
 #    define Model ML2_Model
 #    define Data ML2_Data
 
