@@ -1,7 +1,6 @@
 #ifndef _ML2_H
 #define _ML2_H
 
-// TODO: append to all functions
 #ifndef ML2_DEF
 #    define ML2_DEF static inline
 #endif // ML2_DEF
@@ -65,8 +64,16 @@ static inline void *ML2_ReliableCalloc(size_t count, size_t size) {
 #    define ML2_RELIABLE_CALLOC ML2_ReliableCalloc
 #endif // ML2_RELIABLE_CALLOC
 
+#ifndef ML2_Indentation
+#    define ML2_Indentation 4
+#endif // ML2_Indentation
+
+#define ML2_Indent(fstr, i) "%*s" fstr, (i), ""
+
 // Customizable
 typedef float ML2_Scalar;
+// TODO: figure out how to align the floats nicely
+#define ML2_ScalarFmt "%.3f"
 
 typedef enum {
     ML2_ActNone = 0,
@@ -83,18 +90,20 @@ typedef struct {
 
 typedef int ML2_Arch[][2];
 
-#define ML2_ArchNewStatic(...)                                   \
+#define ML2_ArchNew(...)                                         \
     {                                                            \
         {(sizeof((ML2_Arch){__VA_ARGS__}) / sizeof(int[2])), 0}, \
         __VA_ARGS__}
 /*
     Example:
-        ML2_Arch arch = ML2_ArchNewStatic(
+        ML2_Arch arch = ML2_ArchNew(
             { 2, ML2_ActSigmoid },
             { 1, ML2_ActNone },
         );
     Try to understand it as a fun exercise
 */
+
+// ML2_Arch ML2_ArchNew_()
 
 typedef struct {
     int layers;
@@ -153,10 +162,12 @@ ML2_DEF ML2_Matrix ML2_ModelInput(ML2_Model model);
 ML2_DEF ML2_Matrix ML2_ModelOutput(ML2_Model model);
 ML2_DEF void ML2_ModelSetInput(ML2_Model model, ML2_Matrix input);
 ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_Data data);
-ML2_DEF void ML2_ModelGradientFinite(ML2_Model model, ML2_Data data, ML2_Scalar eps);
+ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_Data data, ML2_Scalar epsilon);
 ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_Scalar learningRate);
 
 ML2_DEF ML2_Data ML2_DataNew(int samples, int inputs, int outputs);
+ML2_DEF void ML2_DataDestroy(ML2_Data *data);
+ML2_DEF void ML2_DataPrint(ML2_Data data, int indent);
 ML2_DEF ML2_Matrix ML2_DataInput(ML2_Data data);
 ML2_DEF ML2_Matrix ML2_DataOutput(ML2_Data data);
 ML2_DEF ML2_Matrix ML2_DataSampleInput(ML2_Data data, int sample);
@@ -215,7 +226,7 @@ ML2_DEF ML2_Matrix ML2_MatrixNew(int rows, int cols) {
         .rows = rows,
         .cols = cols,
         .stride = cols,
-        .values = ML2_RELIABLE_CALLOC(rows * cols, sizeof(matrix.values)),
+        .values = ML2_RELIABLE_CALLOC(rows * cols, sizeof(*matrix.values)),
     };
     return matrix;
 }
@@ -234,15 +245,15 @@ ML2_DEF void ML2_MatrixRand(ML2_Matrix matrix, ML2_Scalar low, ML2_Scalar high) 
 }
 
 ML2_DEF void ML2_MatrixPrint(ML2_Matrix matrix, int indent) {
-    printf("%*s{\n", indent, "");
+    printf(ML2_Indent("{\n", indent));
     for (int row = 0; row < matrix.rows; row++) {
-        printf("%*s", indent + 4, "");
+        printf(ML2_Indent("", indent + ML2_Indentation));
         for (int col = 0; col < matrix.cols; col++) {
-            printf("%f ", *ML2_MatrixAt(matrix, row, col));
+            printf(ML2_ScalarFmt " ", *ML2_MatrixAt(matrix, row, col));
         }
         printf("\n");
     }
-    printf("%*s}\n", indent, "");
+    printf(ML2_Indent("}\n", indent));
 }
 
 ML2_DEF bool ML2_MatrixSame(ML2_Matrix a, ML2_Matrix b) {
@@ -384,7 +395,6 @@ ML2_DEF void ML2_ModelDestroy(ML2_Model *model) {
 }
 
 ML2_DEF void ML2_ModelRand(ML2_Model model, ML2_Scalar low, ML2_Scalar high) {
-    ML2_ASSERT(low < high && "LOW MUST BE LESS THAN HIGH");
     for (int i = 0; i < model.layers - 1; i++) {
         ML2_MatrixRand(model.weights[i], low, high);
         ML2_MatrixRand(model.biases[i], low, high);
@@ -392,55 +402,66 @@ ML2_DEF void ML2_ModelRand(ML2_Model model, ML2_Scalar low, ML2_Scalar high) {
 }
 
 ML2_DEF void ML2_ModelPrint(ML2_Model model, int indent) {
-    printf("%*s{\n", indent, "");
+    printf(ML2_Indent("{\n", indent));
     for (int i = 0; i < model.layers; i++) {
         ML2_Matrix values = model.values[i];
         ML2_Matrix weights = model.weights[i];
         ML2_Matrix biases = model.biases[i];
-        printf("%*sValues[%d](%dx%d):\n", indent + 4, "", i, values.rows, values.cols);
-        ML2_MatrixPrint(values, indent + 4);
+        // printf("%*sValues[%d](%dx%d):\n", indent + ML2_Indentation, "", i, values.rows, values.cols);
+        printf(ML2_Indent("Values[%d](%dx%d):\n", indent + ML2_Indentation), i, values.rows, values.cols);
+        ML2_MatrixPrint(values, indent + ML2_Indentation);
         if (i < model.layers - 1) {
-            printf("%*sWeights[%d](%dx%d):\n", indent + 4, "", i, weights.rows, weights.cols);
-            ML2_MatrixPrint(weights, indent + 4);
-            printf("%*sBiases[%d](%dx%d):\n", indent + 4, "", i, biases.rows, biases.cols);
-            ML2_MatrixPrint(biases, indent + 4);
-            printf("%*sActivation[%d]: \"%s\"\n", indent + 4, "", i, ML2_ActName(model.activations[i]));
+            // printf("%*sWeights[%d](%dx%d):\n", indent + ML2_Indentation, "", i, weights.rows, weights.cols);
+            printf(ML2_Indent("Weights[%d](%dx%d):\n", indent + ML2_Indentation), i, weights.rows, weights.cols);
+            ML2_MatrixPrint(weights, indent + ML2_Indentation);
+            // printf("%*sBiases[%d](%dx%d):\n", indent + ML2_Indentation, "", i, biases.rows, biases.cols);
+            printf(ML2_Indent("Biases[%d](%dx%d):\n", indent + ML2_Indentation), i, biases.rows, biases.cols);
+            ML2_MatrixPrint(biases, indent + ML2_Indentation);
+            // printf("%*sActivation[%d]: \"%s\"\n", indent + ML2_Indentation, "", i, ML2_ActName(model.activations[i]));
+            printf(ML2_Indent("Activation[%d]: \"%s\"\n", indent + ML2_Indentation), i, ML2_ActName(model.activations[i]));
         }
     }
-    printf("%*s}\n", indent, "");
+    printf(ML2_Indent("}\n", indent));
 }
 
 ML2_DEF void ML2_ModelPrintParameters(ML2_Model model, int indent) {
-    printf("%*s{\n", indent, "");
+    printf(ML2_Indent("{\n", indent));
     for (int i = 0; i < model.layers - 1; i++) {
         ML2_Matrix weights = model.weights[i];
         ML2_Matrix biases = model.biases[i];
-        printf("%*sWeights[%d](%dx%d):\n", indent + 4, "", i, weights.rows, weights.cols);
-        ML2_MatrixPrint(weights, indent + 4);
-        printf("%*sBiases[%d](%dx%d):\n", indent + 4, "", i, biases.rows, biases.cols);
-        ML2_MatrixPrint(biases, indent + 4);
-        printf("%*sActivation[%d]: \"%s\"\n", indent + 4, "", i, ML2_ActName(model.activations[i]));
+        // printf("%*sWeights[%d](%dx%d):\n", indent + ML2_Indentation, "", i, weights.rows, weights.cols);
+        printf(ML2_Indent("Weights[%d](%dx%d):\n", indent + ML2_Indentation), i, weights.rows, weights.cols);
+        ML2_MatrixPrint(weights, indent + ML2_Indentation);
+        // printf("%*sBiases[%d](%dx%d):\n", indent + ML2_Indentation, "", i, biases.rows, biases.cols);
+        printf(ML2_Indent("Biases[%d](%dx%d):\n", indent + ML2_Indentation), i, biases.rows, biases.cols);
+        ML2_MatrixPrint(biases, indent + ML2_Indentation);
+        // printf("%*sActivation[%d]: \"%s\"\n", indent + ML2_Indentation, "", i, ML2_ActName(model.activations[i]));
+        printf(ML2_Indent("Activation[%d]: \"%s\"\n", indent + ML2_Indentation), i, ML2_ActName(model.activations[i]));
     }
-    printf("%*s}\n", indent, "");
+    printf(ML2_Indent("}\n", indent));
 }
 
 ML2_DEF void ML2_ModelPrintGradient(ML2_Model model, int indent) {
-    printf("%*s{\n", indent, "");
+    printf(ML2_Indent("{\n", indent));
     for (int i = 0; i < model.layers; i++) {
         ML2_Matrix valuesGradient = model.valuesGradient[i];
         ML2_Matrix weightsGradient = model.weightsGradient[i];
         ML2_Matrix biasesGradient = model.biasesGradient[i];
-        printf("%*sValues[%d](%dx%d):\n", indent + 4, "", i, valuesGradient.rows, valuesGradient.cols);
-        ML2_MatrixPrint(valuesGradient, indent + 4);
+        // printf("%*sValues[%d](%dx%d):\n", indent + ML2_Indentation, "", i, valuesGradient.rows, valuesGradient.cols);
+        printf(ML2_Indent("Values[%d](%dx%d):\n", indent + ML2_Indentation), i, valuesGradient.rows, valuesGradient.cols);
+        ML2_MatrixPrint(valuesGradient, indent + ML2_Indentation);
         if (i < model.layers - 1) {
-            printf("%*sWeights[%d](%dx%d):\n", indent + 4, "", i, weightsGradient.rows, weightsGradient.cols);
-            ML2_MatrixPrint(weightsGradient, indent + 4);
-            printf("%*sBiases[%d](%dx%d):\n", indent + 4, "", i, biasesGradient.rows, biasesGradient.cols);
-            ML2_MatrixPrint(biasesGradient, indent + 4);
-            printf("%*sActivation[%d]: \"%s\"\n", indent + 4, "", i, ML2_ActName(model.activations[i]));
+            // printf("%*sWeights[%d](%dx%d):\n", indent + ML2_Indentation, "", i, weightsGradient.rows, weightsGradient.cols);
+            printf(ML2_Indent("Weights[%d](%dx%d):\n", indent + ML2_Indentation), i, weightsGradient.rows, weightsGradient.cols);
+            ML2_MatrixPrint(weightsGradient, indent + ML2_Indentation);
+            // printf("%*sBiases[%d](%dx%d):\n", indent + ML2_Indentation, "", i, biasesGradient.rows, biasesGradient.cols);
+            printf(ML2_Indent("Biases[%d](%dx%d):\n", indent + ML2_Indentation), i, biasesGradient.rows, biasesGradient.cols);
+            ML2_MatrixPrint(biasesGradient, indent + ML2_Indentation);
+            // printf("%*sActivation[%d]: \"%s\"\n", indent + ML2_Indentation, "", i, ML2_ActName(model.activations[i]));
+            printf(ML2_Indent("Activation[%d]: \"%s\"\n", indent + ML2_Indentation), i, ML2_ActName(model.activations[i]));
         }
     }
-    printf("%*s}\n", indent, "");
+    printf(ML2_Indent("}\n", indent));
 }
 
 // Z[i+1] = Act(W*X[i]+B)
@@ -485,10 +506,10 @@ ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_Data data) {
     return loss;
 }
 
-ML2_DEF void ML2_ModelGradientFinite(ML2_Model model, ML2_Data data, ML2_Scalar eps) {
-    ML2_ASSERT(eps > 0 && "EPSILON MUST BE POSITIVE");
+ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_Data data, ML2_Scalar epsilon) {
+    ML2_ASSERT(epsilon > 0 && "EPSILON MUST BE POSITIVE");
     // f'(x) = lim(e -> 0): (f(x + e) - f(x)) / e
-    ML2_Scalar prev;
+    ML2_Scalar prev = 0;
     ML2_Scalar loss = ML2_ModelSquareLoss(model, data);
     for (int i = 0; i < model.layers - 1; i++) {
         ML2_Matrix weights = model.weights[i];
@@ -497,9 +518,9 @@ ML2_DEF void ML2_ModelGradientFinite(ML2_Model model, ML2_Data data, ML2_Scalar 
             for (int k = 0; k < weights.cols; k++) {
                 ML2_Scalar *cur = ML2_MatrixAt(weights, j, k);
                 prev = *cur;
-                *cur += eps;
+                *cur += epsilon;
                 ML2_Scalar newLoss = ML2_ModelSquareLoss(model, data);
-                *ML2_MatrixAt(weightsGradient, j, k) = (newLoss - loss) / eps;
+                *ML2_MatrixAt(weightsGradient, j, k) = (newLoss - loss) / epsilon;
                 *cur = prev;
             }
         }
@@ -509,16 +530,16 @@ ML2_DEF void ML2_ModelGradientFinite(ML2_Model model, ML2_Data data, ML2_Scalar 
         for (int j = 0; j < biases.rows; j++) {
             ML2_Scalar *cur = ML2_MatrixAt(biases, j, 0);
             prev = *cur;
-            *cur += eps;
+            *cur += epsilon;
             ML2_Scalar newLoss = ML2_ModelSquareLoss(model, data);
-            *ML2_MatrixAt(biasesGradient, j, 0) = (newLoss - loss) / eps;
+            *ML2_MatrixAt(biasesGradient, j, 0) = (newLoss - loss) / epsilon;
             *cur = prev;
         }
     }
 }
 
 ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_Scalar learningRate) {
-    for (int i = 0; i < model.layers; i++) {
+    for (int i = 0; i < model.layers - 1; i++) {
         ML2_Matrix weights = model.weights[i];
         ML2_Matrix weightsGradient = model.weightsGradient[i];
         for (int j = 0; j < weights.rows; j++) {
@@ -547,6 +568,33 @@ ML2_DEF ML2_Data ML2_DataNew(int samples, int inputs, int outputs) {
         .values = ML2_CALLOC(samples * (inputs + outputs), sizeof(*data.values)),
     };
     return data;
+}
+
+ML2_DEF void ML2_DataDestroy(ML2_Data *data) {
+    ML2_FREE(data->values);
+    memset(data, 0, sizeof(*data));
+}
+
+ML2_DEF void ML2_DataPrint(ML2_Data data, int indent) {
+    printf(ML2_Indent("{\n", indent));
+    for (int i = 0; i < data.samples; i++) {
+        printf(ML2_Indent("", indent + ML2_Indentation));
+        for (int j = 0; j < data.inputs; j++) {
+            printf(ML2_ScalarFmt, data.values[i * (data.inputs + data.outputs) + j]);
+            if (j < data.inputs - 1) {
+                printf(", ");
+            }
+        }
+        printf("    ");
+        for (int j = 0; j < data.outputs; j++) {
+            printf(ML2_ScalarFmt, data.values[i * (data.inputs + data.outputs) + data.inputs + j]);
+            if (j < data.outputs - 1) {
+                printf(", ");
+            }
+        }
+        printf("\n");
+    }
+    printf(ML2_Indent("}\n", indent));
 }
 
 ML2_DEF ML2_Matrix ML2_DataInput(ML2_Data data) {
@@ -597,6 +645,16 @@ ML2_DEF ML2_Matrix ML2_DataSampleOutput(ML2_Data data, int sample) {
 
 #ifdef ML2_STRIP_PREFIX
 
+#    define Scalar ML2_Scalar
+#    define ActNone ML2_ActNone
+#    define ActSigmoid ML2_ActSigmoid
+#    define Act ML2_Act
+#    define Matrix ML2_Matrix
+#    define Arch ML2_Arch
+#    define ArchNew ML2_ArchNew
+#    define Model ML2_Model
+#    define Data ML2_Data
+
 #    define Sigmoid ML2_Sigmoid
 #    define ActName ML2_ActName
 #    define MatrixAt ML2_MatrixAt
@@ -624,9 +682,11 @@ ML2_DEF ML2_Matrix ML2_DataSampleOutput(ML2_Data data, int sample) {
 #    define ModelOutput ML2_ModelOutput
 #    define ModelSetInput ML2_ModelSetInput
 #    define ModelSquareLoss ML2_ModelSquareLoss
-#    define ModelGradientFinite ML2_ModelGradientFinite
+#    define ModelGradientFiniteDiff ML2_ModelGradientFiniteDiff
 #    define ModelGradientDescent ML2_ModelGradientDescent
 #    define DataNew ML2_DataNew
+#    define DataDestroy ML2_DataDestroy
+#    define DataPrint ML2_DataPrint
 #    define DataInput ML2_DataInput
 #    define DataOutput ML2_DataOutput
 #    define DataSampleInput ML2_DataSampleInput
