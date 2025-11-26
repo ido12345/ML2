@@ -1,5 +1,5 @@
 #ifndef _ML2_H
-#define _ML2_H
+#    define _ML2_H
 
 /*
     minimal memory allocations
@@ -7,79 +7,79 @@
     *New calls allocate memory, so use *Destroy to free the memory
 */
 
-#ifndef ML2_DEF
-#    define ML2_DEF static inline
-#endif // ML2_DEF
+#    ifndef ML2_DEF
+#        define ML2_DEF static inline
+#    endif // ML2_DEF
 
-#include <stdio.h>
-#include <stdbool.h>
-#include <string.h>
-#include <math.h>
+#    include <stdio.h>
+#    include <stdbool.h>
+#    include <string.h>
+#    include <math.h>
 
-#define ML2_UNREACHABLE(msg, ...)                     \
-    do {                                              \
-        fprintf(stderr, "UNREACHABLE: \"" msg "\":\n" \
-                        "    file:     |%s|\n"        \
-                        "    function: |%s|\n"        \
-                        "    line:     |%d|\n",       \
-            ##__VA_ARGS__,                            \
-            __FILE__,                                 \
-            __func__,                                 \
-            __LINE__);                                \
-        abort();                                      \
-    } while (0)
+#    define ML2_UNREACHABLE(msg, ...)                     \
+        do {                                              \
+            fprintf(stderr, "UNREACHABLE: \"" msg "\":\n" \
+                            "    file:     |%s|\n"        \
+                            "    function: |%s|\n"        \
+                            "    line:     |%d|\n",       \
+                ##__VA_ARGS__,                            \
+                __FILE__,                                 \
+                __func__,                                 \
+                __LINE__);                                \
+            abort();                                      \
+        } while (0)
 
-#define ML2_TODO(msg, ...)                      \
-    do {                                        \
-        fprintf(stderr, "TODO: \"" msg "\":\n"  \
-                        "    file:     |%s|\n"  \
-                        "    function: |%s|\n"  \
-                        "    line:     |%d|\n", \
-            ##__VA_ARGS__,                      \
-            __FILE__,                           \
-            __func__,                           \
-            __LINE__);                          \
-        abort();                                \
-    } while (0)
+#    define ML2_TODO(msg, ...)                      \
+        do {                                        \
+            fprintf(stderr, "TODO: \"" msg "\":\n"  \
+                            "    file:     |%s|\n"  \
+                            "    function: |%s|\n"  \
+                            "    line:     |%d|\n", \
+                ##__VA_ARGS__,                      \
+                __FILE__,                           \
+                __func__,                           \
+                __LINE__);                          \
+            abort();                                \
+        } while (0)
 
-#ifndef ML2_ASSERT
-#    include <assert.h>
-#    define ML2_ASSERT assert
-#endif // ML2_ASSERT
+#    ifndef ML2_ASSERT
+#        include <assert.h>
+#        define ML2_ASSERT assert
+#    endif // ML2_ASSERT
 
-#ifndef ML2_CALLOC
-#    include <stdlib.h>
-#    define ML2_CALLOC calloc
-#endif // ML2_CALLOC
+#    ifndef ML2_CALLOC
+#        include <stdlib.h>
+#        define ML2_CALLOC calloc
+#    endif // ML2_CALLOC
 
 // #ifndef ML2_RELIABLE_CALLOC
 // #    define ML2_RELIABLE_CALLOC(...) (ML2_ASSERT(ML2_CALLOC(__VA_ARGS__) != NULL))
 // #endif // ML2_RELIABLE_CALLOC
 
-#ifndef ML2_FREE
-#    include <stdlib.h>
-#    define ML2_FREE free
-#endif // ML2_FREE
+#    ifndef ML2_FREE
+#        include <stdlib.h>
+#        define ML2_FREE free
+#    endif // ML2_FREE
 
-#ifndef ML2_RELIABLE_CALLOC
+#    ifndef ML2_RELIABLE_CALLOC
 static inline void *ML2_ReliableCalloc(size_t count, size_t size) {
     void *ptr = ML2_CALLOC(count, size);
     ML2_ASSERT(ptr != NULL && "BUY MORE RAM");
     return ptr;
 }
-#    define ML2_RELIABLE_CALLOC ML2_ReliableCalloc
-#endif // ML2_RELIABLE_CALLOC
+#        define ML2_RELIABLE_CALLOC ML2_ReliableCalloc
+#    endif // ML2_RELIABLE_CALLOC
 
-#ifndef ML2_Indentation
-#    define ML2_Indentation 4
-#endif // ML2_Indentation
+#    ifndef ML2_Indentation
+#        define ML2_Indentation 4
+#    endif // ML2_Indentation
 
-#define ML2_Indent(fstr, i) "%*s" fstr, (i), ""
+#    define ML2_Indent(fstr, i) "%*s" fstr, (i), ""
 
 // Customizable
 typedef float ML2_Scalar;
 // TODO: figure out how to align the floats nicely
-#define ML2_ScalarFmt "%.3f"
+#    define ML2_ScalarFmt "%.3f"
 
 typedef enum {
     ML2_ActNone = 0,
@@ -105,11 +105,11 @@ typedef struct {
     ML2_Layer *layers;
 } ML2_Arch;
 
-#define ML2_ArchMake(...)                                                \
-    (ML2_Arch) {                                                         \
-        .count = (sizeof((ML2_Layer[])__VA_ARGS__) / sizeof(ML2_Layer)), \
-        .layers = (ML2_Layer[])__VA_ARGS__,                              \
-    }
+#    define ML2_ArchMake(...)                                                \
+        (ML2_Arch) {                                                         \
+            .count = (sizeof((ML2_Layer[])__VA_ARGS__) / sizeof(ML2_Layer)), \
+            .layers = (ML2_Layer[])__VA_ARGS__,                              \
+        }
 
 typedef struct {
     int count;
@@ -486,7 +486,7 @@ ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_ModelCache modelCach
     ML2_ModelForward(model, modelCache, data);
     for (int i = 0; i < samples; i++) {
         for (int j = 0; j < outputs; j++) {
-            ML2_Scalar diff = *ML2_MatrixAt(modelOutput, j, i) - *ML2_MatrixAt(dataOutput, i, j);
+            ML2_Scalar diff = *ML2_MatrixAt(dataOutput, i, j) - *ML2_MatrixAt(modelOutput, j, i);
             loss += diff * diff;
         }
     }
@@ -564,8 +564,7 @@ ML2_DEF ML2_ModelCache ML2_ModelCacheNew(ML2_Arch arch, int samples) {
         modelCache.valuesGradient[i] = ML2_MatrixNew(nodes, samples);
         if (i < layerCount - 1) {
             int nextNodes = arch.layers[i + 1].nodes;
-            // TODO: this assert runs twice on the same values, problematic but not really
-            ML2_ASSERT(nextNodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
+            ML2_ASSERT(nextNodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES"); // TODO: this assert runs twice on the same values, problematic but not really
             modelCache.weightsGradient[i] = ML2_MatrixNew(nextNodes, nodes);
             modelCache.biasesGradient[i] = ML2_MatrixNew(nextNodes, 1);
         }
@@ -720,69 +719,298 @@ ML2_DEF ML2_Matrix ML2_DataSampleOutput(ML2_Data data, int sample) {
 
 // ML2_Data ⬆️
 
-#ifdef ML2_STRIP_PREFIX
+#    ifdef ML2_STRIP_PREFIX
 
-#    define Scalar ML2_Scalar
-#    define ActNone ML2_ActNone
-#    define ActSigmoid ML2_ActSigmoid
-#    define Act ML2_Act
-#    define Matrix ML2_Matrix
-#    define Arch ML2_Arch
-#    define Layer ML2_Layer
-#    define ArchMake ML2_ArchMake
-#    define Model ML2_Model
-#    define ModelCache ML2_ModelCache
-#    define Data ML2_Data
+#        define Scalar ML2_Scalar
+#        define ActNone ML2_ActNone
+#        define ActSigmoid ML2_ActSigmoid
+#        define Act ML2_Act
+#        define Matrix ML2_Matrix
+#        define Arch ML2_Arch
+#        define Layer ML2_Layer
+#        define ArchMake ML2_ArchMake
+#        define Model ML2_Model
+#        define ModelCache ML2_ModelCache
+#        define Data ML2_Data
 
-#    define Sigmoid ML2_Sigmoid
-#    define ActName ML2_ActName
+#        define Sigmoid ML2_Sigmoid
+#        define ActName ML2_ActName
 
-#    define MatrixAt ML2_MatrixAt
-#    define MatrixNew ML2_MatrixNew
-#    define MatrixDestroy ML2_MatrixDestroy
-#    define MatrixRand ML2_MatrixRand
-#    define MatrixPrint ML2_MatrixPrint
-#    define MatrixRow ML2_MatrixRow
-#    define MatrixCol ML2_MatrixCol
-#    define MatrixSame ML2_MatrixSame
-#    define MatrixSameFlipped ML2_MatrixSameFlipped
-#    define MatrixAssertSame ML2_MatrixAssertSame
-#    define MatrixAssertSameFlipped ML2_MatrixAssertSameFlipped
-#    define MatrixCopy ML2_MatrixCopy
-#    define MatrixCopyFlipped ML2_MatrixCopyFlipped
-#    define MatrixDot ML2_MatrixDot
-#    define MatrixDotCompatible ML2_MatrixDotCompatible
-#    define MatrixDotAssertCompatible ML2_MatrixDotAssertCompatible
-#    define MatrixSum ML2_MatrixSum
-#    define MatrixSumCompatible ML2_MatrixSumCompatible
-#    define MatrixSumAssertCompatible ML2_MatrixSumAssertCompatible
-#    define MatrixActivate ML2_MatrixActivate
+#        define MatrixAt ML2_MatrixAt
+#        define MatrixNew ML2_MatrixNew
+#        define MatrixDestroy ML2_MatrixDestroy
+#        define MatrixRand ML2_MatrixRand
+#        define MatrixPrint ML2_MatrixPrint
+#        define MatrixRow ML2_MatrixRow
+#        define MatrixCol ML2_MatrixCol
+#        define MatrixSame ML2_MatrixSame
+#        define MatrixSameFlipped ML2_MatrixSameFlipped
+#        define MatrixAssertSame ML2_MatrixAssertSame
+#        define MatrixAssertSameFlipped ML2_MatrixAssertSameFlipped
+#        define MatrixCopy ML2_MatrixCopy
+#        define MatrixCopyFlipped ML2_MatrixCopyFlipped
+#        define MatrixDot ML2_MatrixDot
+#        define MatrixDotCompatible ML2_MatrixDotCompatible
+#        define MatrixDotAssertCompatible ML2_MatrixDotAssertCompatible
+#        define MatrixSum ML2_MatrixSum
+#        define MatrixSumCompatible ML2_MatrixSumCompatible
+#        define MatrixSumAssertCompatible ML2_MatrixSumAssertCompatible
+#        define MatrixActivate ML2_MatrixActivate
 
-#    define ModelNew ML2_ModelNew
-#    define ModelDestroy ML2_ModelDestroy
-#    define ModelRand ML2_ModelRand
-#    define ModelPrint ML2_ModelPrint
-#    define ModelForward ML2_ModelForward
-#    define ModelSquareLoss ML2_ModelSquareLoss
-#    define ModelGradientFiniteDiff ML2_ModelGradientFiniteDiff
-#    define ModelGradientDescent ML2_ModelGradientDescent
+#        define ModelNew ML2_ModelNew
+#        define ModelDestroy ML2_ModelDestroy
+#        define ModelRand ML2_ModelRand
+#        define ModelPrint ML2_ModelPrint
+#        define ModelForward ML2_ModelForward
+#        define ModelSquareLoss ML2_ModelSquareLoss
+#        define ModelGradientFiniteDiff ML2_ModelGradientFiniteDiff
+#        define ModelGradientDescent ML2_ModelGradientDescent
 
-#    define ModelCacheNew ML2_ModelCacheNew
-#    define ModelCacheDestroy ML2_ModelCacheDestroy
-#    define ModelCachePrint ML2_ModelCachePrint
-#    define ModelCacheInput ML2_ModelCacheInput
-#    define ModelCacheOutput ML2_ModelCacheOutput
-#    define ModelCacheCompatible ML2_ModelCacheCompatible
-#    define ModelCacheAssertCompatible ML2_ModelCacheAssertCompatible
+#        define ModelCacheNew ML2_ModelCacheNew
+#        define ModelCacheDestroy ML2_ModelCacheDestroy
+#        define ModelCachePrint ML2_ModelCachePrint
+#        define ModelCacheInput ML2_ModelCacheInput
+#        define ModelCacheOutput ML2_ModelCacheOutput
+#        define ModelCacheCompatible ML2_ModelCacheCompatible
+#        define ModelCacheAssertCompatible ML2_ModelCacheAssertCompatible
 
-#    define DataNew ML2_DataNew
-#    define DataDestroy ML2_DataDestroy
-#    define DataPrint ML2_DataPrint
-#    define DataInput ML2_DataInput
-#    define DataOutput ML2_DataOutput
-#    define DataSampleInput ML2_DataSampleInput
-#    define DataSampleOutput ML2_DataSampleOutput
+#        define DataNew ML2_DataNew
+#        define DataDestroy ML2_DataDestroy
+#        define DataPrint ML2_DataPrint
+#        define DataInput ML2_DataInput
+#        define DataOutput ML2_DataOutput
+#        define DataSampleInput ML2_DataSampleInput
+#        define DataSampleOutput ML2_DataSampleOutput
 
-#endif // ML2_STRIP_PREFIX
+#    endif // ML2_STRIP_PREFIX
 
 #endif // ML2_IMPLEMENTATION
+
+/* ChatGPTODO:
+Here’s a **practical, prioritized ML2 TODO list** — exactly the things your library *must* have to behave like a real neural-net framework and stop collapsing outputs to 0.
+
+I’m ordering this from **critical** → **nice-to-have** so you can implement in the right order.
+
+---
+
+# ✅ **ML2 TODO LIST (Minimal but Solid Library)**
+
+## **1. Backpropagation (core)**
+
+You already do finite-diff — next step is real backprop.
+
+Backprop implementation requires:
+
+### **1.1 Layer-by-layer cached state**
+
+Your `ModelCache` is good — keep:
+
+* values[i] — activation of layer i
+* z[i] — linear pre-activation (optional but recommended)
+* gradients of weights
+* gradients of biases
+
+### **1.2 Backward functions**
+
+Implement:
+
+* dLoss/dOutput
+* dOutput/dZ
+* dZ/dWeights
+* dZ/dBias
+* dZ/dActivationPrev
+
+---
+
+# ⚠️ Priority: **Do not skip this**
+
+Without proper backprop — training will always suck.
+
+---
+
+---
+
+# ✅ **2. Proper Activation Functions**
+
+Implement these:
+
+### **2.1 ReLU**
+
+```
+f(x) = max(0, x)
+f'(x) = x > 0 ? 1 : 0
+```
+
+Essential to avoid vanishing gradients.
+
+### **2.2 LeakyReLU**
+
+```
+0.01*x for x<0
+```
+
+Helps dead ReLU problems.
+
+### **2.3 Tanh**
+
+Better than sigmoid for continuous outputs.
+
+### **2.4 Sigmoid**
+
+Keep it — but only use it at the output for binary tasks.
+
+### **2.5 Softmax**
+
+Absolutely needed for classification.
+
+### **2.6 Linear (ActNone)**
+
+Your current ActNone is correct for regression outputs.
+
+---
+
+# ✅ **3. Proper Initialization (no more collapsing slices)**
+
+### **3.1 Xavier (Glorot) init**
+
+For sigmoid/tanh layers:
+
+```
+scale = sqrt(6.0 / (fan_in + fan_out))
+w = uniform(-scale, scale)
+```
+
+### **3.2 He initialization**
+
+For ReLU layers:
+
+```
+scale = sqrt(2.0 / fan_in)
+w = normal(0, scale)
+```
+
+Add:
+
+```
+InitXavier
+InitHe
+InitUniform
+InitCustom
+```
+
+---
+
+# ✅ **4. Real Loss Functions**
+
+At least add these:
+
+### **4.1 MSE (you have it already)**
+
+Keep for regression only.
+
+### **4.2 Binary Cross Entropy**
+
+```
+loss = -[y log(p) + (1-y) log(1-p)]
+```
+
+### **4.3 Categorical Cross Entropy**
+
+For softmax output.
+
+---
+
+# ✅ **5. Optimizers (super important)**
+
+Start simple:
+
+### **5.1 SGD**
+
+(You already have)
+
+### **5.2 Momentum**
+
+```
+v = beta*v + grad
+w -= lr * v
+```
+
+### **5.3 Adam**
+
+This will make your library "real".
+
+---
+
+# ✅ **6. Dataset Utilities (you mostly have this)**
+
+Add helpers:
+
+* shuffle samples
+* batch loader
+* split train/test
+* normalize data (very important)
+
+---
+
+# ✅ **7. Model API Improvements**
+
+### Suggested naming for cached values:
+
+```
+values[i]        → activations[i]
+z[i]             → preactivations[i] (optional)
+weightsGradient  → dW
+biasesGradient   → dB
+```
+
+Better names means fewer mistakes.
+
+---
+
+# 🔥 **PRIORITY ORDER (What to implement first)**
+
+If you want ML2 to *actually learn*, do it in this order:
+
+### **1. Backprop**
+
+Your library is dead without this.
+
+### **2. Xavier/He initialization**
+
+This alone will fix your vanishing outputs.
+
+### **3. ReLU + Tanh**
+
+Critical for stable gradients.
+
+### **4. Softmax + Cross-Entropy**
+
+Needed for classification.
+
+### **5. Adam optimizer**
+
+Huge improvement to learning quality.
+
+### **6. Batching**
+
+Stops overfitting and makes gradients less noisy.
+
+---
+
+# ✔️ Want a code template?
+
+I can give you:
+
+* A clean backprop implementation for your architecture
+* Xavier initialization code
+* ReLU/Tanh/Softmax function + derivatives
+* A standard neural-network training loop
+* A stable gradient descent update pipeline
+
+Just tell me:
+
+**“Give me code templates for X and Y”**
+
+And I’ll generate them in your exact ML2 API style.
+
+*/
