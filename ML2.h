@@ -112,19 +112,21 @@ typedef struct {
     }
 
 typedef struct {
-    int layers;
-    // [firstIndex -> lastIndex]
-
-    ML2_Matrix *values;  // [0 -> layers-1]
-    ML2_Matrix *weights; // [0 -> layers-2]
-    ML2_Matrix *biases;  // [0 -> layers-2]
+    int count;
+    ML2_Matrix *weights;
+    ML2_Matrix *biases;
     // TODO: use the last activation for stuff like softmax
-    ML2_ActType *activations; // [0 -> layers-2]
-
-    ML2_Matrix *valuesGradient;  // [0 -> layers-1]
-    ML2_Matrix *weightsGradient; // [0 -> layers-2]
-    ML2_Matrix *biasesGradient;  // [0 -> layers-2]
+    ML2_ActType *activations;
 } ML2_Model;
+
+typedef struct {
+    int count;
+    // TODO: maybe add the samples the ModelCache is based on
+    ML2_Matrix *values;
+    ML2_Matrix *valuesGradient;
+    ML2_Matrix *weightsGradient;
+    ML2_Matrix *biasesGradient;
+} ML2_ModelCache;
 
 typedef struct {
     int samples, inputs, outputs;
@@ -141,6 +143,8 @@ ML2_DEF ML2_Matrix ML2_MatrixNew(int rows, int cols);
 ML2_DEF void ML2_MatrixDestroy(ML2_Matrix *matrix);
 ML2_DEF void ML2_MatrixRand(ML2_Matrix matrix, ML2_Scalar low, ML2_Scalar high);
 ML2_DEF void ML2_MatrixPrint(ML2_Matrix matrix, int indent);
+ML2_DEF ML2_Matrix ML2_MatrixRow(ML2_Matrix matrix, int row);
+ML2_DEF ML2_Matrix ML2_MatrixCol(ML2_Matrix matrix, int col);
 ML2_DEF bool ML2_MatrixSame(ML2_Matrix a, ML2_Matrix b);
 ML2_DEF bool ML2_MatrixSameFlipped(ML2_Matrix a, ML2_Matrix b);
 ML2_DEF void ML2_MatrixAssertSame(ML2_Matrix a, ML2_Matrix b);
@@ -151,8 +155,12 @@ ML2_DEF void ML2_MatrixCopy(ML2_Matrix dest, ML2_Matrix src);
 ML2_DEF void ML2_MatrixCopyFlipped(ML2_Matrix dest, ML2_Matrix src);
 // Dest[i,j] = Σ(A[i,k] * B[k,j]);
 ML2_DEF void ML2_MatrixDot(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
+ML2_DEF bool ML2_MatrixDotCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
+ML2_DEF void ML2_MatrixDotAssertCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
 // Dest[i,j] = A[i,j] + B[i,j]
 ML2_DEF void ML2_MatrixSum(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
+ML2_DEF bool ML2_MatrixSumCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
+ML2_DEF void ML2_MatrixSumAssertCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
 // Dest[i,j] = f(Dest[i,j]);
 ML2_DEF void ML2_MatrixActivate(ML2_Matrix dest, ML2_Act f);
 
@@ -160,16 +168,19 @@ ML2_DEF ML2_Model ML2_ModelNew(ML2_Arch arch);
 ML2_DEF void ML2_ModelDestroy(ML2_Model *model);
 ML2_DEF void ML2_ModelRand(ML2_Model model, ML2_Scalar low, ML2_Scalar high);
 ML2_DEF void ML2_ModelPrint(ML2_Model model, int indent);
-ML2_DEF void ML2_ModelPrintParameters(ML2_Model model, int indent);
-ML2_DEF void ML2_ModelPrintGradient(ML2_Model model, int indent);
 // Z[i+1] = Act(W*X[i]+B);
-ML2_DEF void ML2_ModelForward(ML2_Model model);
-ML2_DEF ML2_Matrix ML2_ModelInput(ML2_Model model);
-ML2_DEF ML2_Matrix ML2_ModelOutput(ML2_Model model);
-ML2_DEF void ML2_ModelSetInput(ML2_Model model, ML2_Matrix input);
-ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_Data data);
-ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_Data data, ML2_Scalar epsilon);
-ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_Scalar learningRate);
+ML2_DEF void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_Data data);
+ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_ModelCache modelCache, ML2_Data data);
+ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCache, ML2_Data data, ML2_Scalar epsilon);
+ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_ModelCache modelCache, ML2_Scalar learningRate);
+
+ML2_DEF ML2_ModelCache ML2_ModelCacheNew(ML2_Arch arch, int samples);
+ML2_DEF void ML2_ModelCacheDestroy(ML2_ModelCache *modelCache);
+ML2_DEF void ML2_ModelCachePrint(ML2_ModelCache modelCache, int indent);
+ML2_DEF ML2_Matrix ML2_ModelCacheInput(ML2_ModelCache modelCache);
+ML2_DEF ML2_Matrix ML2_ModelCacheOutput(ML2_ModelCache modelCache);
+ML2_DEF bool ML2_ModelCacheCompatible(ML2_Model model, ML2_ModelCache modelCache);
+ML2_DEF void ML2_ModelCacheAssertCompatible(ML2_Model model, ML2_ModelCache modelCache);
 
 ML2_DEF ML2_Data ML2_DataNew(int samples, int inputs, int outputs);
 ML2_DEF void ML2_DataDestroy(ML2_Data *data);
@@ -262,6 +273,24 @@ ML2_DEF void ML2_MatrixPrint(ML2_Matrix matrix, int indent) {
     printf(ML2_Indent("}\n", indent));
 }
 
+ML2_DEF ML2_Matrix ML2_MatrixRow(ML2_Matrix matrix, int row) {
+    return (ML2_Matrix){
+        .rows = 1,
+        .cols = matrix.cols,
+        .stride = matrix.stride,
+        .values = ML2_MatrixAt(matrix, row, 0),
+    };
+}
+
+ML2_DEF ML2_Matrix ML2_MatrixCol(ML2_Matrix matrix, int col) {
+    return (ML2_Matrix){
+        .rows = matrix.rows,
+        .cols = 1,
+        .stride = matrix.stride,
+        .values = ML2_MatrixAt(matrix, 0, col),
+    };
+}
+
 ML2_DEF bool ML2_MatrixSame(ML2_Matrix a, ML2_Matrix b) {
     return a.rows == b.rows &&
            a.cols == b.cols;
@@ -310,11 +339,7 @@ ML2_DEF void ML2_MatrixCopyFlipped(ML2_Matrix dest, ML2_Matrix src) {
 
 // Dest[i,j] = Σ(A[i,k] * B[k,j])
 ML2_DEF void ML2_MatrixDot(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
-    ML2_ASSERT(a.cols == b.rows && "MATRIX SIZES MUST MATCH");
-    ML2_ASSERT(dest.rows == a.rows && "MATRIX SIZES MUST MATCH");
-    ML2_ASSERT(dest.cols == b.cols && "MATRIX SIZES MUST MATCH");
-    ML2_ASSERT(dest.values != a.values && "MATRIX VALUES MUST NOT OVERLAP");
-    ML2_ASSERT(dest.values != b.values && "MATRIX VALUES MUST NOT OVERLAP");
+    ML2_MatrixDotAssertCompatible(dest, a, b);
     int inner = a.cols;
 
     for (int i = 0; i < dest.rows; i++) {
@@ -328,15 +353,42 @@ ML2_DEF void ML2_MatrixDot(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
     }
 }
 
+ML2_DEF bool ML2_MatrixDotCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
+    if (a.cols != b.rows) return false;
+    if (dest.rows != a.rows) return false;
+    if (dest.cols != b.cols) return false;
+    if (dest.values == a.values) return false;
+    if (dest.values == b.values) return false;
+    return true;
+}
+
+ML2_DEF void ML2_MatrixDotAssertCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
+    // ML2_ASSERT(a.cols == b.rows && "MATRIX SIZES MUST MATCH");
+    // ML2_ASSERT(dest.rows == a.rows && "MATRIX SIZES MUST MATCH");
+    // ML2_ASSERT(dest.cols == b.cols && "MATRIX SIZES MUST MATCH");
+    // ML2_ASSERT(dest.values != a.values && "MATRIX VALUES MUST NOT OVERLAP");
+    // ML2_ASSERT(dest.values != b.values && "MATRIX VALUES MUST NOT OVERLAP");
+    ML2_ASSERT(ML2_MatrixDotCompatible(dest, a, b) && "MATRICES MUST BE DOT COMPATIBLE");
+}
+
 // Dest[i,j] = A[i,j] + B[i,j]
 ML2_DEF void ML2_MatrixSum(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
-    ML2_MatrixAssertSame(dest, a);
-    ML2_MatrixAssertSame(dest, b);
+    ML2_MatrixSumAssertCompatible(dest, a, b);
     for (int i = 0; i < dest.rows; i++) {
         for (int j = 0; j < dest.cols; j++) {
             *ML2_MatrixAt(dest, i, j) = *ML2_MatrixAt(a, i, j) + *ML2_MatrixAt(b, i, j);
         }
     }
+}
+
+ML2_DEF bool ML2_MatrixSumCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
+    if (!ML2_MatrixSame(dest, a)) return false;
+    if (!ML2_MatrixSame(dest, b)) return false;
+    return true;
+}
+
+ML2_DEF void ML2_MatrixSumAssertCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b) {
+    ML2_ASSERT(ML2_MatrixSumCompatible(dest, a, b) && "MATRICES MUST BE SUM COMPATIBLE");
 }
 
 // Dest[i,j] = f(Dest[i,j])
@@ -354,59 +406,35 @@ ML2_DEF void ML2_MatrixActivate(ML2_Matrix dest, ML2_Act f) {
 
 ML2_DEF ML2_Model ML2_ModelNew(ML2_Arch arch) {
     int layerCount = arch.count;
-    ML2_Model model = {.layers = layerCount};
-    model.values = ML2_RELIABLE_CALLOC(layerCount, sizeof(*model.values));
+    ML2_Model model = {.count = layerCount - 1};
     model.weights = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.weights));
     model.biases = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.biases));
     model.activations = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.activations));
-
-    model.valuesGradient = ML2_RELIABLE_CALLOC(layerCount, sizeof(*model.valuesGradient));
-    model.weightsGradient = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.weightsGradient));
-    model.biasesGradient = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*model.biasesGradient));
-    for (int i = 0; i < layerCount; i++) {
+    for (int i = 0; i < layerCount - 1; i++) {
         int nodes = arch.layers[i].nodes;
         ML2_ASSERT(nodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
-        model.values[i] = ML2_MatrixNew(nodes, 1);
-        model.valuesGradient[i] = ML2_MatrixNew(nodes, 1);
-        if (i < layerCount - 1) {
-            int nextNodes = arch.layers[i + 1].nodes;
-            // TODO: this assert runs twice on the same values, problematic but not really
-            ML2_ASSERT(nextNodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
-            model.weights[i] = ML2_MatrixNew(nextNodes, nodes);
-            model.biases[i] = ML2_MatrixNew(nextNodes, 1);
-            model.activations[i] = arch.layers[i].actType;
-
-            model.weightsGradient[i] = ML2_MatrixNew(nextNodes, nodes);
-            model.biasesGradient[i] = ML2_MatrixNew(nextNodes, 1);
-        }
+        int nextNodes = arch.layers[i + 1].nodes;
+        ML2_ASSERT(nextNodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES"); // TODO: this assert runs twice on the same values, problematic but not really
+        model.weights[i] = ML2_MatrixNew(nextNodes, nodes);
+        model.biases[i] = ML2_MatrixNew(nextNodes, 1);
+        model.activations[i] = arch.layers[i].actType;
     }
     return model;
 }
 
 ML2_DEF void ML2_ModelDestroy(ML2_Model *model) {
-    for (int i = 0; i < model->layers; i++) {
-        ML2_MatrixDestroy(&model->values[i]);
-        ML2_MatrixDestroy(&model->valuesGradient[i]);
-        if (i < model->layers - 1) {
-            ML2_MatrixDestroy(&model->weights[i]);
-            ML2_MatrixDestroy(&model->biases[i]);
-
-            ML2_MatrixDestroy(&model->weightsGradient[i]);
-            ML2_MatrixDestroy(&model->biasesGradient[i]);
-        }
+    for (int i = 0; i < model->count; i++) {
+        ML2_MatrixDestroy(&model->weights[i]);
+        ML2_MatrixDestroy(&model->biases[i]);
     }
-    ML2_FREE(model->values);
     ML2_FREE(model->weights);
     ML2_FREE(model->biases);
     ML2_FREE(model->activations);
-    ML2_FREE(model->valuesGradient);
-    ML2_FREE(model->weightsGradient);
-    ML2_FREE(model->biasesGradient);
     memset(model, 0, sizeof(*model));
 }
 
 ML2_DEF void ML2_ModelRand(ML2_Model model, ML2_Scalar low, ML2_Scalar high) {
-    for (int i = 0; i < model.layers - 1; i++) {
+    for (int i = 0; i < model.count; i++) {
         ML2_MatrixRand(model.weights[i], low, high);
         ML2_MatrixRand(model.biases[i], low, high);
     }
@@ -414,30 +442,7 @@ ML2_DEF void ML2_ModelRand(ML2_Model model, ML2_Scalar low, ML2_Scalar high) {
 
 ML2_DEF void ML2_ModelPrint(ML2_Model model, int indent) {
     printf(ML2_Indent("{\n", indent));
-    for (int i = 0; i < model.layers; i++) {
-        ML2_Matrix values = model.values[i];
-        ML2_Matrix weights = model.weights[i];
-        ML2_Matrix biases = model.biases[i];
-        // printf("%*sValues[%d](%dx%d):\n", indent + ML2_Indentation, "", i, values.rows, values.cols);
-        printf(ML2_Indent("Values[%d](%dx%d):\n", indent + ML2_Indentation), i, values.rows, values.cols);
-        ML2_MatrixPrint(values, indent + ML2_Indentation);
-        if (i < model.layers - 1) {
-            // printf("%*sWeights[%d](%dx%d):\n", indent + ML2_Indentation, "", i, weights.rows, weights.cols);
-            printf(ML2_Indent("Weights[%d](%dx%d):\n", indent + ML2_Indentation), i, weights.rows, weights.cols);
-            ML2_MatrixPrint(weights, indent + ML2_Indentation);
-            // printf("%*sBiases[%d](%dx%d):\n", indent + ML2_Indentation, "", i, biases.rows, biases.cols);
-            printf(ML2_Indent("Biases[%d](%dx%d):\n", indent + ML2_Indentation), i, biases.rows, biases.cols);
-            ML2_MatrixPrint(biases, indent + ML2_Indentation);
-            // printf("%*sActivation[%d]: \"%s\"\n", indent + ML2_Indentation, "", i, ML2_ActName(model.activations[i]));
-            printf(ML2_Indent("Activation[%d]: \"%s\"\n", indent + ML2_Indentation), i, ML2_ActName(model.activations[i]));
-        }
-    }
-    printf(ML2_Indent("}\n", indent));
-}
-
-ML2_DEF void ML2_ModelPrintParameters(ML2_Model model, int indent) {
-    printf(ML2_Indent("{\n", indent));
-    for (int i = 0; i < model.layers - 1; i++) {
+    for (int i = 0; i < model.count; i++) {
         ML2_Matrix weights = model.weights[i];
         ML2_Matrix biases = model.biases[i];
         // printf("%*sWeights[%d](%dx%d):\n", indent + ML2_Indentation, "", i, weights.rows, weights.cols);
@@ -452,64 +457,36 @@ ML2_DEF void ML2_ModelPrintParameters(ML2_Model model, int indent) {
     printf(ML2_Indent("}\n", indent));
 }
 
-ML2_DEF void ML2_ModelPrintGradient(ML2_Model model, int indent) {
-    printf(ML2_Indent("{\n", indent));
-    for (int i = 0; i < model.layers; i++) {
-        ML2_Matrix valuesGradient = model.valuesGradient[i];
-        ML2_Matrix weightsGradient = model.weightsGradient[i];
-        ML2_Matrix biasesGradient = model.biasesGradient[i];
-        // printf("%*sValues[%d](%dx%d):\n", indent + ML2_Indentation, "", i, valuesGradient.rows, valuesGradient.cols);
-        printf(ML2_Indent("Values[%d](%dx%d):\n", indent + ML2_Indentation), i, valuesGradient.rows, valuesGradient.cols);
-        ML2_MatrixPrint(valuesGradient, indent + ML2_Indentation);
-        if (i < model.layers - 1) {
-            // printf("%*sWeights[%d](%dx%d):\n", indent + ML2_Indentation, "", i, weightsGradient.rows, weightsGradient.cols);
-            printf(ML2_Indent("Weights[%d](%dx%d):\n", indent + ML2_Indentation), i, weightsGradient.rows, weightsGradient.cols);
-            ML2_MatrixPrint(weightsGradient, indent + ML2_Indentation);
-            // printf("%*sBiases[%d](%dx%d):\n", indent + ML2_Indentation, "", i, biasesGradient.rows, biasesGradient.cols);
-            printf(ML2_Indent("Biases[%d](%dx%d):\n", indent + ML2_Indentation), i, biasesGradient.rows, biasesGradient.cols);
-            ML2_MatrixPrint(biasesGradient, indent + ML2_Indentation);
-            // printf("%*sActivation[%d]: \"%s\"\n", indent + ML2_Indentation, "", i, ML2_ActName(model.activations[i]));
-            printf(ML2_Indent("Activation[%d]: \"%s\"\n", indent + ML2_Indentation), i, ML2_ActName(model.activations[i]));
-        }
-    }
-    printf(ML2_Indent("}\n", indent));
-}
-
 // Z[i+1] = Act(W*X[i]+B)
-ML2_DEF void ML2_ModelForward(ML2_Model model) {
-    for (int i = 0; i < model.layers - 1; i++) {
-        ML2_MatrixDot(model.values[i + 1], model.weights[i], model.values[i]);
-        ML2_MatrixSum(model.values[i + 1], model.values[i + 1], model.biases[i]);
+ML2_DEF void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_Data data) {
+    ML2_ModelCacheAssertCompatible(model, modelCache);
+    ML2_MatrixCopyFlipped(ML2_ModelCacheInput(modelCache), ML2_DataInput(data));
+    for (int i = 0; i < model.count; i++) {
+        ML2_MatrixDot(modelCache.values[i + 1], model.weights[i], modelCache.values[i]);
+        for (int j = 0; j < data.samples; j++) {
+            ML2_Matrix valueCol = ML2_MatrixCol(modelCache.values[i + 1], j);
+            ML2_MatrixSum(valueCol, valueCol, model.biases[i]);
+        }
         if (model.activations[i]) {
-            ML2_MatrixActivate(model.values[i + 1], ML2_ActOf(model.activations[i]));
+            ML2_MatrixActivate(modelCache.values[i + 1], ML2_ActOf(model.activations[i]));
         }
     }
 }
 
-ML2_DEF ML2_Matrix ML2_ModelInput(ML2_Model model) {
-    return model.values[0];
-}
-
-ML2_DEF ML2_Matrix ML2_ModelOutput(ML2_Model model) {
-    return model.values[model.layers - 1];
-}
-
-ML2_DEF void ML2_ModelSetInput(ML2_Model model, ML2_Matrix input) {
-    ML2_MatrixCopyFlipped(ML2_ModelInput(model), input);
-}
-
-ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_Data data) {
+ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_ModelCache modelCache, ML2_Data data) {
     ML2_Scalar loss = 0;
-    ML2_Matrix modelOutput = ML2_ModelOutput(model);
+    ML2_Matrix modelOutput = ML2_ModelCacheOutput(modelCache);
+    ML2_Matrix dataOutput = ML2_DataOutput(data);
     ML2_ASSERT(modelOutput.rows == data.outputs && "MODEL AND DATA OUTPUT SIZES MUST MATCH");
+    ML2_ASSERT(modelOutput.cols == data.samples && "MODEL AND DATA OUTPUT SIZES MUST MATCH");
+    ML2_ModelCacheAssertCompatible(model, modelCache);
     int outputs = modelOutput.rows;
-    for (int i = 0; i < data.samples; i++) {
-        ML2_Matrix sampleInput = ML2_DataSampleInput(data, i);
-        ML2_Matrix sampleOutput = ML2_DataSampleOutput(data, i);
-        ML2_ModelSetInput(model, sampleInput);
-        ML2_ModelForward(model);
+    int samples = data.samples;
+
+    ML2_ModelForward(model, modelCache, data);
+    for (int i = 0; i < samples; i++) {
         for (int j = 0; j < outputs; j++) {
-            ML2_Scalar diff = *ML2_MatrixAt(modelOutput, j, 0) - *ML2_MatrixAt(sampleOutput, 0, j);
+            ML2_Scalar diff = *ML2_MatrixAt(modelOutput, j, i) - *ML2_MatrixAt(dataOutput, i, j);
             loss += diff * diff;
         }
     }
@@ -517,42 +494,44 @@ ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_Data data) {
     return loss;
 }
 
-ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_Data data, ML2_Scalar epsilon) {
+ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCache, ML2_Data data, ML2_Scalar epsilon) {
     ML2_ASSERT(epsilon > 0 && "EPSILON MUST BE POSITIVE");
+    ML2_ModelCacheAssertCompatible(model, modelCache);
     // f'(x) = lim(e -> 0): (f(x + e) - f(x)) / e
     ML2_Scalar prev = 0;
-    ML2_Scalar loss = ML2_ModelSquareLoss(model, data);
-    for (int i = 0; i < model.layers - 1; i++) {
+    ML2_Scalar loss = ML2_ModelSquareLoss(model, modelCache, data);
+    for (int i = 0; i < model.count; i++) {
         ML2_Matrix weights = model.weights[i];
-        ML2_Matrix weightsGradient = model.weightsGradient[i];
+        ML2_Matrix weightsGradient = modelCache.weightsGradient[i];
         for (int j = 0; j < weights.rows; j++) {
             for (int k = 0; k < weights.cols; k++) {
                 ML2_Scalar *cur = ML2_MatrixAt(weights, j, k);
                 prev = *cur;
                 *cur += epsilon;
-                ML2_Scalar newLoss = ML2_ModelSquareLoss(model, data);
+                ML2_Scalar newLoss = ML2_ModelSquareLoss(model, modelCache, data);
                 *ML2_MatrixAt(weightsGradient, j, k) = (newLoss - loss) / epsilon;
                 *cur = prev;
             }
         }
 
         ML2_Matrix biases = model.biases[i];
-        ML2_Matrix biasesGradient = model.biasesGradient[i];
+        ML2_Matrix biasesGradient = modelCache.biasesGradient[i];
         for (int j = 0; j < biases.rows; j++) {
             ML2_Scalar *cur = ML2_MatrixAt(biases, j, 0);
             prev = *cur;
             *cur += epsilon;
-            ML2_Scalar newLoss = ML2_ModelSquareLoss(model, data);
+            ML2_Scalar newLoss = ML2_ModelSquareLoss(model, modelCache, data);
             *ML2_MatrixAt(biasesGradient, j, 0) = (newLoss - loss) / epsilon;
             *cur = prev;
         }
     }
 }
 
-ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_Scalar learningRate) {
-    for (int i = 0; i < model.layers - 1; i++) {
+ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_ModelCache modelCache, ML2_Scalar learningRate) {
+    ML2_ModelCacheAssertCompatible(model, modelCache);
+    for (int i = 0; i < model.count; i++) {
         ML2_Matrix weights = model.weights[i];
-        ML2_Matrix weightsGradient = model.weightsGradient[i];
+        ML2_Matrix weightsGradient = modelCache.weightsGradient[i];
         for (int j = 0; j < weights.rows; j++) {
             for (int k = 0; k < weights.cols; k++) {
                 *ML2_MatrixAt(weights, j, k) -= learningRate * *ML2_MatrixAt(weightsGradient, j, k);
@@ -560,7 +539,7 @@ ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_Scalar learningRate) 
         }
 
         ML2_Matrix biases = model.biases[i];
-        ML2_Matrix biasesGradient = model.biasesGradient[i];
+        ML2_Matrix biasesGradient = modelCache.biasesGradient[i];
         for (int j = 0; j < biases.rows; j++) {
             *ML2_MatrixAt(biases, j, 0) -= learningRate * *ML2_MatrixAt(biasesGradient, j, 0);
         }
@@ -568,6 +547,93 @@ ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_Scalar learningRate) 
 }
 
 // ML2_Model ⬆️
+
+// ML2_ModelCache ⬇️
+
+ML2_DEF ML2_ModelCache ML2_ModelCacheNew(ML2_Arch arch, int samples) {
+    int layerCount = arch.count;
+    ML2_ModelCache modelCache = {.count = layerCount};
+    modelCache.values = ML2_RELIABLE_CALLOC(layerCount, sizeof(*modelCache.values));
+    modelCache.valuesGradient = ML2_RELIABLE_CALLOC(layerCount, sizeof(*modelCache.valuesGradient));
+    modelCache.weightsGradient = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*modelCache.weightsGradient));
+    modelCache.biasesGradient = ML2_RELIABLE_CALLOC(layerCount - 1, sizeof(*modelCache.biasesGradient));
+    for (int i = 0; i < layerCount; i++) {
+        int nodes = arch.layers[i].nodes;
+        ML2_ASSERT(nodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
+        modelCache.values[i] = ML2_MatrixNew(nodes, samples);
+        modelCache.valuesGradient[i] = ML2_MatrixNew(nodes, samples);
+        if (i < layerCount - 1) {
+            int nextNodes = arch.layers[i + 1].nodes;
+            // TODO: this assert runs twice on the same values, problematic but not really
+            ML2_ASSERT(nextNodes > 0 && "LAYERS MUST HAVE MORE THAN 0 NODES");
+            modelCache.weightsGradient[i] = ML2_MatrixNew(nextNodes, nodes);
+            modelCache.biasesGradient[i] = ML2_MatrixNew(nextNodes, 1);
+        }
+    }
+    return modelCache;
+}
+
+ML2_DEF void ML2_ModelCacheDestroy(ML2_ModelCache *modelCache) {
+    for (int i = 0; i < modelCache->count; i++) {
+        ML2_MatrixDestroy(&modelCache->values[i]);
+        ML2_MatrixDestroy(&modelCache->valuesGradient[i]);
+        if (i < modelCache->count - 1) {
+            ML2_MatrixDestroy(&modelCache->weightsGradient[i]);
+            ML2_MatrixDestroy(&modelCache->biasesGradient[i]);
+        }
+    }
+    ML2_FREE(modelCache->values);
+    ML2_FREE(modelCache->valuesGradient);
+    ML2_FREE(modelCache->weightsGradient);
+    ML2_FREE(modelCache->biasesGradient);
+    memset(modelCache, 0, sizeof(*modelCache));
+}
+
+ML2_DEF void ML2_ModelCachePrint(ML2_ModelCache modelCache, int indent) {
+    printf(ML2_Indent("{\n", indent));
+    for (int i = 0; i < modelCache.count; i++) {
+        ML2_Matrix values = modelCache.values[i];
+        ML2_Matrix valuesGradient = modelCache.valuesGradient[i];
+        ML2_Matrix weightsGradient = modelCache.weightsGradient[i];
+        ML2_Matrix biasesGradient = modelCache.biasesGradient[i];
+        printf(ML2_Indent("Values[%d](%dx%d):\n", indent + ML2_Indentation), i, values.rows, values.cols);
+        ML2_MatrixPrint(values, indent + ML2_Indentation);
+        printf(ML2_Indent("Values Gradient[%d](%dx%d):\n", indent + ML2_Indentation), i, valuesGradient.rows, valuesGradient.cols);
+        ML2_MatrixPrint(valuesGradient, indent + ML2_Indentation);
+        if (i < modelCache.count - 1) {
+            printf(ML2_Indent("Weights Gradient[%d](%dx%d):\n", indent + ML2_Indentation), i, weightsGradient.rows, weightsGradient.cols);
+            ML2_MatrixPrint(weightsGradient, indent + ML2_Indentation);
+            printf(ML2_Indent("Biases Gradient[%d](%dx%d):\n", indent + ML2_Indentation), i, biasesGradient.rows, biasesGradient.cols);
+            ML2_MatrixPrint(biasesGradient, indent + ML2_Indentation);
+        }
+    }
+    printf(ML2_Indent("}\n", indent));
+}
+
+ML2_DEF ML2_Matrix ML2_ModelCacheInput(ML2_ModelCache modelCache) {
+    return modelCache.values[0];
+}
+
+ML2_DEF ML2_Matrix ML2_ModelCacheOutput(ML2_ModelCache modelCache) {
+    return modelCache.values[modelCache.count - 1];
+}
+
+ML2_DEF bool ML2_ModelCacheCompatible(ML2_Model model, ML2_ModelCache modelCache) {
+    if (model.count + 1 != modelCache.count) return false;
+    for (int i = 0; i < model.count; i++) {
+        if (!ML2_MatrixDotCompatible(modelCache.values[i + 1], model.weights[i], modelCache.values[i])) return false;
+        ML2_ASSERT(modelCache.values[i + 1].rows == model.biases[i].rows && "BIASES MUST BE SUM COMPATIBLE TO EACH COLOUMN");
+        if (!ML2_MatrixSame(model.weights[i], modelCache.weightsGradient[i])) return false;
+        if (!ML2_MatrixSame(model.biases[i], modelCache.biasesGradient[i])) return false;
+    }
+    return true;
+}
+
+ML2_DEF void ML2_ModelCacheAssertCompatible(ML2_Model model, ML2_ModelCache modelCache) {
+    ML2_ASSERT(ML2_ModelCacheCompatible(model, modelCache) && "MODEL MUST BE COMPATIBLE WITH CACHE");
+}
+
+// ML2_ModelCache ⬆️
 
 // ML2_Data ⬇️
 
@@ -665,15 +731,19 @@ ML2_DEF ML2_Matrix ML2_DataSampleOutput(ML2_Data data, int sample) {
 #    define Layer ML2_Layer
 #    define ArchMake ML2_ArchMake
 #    define Model ML2_Model
+#    define ModelCache ML2_ModelCache
 #    define Data ML2_Data
 
 #    define Sigmoid ML2_Sigmoid
 #    define ActName ML2_ActName
+
 #    define MatrixAt ML2_MatrixAt
 #    define MatrixNew ML2_MatrixNew
 #    define MatrixDestroy ML2_MatrixDestroy
 #    define MatrixRand ML2_MatrixRand
 #    define MatrixPrint ML2_MatrixPrint
+#    define MatrixRow ML2_MatrixRow
+#    define MatrixCol ML2_MatrixCol
 #    define MatrixSame ML2_MatrixSame
 #    define MatrixSameFlipped ML2_MatrixSameFlipped
 #    define MatrixAssertSame ML2_MatrixAssertSame
@@ -681,21 +751,30 @@ ML2_DEF ML2_Matrix ML2_DataSampleOutput(ML2_Data data, int sample) {
 #    define MatrixCopy ML2_MatrixCopy
 #    define MatrixCopyFlipped ML2_MatrixCopyFlipped
 #    define MatrixDot ML2_MatrixDot
+#    define MatrixDotCompatible ML2_MatrixDotCompatible
+#    define MatrixDotAssertCompatible ML2_MatrixDotAssertCompatible
 #    define MatrixSum ML2_MatrixSum
+#    define MatrixSumCompatible ML2_MatrixSumCompatible
+#    define MatrixSumAssertCompatible ML2_MatrixSumAssertCompatible
 #    define MatrixActivate ML2_MatrixActivate
+
 #    define ModelNew ML2_ModelNew
 #    define ModelDestroy ML2_ModelDestroy
 #    define ModelRand ML2_ModelRand
 #    define ModelPrint ML2_ModelPrint
-#    define ModelPrintParameters ML2_ModelPrintParameters
-#    define ModelPrintGradient ML2_ModelPrintGradient
 #    define ModelForward ML2_ModelForward
-#    define ModelInput ML2_ModelInput
-#    define ModelOutput ML2_ModelOutput
-#    define ModelSetInput ML2_ModelSetInput
 #    define ModelSquareLoss ML2_ModelSquareLoss
 #    define ModelGradientFiniteDiff ML2_ModelGradientFiniteDiff
 #    define ModelGradientDescent ML2_ModelGradientDescent
+
+#    define ModelCacheNew ML2_ModelCacheNew
+#    define ModelCacheDestroy ML2_ModelCacheDestroy
+#    define ModelCachePrint ML2_ModelCachePrint
+#    define ModelCacheInput ML2_ModelCacheInput
+#    define ModelCacheOutput ML2_ModelCacheOutput
+#    define ModelCacheCompatible ML2_ModelCacheCompatible
+#    define ModelCacheAssertCompatible ML2_ModelCacheAssertCompatible
+
 #    define DataNew ML2_DataNew
 #    define DataDestroy ML2_DataDestroy
 #    define DataPrint ML2_DataPrint
