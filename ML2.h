@@ -132,11 +132,17 @@ typedef struct {
     ML2_Matrix *biasesGradient;
 } ML2_ModelCache;
 
-// TODO: rename to ML2_Batch
 typedef struct {
     int samples, inputs, outputs;
     ML2_Scalar *values;
 } ML2_Batch;
+
+// typedef ML2_Scalar (*ML2_LossFn)(ML2_Matrix modelOutput, ML2_Matrix output);
+
+// typedef struct {
+//     ML2_LossFn forward;
+//     ML2_LossFn backward;
+// } ML2_Loss;
 
 ML2_DEF ML2_Scalar ML2_ScalarRand(ML2_Scalar low, ML2_Scalar high);
 
