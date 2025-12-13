@@ -88,7 +88,7 @@ typedef enum {
     ML2_ActCount,
 } ML2_ActType;
 
-static_assert(ML2_ActCount == 3, "ACTIVATIONS");
+static_assert(ML2_ActCount == 3, "ACTIVATIONS"); // for development
 
 typedef ML2_Scalar (*ML2_Act)(ML2_Scalar);
 
@@ -137,12 +137,13 @@ typedef struct {
     ML2_Scalar *values;
 } ML2_Batch;
 
-// typedef ML2_Scalar (*ML2_LossFn)(ML2_Matrix modelOutput, ML2_Matrix output);
+typedef ML2_Scalar (*ML2_LossForward)(ML2_Matrix target, ML2_Matrix prediction);
+typedef void (*ML2_LossBackward)(ML2_Matrix gradient, ML2_Matrix target, ML2_Matrix prediction);
 
-// typedef struct {
-//     ML2_LossFn forward;
-//     ML2_LossFn backward;
-// } ML2_Loss;
+typedef struct {
+    ML2_LossForward forward;
+    ML2_LossBackward backward;
+} ML2_Loss;
 
 ML2_DEF ML2_Scalar ML2_ScalarRand(ML2_Scalar low, ML2_Scalar high);
 
@@ -186,9 +187,9 @@ ML2_DEF void ML2_ModelRand(ML2_Model model, ML2_Scalar low, ML2_Scalar high);
 ML2_DEF void ML2_ModelPrint(ML2_Model model, int indent);
 // Z[i+1] = Act(W*X[i]+B);
 ML2_DEF void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch);
-ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch);
-ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Scalar epsilon);
-ML2_DEF void ML2_ModelGradientBackprop(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch);
+ML2_DEF ML2_Scalar ML2_ModelLoss(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Loss loss);
+ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Scalar epsilon, ML2_Loss loss);
+ML2_DEF void ML2_ModelGradientBackprop(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Loss loss);
 ML2_DEF void ML2_ModelGradientDescent(ML2_Model model, ML2_ModelCache modelCache, ML2_Scalar learningRate);
 ML2_DEF bool ML2_ModelCompatibleCache(ML2_Model model, ML2_ModelCache modelCache);
 ML2_DEF void ML2_ModelAssertCompatibleCache(ML2_Model model, ML2_ModelCache modelCache);
@@ -212,6 +213,9 @@ ML2_DEF ML2_Matrix ML2_BatchInput(ML2_Batch batch);
 ML2_DEF ML2_Matrix ML2_BatchOutput(ML2_Batch batch);
 ML2_DEF ML2_Matrix ML2_BatchSampleInput(ML2_Batch batch, int sample);
 ML2_DEF ML2_Matrix ML2_BatchSampleOutput(ML2_Batch batch, int sample);
+
+ML2_DEF ML2_Scalar ML2_LossForwardSquareError(ML2_Matrix target, ML2_Matrix prediction);
+ML2_DEF void ML2_LossBackwardSquareError(ML2_Matrix gradient, ML2_Matrix target, ML2_Matrix prediction);
 
 #endif // _ML2_H
 
@@ -509,7 +513,7 @@ ML2_DEF void ML2_ModelPrint(ML2_Model model, int indent) {
     printf(ML2_Indent("}\n", indent));
 }
 
-// Z[i+1] = Act(W*X[i]+B)
+// Z[i+1] = Act(X[i]*W+B)
 ML2_DEF void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch) {
     ML2_ModelAssertCompatibleCache(model, modelCache);
     ML2_ModelCacheAssertCompatibleBatch(modelCache, batch);
@@ -527,34 +531,39 @@ ML2_DEF void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_Ba
     }
 }
 
-ML2_DEF ML2_Scalar ML2_ModelSquareLoss(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch) {
+ML2_DEF ML2_Scalar ML2_ModelLoss(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Loss loss) {
     ML2_ModelAssertCompatibleCache(model, modelCache);
     ML2_ModelCacheAssertCompatibleBatch(modelCache, batch);
-    ML2_Matrix modelOutput = ML2_ModelCacheOutput(modelCache);
-    ML2_Matrix batchOutput = ML2_BatchOutput(batch);
-
-    ML2_Scalar loss = 0;
-    int samples = batch.samples;
-    int outputs = batch.outputs;
 
     ML2_ModelForward(model, modelCache, batch);
-    for (int i = 0; i < samples; i++) {
-        for (int j = 0; j < outputs; j++) {
-            ML2_Scalar diff = *ML2_MatrixAt(batchOutput, i, j) - *ML2_MatrixAt(modelOutput, i, j);
-            loss += diff * diff;
-        }
-    }
-    loss /= (samples * outputs);
-    return loss;
+    // it is asserted that
+    // modelOutput.rows == batch.samples
+    // modelOutput.cols == batch.outputs
+    ML2_Matrix modelOutput = ML2_ModelCacheOutput(modelCache);
+    ML2_Matrix batchOutput = ML2_BatchOutput(batch);
+    return loss.forward(batchOutput, modelOutput);
+    // ML2_Scalar loss = 0;
+    // int samples = batch.samples;
+    // int outputs = batch.outputs;
+
+    // ML2_ModelForward(model, modelCache, batch);
+    // for (int i = 0; i < samples; i++) {
+    //     for (int j = 0; j < outputs; j++) {
+    //         ML2_Scalar diff = *ML2_MatrixAt(batchOutput, i, j) - *ML2_MatrixAt(modelOutput, i, j);
+    //         loss += diff * diff;
+    //     }
+    // }
+    // loss /= (samples * outputs);
+    // return loss;
 }
 
-ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Scalar epsilon) {
+ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Scalar epsilon, ML2_Loss loss) {
     ML2_ASSERT(epsilon > 0 && "EPSILON MUST BE POSITIVE");
     ML2_ModelAssertCompatibleCache(model, modelCache);
     ML2_ModelCacheAssertCompatibleBatch(modelCache, batch);
     // f'(x) = lim(e -> 0): (f(x + e) - f(x)) / e
     ML2_Scalar prev = 0;
-    ML2_Scalar loss = ML2_ModelSquareLoss(model, modelCache, batch);
+    ML2_Scalar curLoss = ML2_ModelLoss(model, modelCache, batch, loss);
     for (int i = 0; i < model.count; i++) {
         ML2_Matrix weights = model.weights[i];
         ML2_Matrix weightsGradient = modelCache.weightsGradient[i];
@@ -563,8 +572,8 @@ ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCa
                 ML2_Scalar *cur = ML2_MatrixAt(weights, j, k);
                 prev = *cur;
                 *cur += epsilon;
-                ML2_Scalar newLoss = ML2_ModelSquareLoss(model, modelCache, batch);
-                *ML2_MatrixAt(weightsGradient, j, k) = (newLoss - loss) / epsilon;
+                ML2_Scalar newLoss = ML2_ModelLoss(model, modelCache, batch, loss);
+                *ML2_MatrixAt(weightsGradient, j, k) = (newLoss - curLoss) / epsilon;
                 *cur = prev;
             }
         }
@@ -575,34 +584,28 @@ ML2_DEF void ML2_ModelGradientFiniteDiff(ML2_Model model, ML2_ModelCache modelCa
             ML2_Scalar *cur = ML2_MatrixAt(biases, 0, j);
             prev = *cur;
             *cur += epsilon;
-            ML2_Scalar newLoss = ML2_ModelSquareLoss(model, modelCache, batch);
-            *ML2_MatrixAt(biasesGradient, 0, j) = (newLoss - loss) / epsilon;
+            ML2_Scalar newLoss = ML2_ModelLoss(model, modelCache, batch, loss);
+            *ML2_MatrixAt(biasesGradient, 0, j) = (newLoss - curLoss) / epsilon;
             *cur = prev;
         }
     }
 }
 
-ML2_DEF void ML2_ModelGradientBackprop(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch) {
+ML2_DEF void ML2_ModelGradientBackprop(ML2_Model model, ML2_ModelCache modelCache, ML2_Batch batch, ML2_Loss loss) {
     ML2_ModelAssertCompatibleCache(model, modelCache);
     ML2_ModelCacheAssertCompatibleBatch(modelCache, batch);
 
     ML2_ModelCacheClear(modelCache);
 
     ML2_ModelForward(model, modelCache, batch);
+    // these 3 matrices are asserted to be compatible sizes from the 2 asserts above
     ML2_Matrix modelOutput = ML2_ModelCacheOutput(modelCache);
     ML2_Matrix modelOutputGradient = ML2_ModelCacheOutputGradient(modelCache);
     ML2_Matrix batchOutput = ML2_BatchOutput(batch);
 
-    int samples = batch.samples;
-    int outputs = batch.outputs;
-    for (int i = 0; i < samples; i++) {
-        for (int j = 0; j < outputs; j++) {
-            ML2_Scalar diff = *ML2_MatrixAt(batchOutput, i, j) - *ML2_MatrixAt(modelOutput, i, j);
-            // divide by the outputs or outputs * samples?
-            *ML2_MatrixAt(modelOutputGradient, i, j) = -2.0 * diff / (samples * outputs);
-        }
-    }
+    loss.backward(modelOutputGradient, batchOutput, modelOutput);
 
+    int samples = batch.samples;
     for (int l = model.count - 1; l >= 0; l--) {
         ML2_Matrix values = modelCache.values[l];
         ML2_Matrix weights = model.weights[l];
@@ -873,6 +876,49 @@ ML2_DEF ML2_Matrix ML2_BatchSampleOutput(ML2_Batch batch, int sample) {
 
 // ML2_Batch ⬆️
 
+// ML2_Loss ⬇️
+
+ML2_DEF ML2_Scalar ML2_LossForwardSquareError(ML2_Matrix target, ML2_Matrix prediction) {
+    ML2_MatrixAssertEqual(target, prediction);
+    // target.rows == prediction.rows == samples
+    // target.cols == prediction.cols == outputs
+    int samples = target.rows;
+    int outputs = target.cols;
+
+    ML2_Scalar loss = 0;
+    for (int i = 0; i < samples; i++) {
+        for (int j = 0; j < outputs; j++) {
+            ML2_Scalar diff = *ML2_MatrixAt(target, i, j) - *ML2_MatrixAt(prediction, i, j);
+            loss += diff * diff;
+        }
+    }
+    loss /= (samples * outputs);
+    return loss;
+}
+
+ML2_DEF void ML2_LossBackwardSquareError(ML2_Matrix gradient, ML2_Matrix target, ML2_Matrix prediction) {
+    ML2_MatrixAssertEqual(gradient, target);
+    ML2_MatrixAssertEqual(target, prediction);
+    // gradient.rows == target.rows == prediction.rows == samples
+    // gradient.cols == target.cols == prediction.cols == outputs
+    int samples = target.rows;
+    int outputs = target.cols;
+
+    for (int i = 0; i < samples; i++) {
+        for (int j = 0; j < outputs; j++) {
+            ML2_Scalar diff = *ML2_MatrixAt(target, i, j) - *ML2_MatrixAt(prediction, i, j);
+            *ML2_MatrixAt(gradient, i, j) = -2.0 * diff / (samples * outputs);
+        }
+    }
+}
+
+ML2_Loss ML2_SquareLoss = {
+    .forward = ML2_LossForwardSquareError,
+    .backward = ML2_LossBackwardSquareError,
+};
+
+// ML2_Loss ⬆️
+
 #endif // ML2_IMPLEMENTATION
 
 #ifdef ML2_STRIP_PREFIX
@@ -927,7 +973,7 @@ ML2_DEF ML2_Matrix ML2_BatchSampleOutput(ML2_Batch batch, int sample) {
 #        define ModelRand ML2_ModelRand
 #        define ModelPrint ML2_ModelPrint
 #        define ModelForward ML2_ModelForward
-#        define ModelSquareLoss ML2_ModelSquareLoss
+#        define ModelLoss ML2_ModelLoss
 #        define ModelGradientFiniteDiff ML2_ModelGradientFiniteDiff
 #        define ModelGradientBackprop ML2_ModelGradientBackprop
 #        define ModelGradientDescent ML2_ModelGradientDescent
@@ -953,6 +999,13 @@ ML2_DEF ML2_Matrix ML2_BatchSampleOutput(ML2_Batch batch, int sample) {
 #        define BatchOutput ML2_BatchOutput
 #        define BatchSampleInput ML2_BatchSampleInput
 #        define BatchSampleOutput ML2_BatchSampleOutput
+
+#        define LossForward ML2_LossForward
+#        define LossBackward ML2_LossBackward
+#        define Loss ML2_Loss
+#        define LossForwardSquareError ML2_LossForwardSquareError
+#        define LossBackwardSquareError ML2_LossBackwardSquareError
+#        define SquareLoss ML2_SquareLoss
 
 #    endif // _ML2_H_STRIP_PREFIX_GUARD
 
