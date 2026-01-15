@@ -128,7 +128,6 @@ typedef struct {
 
 typedef struct {
     int count;
-    // TODO: maybe add the samples the ModelCache is based on
     ML2_Matrix *values;
     ML2_Matrix *valuesGradient;
     ML2_Matrix *weightsGradient;
@@ -142,11 +141,6 @@ typedef struct {
 
 typedef ML2_Scalar (*ML2_LossForward)(ML2_Matrix target, ML2_Matrix prediction);
 typedef void (*ML2_LossBackward)(ML2_Matrix gradient, ML2_Matrix target, ML2_Matrix prediction);
-
-// typedef struct {
-//     ML2_LossForward forward;
-//     ML2_LossBackward backward;
-// } ML2_Loss;
 
 ML2_DEF ML2_Scalar ML2_ScalarRand(ML2_Scalar low, ML2_Scalar high);
 
@@ -173,7 +167,7 @@ ML2_DEF void ML2_MatrixClear(ML2_Matrix dest);
 ML2_DEF void ML2_MatrixScale(ML2_Matrix dest, ML2_Scalar scale);
 // Dest[i,j] = Src[i,j]
 ML2_DEF void ML2_MatrixCopy(ML2_Matrix dest, ML2_Matrix src);
-// Dest[i,j] = Σ(A[i,k] * B[k,j]);
+// Dest[i,j] = Σ(A[i,k] * B[k,j])
 ML2_DEF void ML2_MatrixDot(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
 ML2_DEF bool ML2_MatrixDotCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
 ML2_DEF void ML2_MatrixDotAssertCompatible(ML2_Matrix dest, ML2_Matrix a, ML2_Matrix b);
@@ -911,6 +905,7 @@ ML2_DEF void ML2_LossBackwardSquareError(ML2_Matrix gradient, ML2_Matrix target,
 #        define Scalar ML2_Scalar
 #        define ActNone ML2_ActNone
 #        define ActSigmoid ML2_ActSigmoid
+#        define ActType ML2_ActType
 #        define Act ML2_Act
 #        define Matrix ML2_Matrix
 #        define Arch ML2_Arch
