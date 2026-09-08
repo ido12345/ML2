@@ -2948,7 +2948,7 @@ ML2_FN ML2_Size ML2_LinearSizeof(ML2_LayerLinear linear) {
 // ML2_LayerFilters ⬇️
 
 ML2_FN ML2_LayerInfo ML2_Filters(ML2_Int inputs, ML2_Int outputs, ML2_Int height, ML2_Int width, ML2_Int paddingHeight, ML2_Int paddingWidth, ML2_Int strideHeight, ML2_Int strideWidth) {
-    return (ML2_LayerInfo){ML2_LayerTypeFilters, .as.filters = {outputs, height, width, inputs, paddingHeight, paddingWidth, strideHeight, strideWidth}};
+    return (ML2_LayerInfo){ML2_LayerTypeFilters, .as.filters = {height, width, inputs, outputs, paddingHeight, paddingWidth, strideHeight, strideWidth}};
 }
 
 ML2_FN ML2_LayerFilters ML2_FiltersNew(ML2_LayerInfoFilters info) {
