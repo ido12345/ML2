@@ -414,7 +414,7 @@ void DrawLabelPredictionBars(Rect boundary, ML2_LayerCacheScalars *sampleTrainin
     static bool init = false;
     if (!init) {
         // MemLeak:
-        output = ML2_LayerCacheNew(ML2_Scalars(1, outputs));
+        output = ML2_LayerCacheNew(ML2_DeviceCPU, ML2_Scalars(1, outputs));
         init = true;
     }
     ML2_LayerCacheClear(output);
@@ -915,8 +915,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance [[maybe_unused]]
     DWORD dwExStyle = WS_EX_CLIENTEDGE;
     DWORD dwStyle = WS_OVERLAPPEDWINDOW;
 
-    Rect WindowRect = {0, 0, WindowWidth, WindowHeight};
-    AdjustWindowRectEx(&WindowRect, dwStyle, false, dwExStyle);
+    Rect windowRect = {0, 0, WindowWidth, WindowHeight};
+    AdjustWindowRectEx(&windowRect, dwStyle, false, dwExStyle);
     
     HWND hwnd = CreateWindowEx(
         dwExStyle,
@@ -924,7 +924,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance [[maybe_unused]]
         "Mnist",
         dwStyle,
         CW_USEDEFAULT, CW_USEDEFAULT,
-        RectWidth(WindowRect), RectHeight(WindowRect),
+        RectWidth(windowRect), RectHeight(windowRect),
         nullptr, nullptr, hInstance, nullptr
     );
     if (!hwnd) {

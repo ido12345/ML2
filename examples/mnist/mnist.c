@@ -58,15 +58,15 @@ static void ModelInit() {
         // ML2_Softmax(),
     );
 
-    model = ML2_ModelNew(arch);
+    model = ML2_ModelNew(ML2_DeviceCPU, arch);
 
     {
         FILE *mnist_train_input = fopen("data/mnist_train_input.bin", "rb");
         FILE *mnist_train_output = fopen("data/mnist_train_output.bin", "rb");
-        modelGradient = ML2_RELIABLE_CALLOC(batches, sizeof(*modelGradient));
-        modelCacheTraining = ML2_RELIABLE_CALLOC(batches, sizeof(*modelCacheTraining));
-        modelCacheGradientTraining = ML2_RELIABLE_CALLOC(batches, sizeof(*modelCacheGradientTraining));
-        batchTraining = ML2_RELIABLE_CALLOC(batches, sizeof(*batchTraining));
+        modelGradient = ML2_Calloc(batches * sizeof(*modelGradient));
+        modelCacheTraining = ML2_Calloc(batches * sizeof(*modelCacheTraining));
+        modelCacheGradientTraining = ML2_Calloc(batches * sizeof(*modelCacheGradientTraining));
+        batchTraining = ML2_Calloc(batches * sizeof(*batchTraining));
         int base = trainingSamples / batches;
         int remainder = trainingSamples % batches;
         for (int i = 0; i < batches; i++) {
@@ -75,14 +75,14 @@ static void ModelInit() {
                 ML2_Matrices(batchSize, imageHeight, imageWidth, imageChannels),
                 ML2_Scalars(batchSize, outputs)
             );
-            modelGradient[i] = ML2_ModelNew(arch);
-            modelCacheTraining[i] = ML2_ModelCacheNew(arch, batchTrainingInfo);
-            modelCacheGradientTraining[i] = ML2_ModelCacheNew(arch, batchTrainingInfo);
-            batchTraining[i] = ML2_BatchNew(batchTrainingInfo);
+            modelGradient[i] = ML2_ModelNew(ML2_DeviceCPU, arch);
+            modelCacheTraining[i] = ML2_ModelCacheNew(ML2_DeviceCPU, arch, batchTrainingInfo);
+            modelCacheGradientTraining[i] = ML2_ModelCacheNew(ML2_DeviceCPU, arch, batchTrainingInfo);
+            batchTraining[i] = ML2_BatchNew(ML2_DeviceCPU, batchTrainingInfo);
             ML2_LayerCacheMatrices batchTrainingInput = ML2_LayerCacheAsMatrices(batchTraining[i].input);
             ML2_LayerCacheScalars batchTrainingOutput = ML2_LayerCacheAsScalars(batchTraining[i].output);
-            ML2_HARD_ASSERT(fread(batchTrainingInput.data.matrices, sizeof(*batchTrainingInput.data.matrices), batchSize * inputs, mnist_train_input) == batchSize * inputs);
-            ML2_HARD_ASSERT(fread(batchTrainingOutput.data.scalars, sizeof(*batchTrainingOutput.data.scalars), batchSize * outputs, mnist_train_output) == batchSize * outputs);
+            ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTrainingInput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTrainingInput.data).ptr), batchSize * inputs, mnist_train_input) == batchSize * inputs);
+            ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTrainingOutput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTrainingOutput.data).ptr), batchSize * outputs, mnist_train_output) == batchSize * outputs);
         }
         fclose(mnist_train_input);
         fclose(mnist_train_output);
@@ -91,27 +91,27 @@ static void ModelInit() {
         ML2_Matrices(testingSamples, imageHeight, imageWidth, imageChannels),
         ML2_Scalars(testingSamples, outputs)
     );
-    modelCacheTesting = ML2_ModelCacheNew(arch, batchTestingInfo);
-    batchTesting = ML2_BatchNew(batchTestingInfo);
-    
+    modelCacheTesting = ML2_ModelCacheNew(ML2_DeviceCPU, arch, batchTestingInfo);
+    batchTesting = ML2_BatchNew(ML2_DeviceCPU, batchTestingInfo);
+
     ML2_LayerCacheMatrices batchTestingInput = ML2_LayerCacheAsMatrices(batchTesting.input);
     ML2_LayerCacheScalars batchTestingOutput = ML2_LayerCacheAsScalars(batchTesting.output);
     FILE *mnist_test_input = fopen("data/mnist_test_input.bin", "rb");
     FILE *mnist_test_output = fopen("data/mnist_test_output.bin", "rb");
-    ML2_HARD_ASSERT(fread(batchTestingInput.data.matrices, sizeof(*batchTestingInput.data.matrices), testingSamples * inputs, mnist_test_input) == testingSamples * inputs);
-    ML2_HARD_ASSERT(fread(batchTestingOutput.data.scalars, sizeof(*batchTestingOutput.data.scalars), testingSamples * outputs, mnist_test_output) == testingSamples * outputs);
+    ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTestingInput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTestingInput.data).ptr), testingSamples * inputs, mnist_test_input) == testingSamples * inputs);
+    ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTestingOutput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTestingOutput.data).ptr), testingSamples * outputs, mnist_test_output) == testingSamples * outputs);
     fclose(mnist_test_input);
     fclose(mnist_test_output);
 
-    // optimizer = ML2_OptimizerNew(ML2_GradientDescent(learningRate), arch);
-    optimizer = ML2_OptimizerNew(ML2_Adam(learningRate, 0.9, 0.999), arch);
+    // optimizer = ML2_OptimizerNew(ML2_DeviceCPU, ML2_GradientDescent(learningRate), arch);
+    optimizer = ML2_OptimizerNew(ML2_DeviceCPU, ML2_Adam(learningRate, 0.9, 0.999), arch);
 
     ML2_BatchInfo batchSampleInfo = ML2_BatchInfoMake(
         ML2_Matrices(1, imageHeight, imageWidth, imageChannels),
         ML2_Scalars(1, outputs)
     );
-    modelCacheSample = ML2_ModelCacheNew(arch, batchSampleInfo);
-    inputSampleSingle = ML2_LayerCacheNew(batchSampleInfo.input);
+    modelCacheSample = ML2_ModelCacheNew(ML2_DeviceCPU, arch, batchSampleInfo);
+    inputSampleSingle = ML2_LayerCacheNew(ML2_DeviceCPU, batchSampleInfo.input);
 
     ModelRand();
 }
@@ -134,12 +134,12 @@ static void ModelDeinit() {
 
 static ML2_Scalar ModelLossTraining() {
     ML2_Scalar loss = {};
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < batches; i++) {
         ML2_ModelCacheClear(modelCacheTraining[i]);
         ML2_ModelForward(model, modelCacheTraining[i], batchTraining[i].input);
         ML2_Scalar l = ML2_ModelCacheLoss(modelCacheTraining[i], batchTraining[i].output, lossForward);
-        #pragma omp critical
+#pragma omp critical
         {
             loss += l;
         }
@@ -154,7 +154,7 @@ static ML2_Scalar ModelLossTesting() {
 }
 
 static void ModelTrain() {
-    #pragma omp parallel for
+#pragma omp parallel for
     for (int i = 0; i < batches; i++) {
         ML2_ModelClear(modelGradient[i]);
         ML2_ModelCacheClear(modelCacheTraining[i]);
@@ -172,7 +172,16 @@ static void ModelTrain() {
     for (int i = 0; i < batches; i++) {
         ML2_LayerCacheMatrices images = ML2_LayerCacheAsMatrices(batchTraining[i].input);
         if (sample < images.info.samples) {
-            return (ML2_LayerCache){ML2_LayerCacheTypeMatrices, .as.matrices = {{1, images.info.matrices, images.info.vectors, images.info.scalars}, {ML2_MatricesAt(images, sample, 0, 0, 0)}}};
+            return (ML2_LayerCache){
+                ML2_LayerCacheTypeMatrices,
+                .as.matrices = {
+                    {1, images.info.matrices, images.info.vectors, images.info.scalars},
+                    {
+                        ML2_DeviceCPU,
+                        .as.cpu = {ML2_MatricesAt(images, sample, 0, 0, 0)},
+                    },
+                },
+            };
         }
         sample -= images.info.samples;
     }
@@ -183,7 +192,13 @@ static void ModelTrain() {
     for (int i = 0; i < batches; i++) {
         ML2_LayerCacheScalars scalars = ML2_LayerCacheAsScalars(batchTraining[i].output);
         if (sample < scalars.info.samples) {
-            return (ML2_LayerCacheScalars){{1, scalars.info.scalars}, {ML2_ScalarsAt(scalars, sample, 0)}};
+            return (ML2_LayerCacheScalars){
+                {1, scalars.info.scalars},
+                {
+                    ML2_DeviceCPU,
+                    .as.cpu = {ML2_ScalarsAt(scalars, sample, 0)},
+                },
+            };
         }
         sample -= scalars.info.samples;
     }
@@ -231,7 +246,7 @@ static void ModelTrain() {
 static void ModelEval(ML2_ModelCache modelCache, ML2_LayerCache input, ML2_LayerCache output) {
     ML2_ModelCacheClear(modelCache);
     ML2_ModelForward(model, modelCache, input);
-    ML2_ActivationSoftmaxForward(ML2_ModelCacheOutput(modelCache), output);
+    ML2_SoftmaxForward(ML2_ModelCacheOutput(modelCache), output);
 }
 
 #ifndef NO_MAIN
@@ -247,7 +262,7 @@ int main() {
         printf("Loss[%d]: Training: %f, Testing: %f\n", i, ModelLossTraining(), ModelLossTesting());
     }
 
-    ML2_LayerCache output = ML2_LayerCacheNew(ML2_LayerCacheAsInfo(ML2_ModelCacheOutput(modelCacheTesting)));
+    ML2_LayerCache output = ML2_LayerCacheNew(ML2_DeviceCPU, ML2_LayerCacheAsInfo(ML2_ModelCacheOutput(modelCacheTesting)));
     ModelEval(modelCacheTesting, batchTesting.input, output);
 
     ML2_LayerCacheMatrices input = ML2_LayerCacheAsMatrices(batchTesting.input);

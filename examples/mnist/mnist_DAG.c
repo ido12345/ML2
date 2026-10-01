@@ -178,8 +178,8 @@ static void ModelInit() {
         ML2_Matrices(testingSamples, imageHeight, imageWidth, imageChannels), 
         ML2_Scalars(testingSamples, outputs)
     );
-    batchTraining = ML2_BatchNew(batchInfoTraining);
-    batchTesting = ML2_BatchNew(batchInfoTesting);
+    batchTraining = ML2_BatchNew(ML2_DeviceCPU, batchInfoTraining);
+    batchTesting = ML2_BatchNew(ML2_DeviceCPU, batchInfoTesting);
 
     {
         FILE *mnist_train_input = nullptr;
@@ -188,8 +188,8 @@ static void ModelInit() {
         ML2_HARD_ASSERT(mnist_train_output = fopen("data/mnist_train_output.bin", "rb"));
         ML2_LayerCacheMatrices batchTrainingInput = ML2_LayerCacheAsMatrices(batchTraining.input);
         ML2_LayerCacheScalars batchTrainingOutput = ML2_LayerCacheAsScalars(batchTraining.output);
-        ML2_HARD_ASSERT(fread(batchTrainingInput.data.matrices, sizeof(*batchTrainingInput.data.matrices), trainingSamples * inputs, mnist_train_input) == trainingSamples * inputs);
-        ML2_HARD_ASSERT(fread(batchTrainingOutput.data.scalars, sizeof(*batchTrainingOutput.data.scalars), trainingSamples * outputs, mnist_train_output) == trainingSamples * outputs);
+        ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTrainingInput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTrainingInput.data).ptr), trainingSamples * inputs, mnist_train_input) == trainingSamples * inputs);
+        ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTrainingOutput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTrainingOutput.data).ptr), trainingSamples * outputs, mnist_train_output) == trainingSamples * outputs);
         fclose(mnist_train_input);
         fclose(mnist_train_output);
     }
@@ -200,8 +200,8 @@ static void ModelInit() {
         ML2_HARD_ASSERT(mnist_test_output = fopen("data/mnist_test_output.bin", "rb"));
         ML2_LayerCacheMatrices batchTestingInput = ML2_LayerCacheAsMatrices(batchTesting.input);
         ML2_LayerCacheScalars batchTestingOutput = ML2_LayerCacheAsScalars(batchTesting.output);
-        ML2_HARD_ASSERT(fread(batchTestingInput.data.matrices, sizeof(*batchTestingInput.data.matrices), testingSamples * inputs, mnist_test_input) == testingSamples * inputs);
-        ML2_HARD_ASSERT(fread(batchTestingOutput.data.scalars, sizeof(*batchTestingOutput.data.scalars), testingSamples * outputs, mnist_test_output) == testingSamples * outputs);
+        ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTestingInput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTestingInput.data).ptr), testingSamples * inputs, mnist_test_input) == testingSamples * inputs);
+        ML2_HARD_ASSERT(fread(ML2_DeviceDataAsCPU(batchTestingOutput.data).ptr, sizeof(*ML2_DeviceDataAsCPU(batchTestingOutput.data).ptr), testingSamples * outputs, mnist_test_output) == testingSamples * outputs);
         fclose(mnist_test_input);
         fclose(mnist_test_output);
     }
@@ -257,13 +257,13 @@ static void ModelInit() {
         // [0]: Add me to [7]
     );
 
-    m1 = ML2_ModelNew(arch1), m1Grad = ML2_ModelNew(arch1);
-    mc1 = ML2_ModelCacheNew(arch1, batchInfoTraining), mc1Grad = ML2_ModelCacheNew(arch1, batchInfoTraining);
-    m2 = ML2_ModelNew(arch2), m2Grad = ML2_ModelNew(arch2);
+    m1 = ML2_ModelNew(ML2_DeviceCPU, arch1), m1Grad = ML2_ModelNew(ML2_DeviceCPU, arch1);
+    mc1 = ML2_ModelCacheNew(ML2_DeviceCPU, arch1, batchInfoTraining), mc1Grad = ML2_ModelCacheNew(ML2_DeviceCPU, arch1, batchInfoTraining);
+    m2 = ML2_ModelNew(ML2_DeviceCPU, arch2), m2Grad = ML2_ModelNew(ML2_DeviceCPU, arch2);
     
     ML2_OptimizerParameters op = ML2_Adam(learningRate, 0.9, 0.999);
-    o1 = ML2_OptimizerNew(op, arch1);
-    o2 = ML2_OptimizerNew(op, arch2);
+    o1 = ML2_OptimizerNew(ML2_DeviceCPU, op, arch1);
+    o2 = ML2_OptimizerNew(ML2_DeviceCPU, op, arch2);
 }
 
 static void ModelDeinit() {
