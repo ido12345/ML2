@@ -63,10 +63,10 @@ static void ModelInit() {
     {
         FILE *mnist_train_input = fopen("data/mnist_train_input.bin", "rb");
         FILE *mnist_train_output = fopen("data/mnist_train_output.bin", "rb");
-        modelGradient = ML2_Calloc(batches * sizeof(*modelGradient));
-        modelCacheTraining = ML2_Calloc(batches * sizeof(*modelCacheTraining));
-        modelCacheGradientTraining = ML2_Calloc(batches * sizeof(*modelCacheGradientTraining));
-        batchTraining = ML2_Calloc(batches * sizeof(*batchTraining));
+        modelGradient = ML2_Allocate(batches * sizeof(*modelGradient));
+        modelCacheTraining = ML2_Allocate(batches * sizeof(*modelCacheTraining));
+        modelCacheGradientTraining = ML2_Allocate(batches * sizeof(*modelCacheGradientTraining));
+        batchTraining = ML2_Allocate(batches * sizeof(*batchTraining));
         int base = trainingSamples / batches;
         int remainder = trainingSamples % batches;
         for (int i = 0; i < batches; i++) {
@@ -176,10 +176,7 @@ static void ModelTrain() {
                 ML2_LayerCacheTypeMatrices,
                 .as.matrices = {
                     {1, images.info.matrices, images.info.vectors, images.info.scalars},
-                    {
-                        ML2_DeviceCPU,
-                        .as.cpu = {ML2_MatricesAt(images, sample, 0, 0, 0)},
-                    },
+                    ML2_MatricesDataAt(images, sample, 0, 0, 0),
                 },
             };
         }
@@ -194,10 +191,7 @@ static void ModelTrain() {
         if (sample < scalars.info.samples) {
             return (ML2_LayerCacheScalars){
                 {1, scalars.info.scalars},
-                {
-                    ML2_DeviceCPU,
-                    .as.cpu = {ML2_ScalarsAt(scalars, sample, 0)},
-                },
+                ML2_ScalarsDataAt(scalars, sample, 0),
             };
         }
         sample -= scalars.info.samples;
@@ -271,17 +265,17 @@ int main() {
 
     int correct = 0;
     for (int s = 0; s < testingSamples; s++) {
-        ML2_Scalar max = *ML2_ScalarsAt(modelOutput, s, 0);
+        ML2_Scalar max = *ML2_CPU_ScalarsAt(modelOutput, s, 0);
         int maxIdx = 0;
         for (int i = 1; i < outputs; i++) {
-            ML2_Scalar scalar = *ML2_ScalarsAt(modelOutput, s, i);
+            ML2_Scalar scalar = *ML2_CPU_ScalarsAt(modelOutput, s, i);
             if (scalar > max) {
                 max = scalar;
                 maxIdx = i;
             }
         }
         for (int i = 0; i < outputs; i++) {
-            if (*ML2_ScalarsAt(expectedOutput, s, i) == 1.0f) {
+            if (*ML2_CPU_ScalarsAt(expectedOutput, s, i) == 1.0f) {
                 if (i == maxIdx) {
                     correct++;
                 }
@@ -290,14 +284,14 @@ int main() {
         }
         if (1) {
             for (int i = 0; i < outputs; i++) {
-                if (*ML2_ScalarsAt(expectedOutput, s, i) == 1.0f) {
+                if (*ML2_CPU_ScalarsAt(expectedOutput, s, i) == 1.0f) {
                     if (i == maxIdx) {
                         printf("\e[0;32m"); // green
                     } else {
                         printf("\e[0;31m"); // red
                     }
                 }
-                printf("%d: %.0f (%5.3f)", i, *ML2_ScalarsAt(expectedOutput, s, i), *ML2_ScalarsAt(modelOutput, s, i));
+                printf("%d: %.0f (%5.3f)", i, *ML2_CPU_ScalarsAt(expectedOutput, s, i), *ML2_CPU_ScalarsAt(modelOutput, s, i));
                 printf("\e[0m"); // reset color
                 printf("\n");
             }
@@ -305,7 +299,7 @@ int main() {
             for (int y = 0; y < imageHeight; y++) {
                 for (int x = 0; x < imageWidth; x++) {
                     constexpr char brightness[] = ".:;-=+*#%@";
-                    printf("%c ", brightness[(int)floorf(*ML2_MatricesAt(input, s, y, x, 0) * (sizeof(brightness) - 2))]);
+                    printf("%c ", brightness[(int)floorf(*ML2_CPU_MatricesAt(input, s, y, x, 0) * (sizeof(brightness) - 2))]);
                 }
                 printf("\n");
             }

@@ -372,7 +372,7 @@ void DrawLabel(Rect boundary, int digit, Color color) {
 }
 
 // ML2_FN ML2_LayerCacheScalars ML2_ScalarsSample(ML2_LayerCacheScalars scalars, int sample) {
-//     return (ML2_LayerCacheScalars){{1, scalars.info.scalars}, {ML2_ScalarsAt(scalars, sample, 0)}};
+//     return (ML2_LayerCacheScalars){{1, scalars.info.scalars}, {ML2_CPU_ScalarsAt(scalars, sample, 0)}};
 // }
 
 // ML2_FN ML2_LayerCacheImages ML2_ImagesSample(ML2_LayerCacheImages images, int sample) {
@@ -388,15 +388,15 @@ void DrawLabel(Rect boundary, int digit, Color color) {
 // }
 
 ML2_FN ML2_Scalar *ML2_ScalarsRaw(ML2_LayerCacheScalars scalars) {
-    return ML2_ScalarsAt(scalars, 0, 0);
+    return ML2_CPU_ScalarsAt(scalars, 0, 0);
 }
 
 ML2_FN ML2_Scalar *ML2_VectorsRaw(ML2_LayerCacheVectors vectors) {
-    return ML2_VectorsAt(vectors, 0, 0, 0);
+    return ML2_CPU_VectorsAt(vectors, 0, 0, 0);
 }
 
 ML2_FN ML2_Scalar *ML2_ImagesRaw(ML2_LayerCacheMatrices images) {
-    return ML2_MatricesAt(images, 0, 0, 0, 0);
+    return ML2_CPU_MatricesAt(images, 0, 0, 0, 0);
 }
 
 ML2_FN ML2_Scalar *ML2_LayerCacheRaw(ML2_LayerCache cache) {
@@ -428,14 +428,14 @@ void DrawLabelPredictionBars(Rect boundary, ML2_LayerCacheScalars *sampleTrainin
         int padFactor = 10;
         int pad = min(RectWidth(boundary) * padFactor / outputs / 100, RectHeight(boundary) * padFactor / 100);
 
-        int fill = RectHeight(boundary) * *ML2_ScalarsAt(modelOutput, 0, i);
+        int fill = RectHeight(boundary) * *ML2_CPU_ScalarsAt(modelOutput, 0, i);
         Rect predictionBar = {
             .left = x1,
             .top = RectHeight(boundary) - fill,
             .right = x2,
             .bottom = RectHeight(boundary),
         };
-        Color outputColor = (int)floorf(fminf(255.0f, *ML2_ScalarsAt(modelOutput, 0, i) * 255.0f));
+        Color outputColor = (int)floorf(fminf(255.0f, *ML2_CPU_ScalarsAt(modelOutput, 0, i) * 255.0f));
         DrawRect(boundary, predictionBar, RGBA(0xff - outputColor, outputColor, 0, 0xff));
 
         Rect digitRect = {
@@ -446,7 +446,7 @@ void DrawLabelPredictionBars(Rect boundary, ML2_LayerCacheScalars *sampleTrainin
         };
         Color digitValue = 0xff;
         if (sampleTrainingOutput) {
-            digitValue = *ML2_ScalarsAt(*sampleTrainingOutput, 0, i) == 1.0f ? 0xff : 0x70;
+            digitValue = *ML2_CPU_ScalarsAt(*sampleTrainingOutput, 0, i) == 1.0f ? 0xff : 0x70;
         }
         DrawLabel(digitRect, i, RGBA(digitValue, digitValue, digitValue, 0xff));
     }

@@ -25,24 +25,42 @@
 
 #ifdef ML2_CUDA_ENABLE
     #include <cuda.h>
+    #include <cublas_v2.h>
 
-    #define ML2_CUDA_CHECK_ERROR(result, msg, ...)                                                          \
-        do {                                                                                                \
-            CUresult _result = (result);                                                                    \
-            if (_result != CUDA_SUCCESS) {                                                                  \
-                const char *_errorName = "Unknown";                                                         \
-                const char *_errorDetails = "Unknown";                                                      \
-                cuGetErrorName(_result, &_errorName);                                                       \
-                cuGetErrorString(_result, &_errorDetails);                                                  \
-                fprintf(stderr, "CUDA DRIVER ERROR: \"" msg "\"\n"                                          \
-                                "    Error:    |%s|\n"                                                      \
-                                "    Details:  |%s|\n"                                                      \
-                                "    File:     |%s|\n"                                                      \
-                                "    Function: |%s|\n"                                                      \
-                                "    Line:     |%d|\n",                                                     \
-                        __VA_OPT__(__VA_ARGS__, ) _errorName, _errorDetails, __FILE__, __func__, __LINE__); \
-                abort();                                                                                    \
-            }                                                                                               \
+    #define ML2_CUDA_CHECK_ERROR(result)                                                          \
+        do {                                                                                      \
+            CUresult ML2_CUDA_Result = (result);                                                  \
+            if (ML2_CUDA_Result != CUDA_SUCCESS) {                                                \
+                const char *ML2_CUDA_ErrorName = "Unknown";                                       \
+                const char *ML2_CUDA_ErrorDetails = "Unknown";                                    \
+                cuGetErrorName(ML2_CUDA_Result, &ML2_CUDA_ErrorName);                             \
+                cuGetErrorString(ML2_CUDA_Result, &ML2_CUDA_ErrorDetails);                        \
+                fprintf(stderr, "CUDA ERROR:\n"                                                   \
+                                "    Error:    |%s|\n"                                            \
+                                "    Details:  |%s|\n"                                            \
+                                "    File:     |%s|\n"                                            \
+                                "    Function: |%s|\n"                                            \
+                                "    Line:     |%d|\n",                                           \
+                        ML2_CUDA_ErrorName, ML2_CUDA_ErrorDetails, __FILE__, __func__, __LINE__); \
+                abort();                                                                          \
+            }                                                                                     \
+        } while (0)
+
+    #define ML2_CUBLAS_CHECK_ERROR(status)                                                            \
+        do {                                                                                          \
+            cublasStatus_t ML2_CUBLAS_Status = (status);                                              \
+            if (ML2_CUBLAS_Status != CUBLAS_STATUS_SUCCESS) {                                         \
+                const char *ML2_CUBLAS_ErrorName = cublasGetStatusName(ML2_CUBLAS_Status);            \
+                const char *ML2_CUBLAS_ErrorDetails = cublasGetStatusString(ML2_CUBLAS_Status);       \
+                fprintf(stderr, "CUBLAS ERROR:\n"                                                     \
+                                "    Error:    |%s|\n"                                                \
+                                "    Details:  |%s|\n"                                                \
+                                "    File:     |%s|\n"                                                \
+                                "    Function: |%s|\n"                                                \
+                                "    Line:     |%d|\n",                                               \
+                        ML2_CUBLAS_ErrorName, ML2_CUBLAS_ErrorDetails, __FILE__, __func__, __LINE__); \
+                abort();                                                                              \
+            }                                                                                         \
         } while (0)
 #endif // ML2_CUDA_ENABLE
 
@@ -143,9 +161,11 @@ typedef ML2_SIZE_TYPE ML2_Size;
 
 // ML2_Size ⬆️
 
-#ifndef ML2_CALLOC
+ML2_FN void *ML2_Allocate(ML2_Size size);
+#ifndef ML2_ALLOCATE_IMPLEMENTED
+    #define ML2_ALLOCATE_IMPLEMENTED
     #include <stdlib.h>
-static inline void *ML2_Calloc(ML2_Size size) {
+ML2_FN void *ML2_Allocate(ML2_Size size) {
     #ifdef ML2_PRINT_ALLOC
     {
         // NOTE: global byte counter
@@ -180,8 +200,7 @@ static inline void *ML2_Calloc(ML2_Size size) {
     }
     return ptr;
 }
-    #define ML2_CALLOC ML2_Calloc
-#endif // ML2_CALLOC
+#endif // ML2_ALLOCATE_IMPLEMENTED
 
 #ifndef ML2_FREE
     #include <stdlib.h>
@@ -227,7 +246,7 @@ ML2_VAR constexpr ML2_Int ML2_Indentation = ML2_INDENTATION;
 typedef enum : ML2_Int {
     ML2_DeviceCPU = 1,
 #ifdef ML2_CUDA_ENABLE
-    ML2_DeviceCUDA,
+    ML2_DeviceCUDA = 2,
 #endif // ML2_CUDA_ENABLE
 } ML2_Device;
 
@@ -795,6 +814,7 @@ ML2_FN void ML2_CPU_DeviceDataDestroy(ML2_DeviceData *data);
 ML2_FN ML2_Scalar *ML2_CPU_DeviceDataAt(ML2_DeviceData data, ML2_Int index);
 
 ML2_FN ML2_Scalar *ML2_CPU_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CPU_WeightsDataAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
 ML2_FN void ML2_CPU_WeightsPrint(ML2_LayerWeights weights, ML2_Int indent);
 ML2_FN void ML2_CPU_WeightsClear(ML2_LayerWeights weights);
 ML2_FN void ML2_CPU_WeightsCopy(ML2_LayerWeights dest, ML2_LayerWeights src);
@@ -817,6 +837,7 @@ ML2_FN void ML2_CPU_WeightsRMSPropOptimize(ML2_LayerWeights weights, ML2_LayerWe
 ML2_FN void ML2_CPU_WeightsAdamOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerWeights average, ML2_LayerWeights squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 
 ML2_FN ML2_Scalar *ML2_CPU_BiasesAt(ML2_LayerBiases biases, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CPU_BiasesDataAt(ML2_LayerBiases biases, ML2_Int i);
 ML2_FN void ML2_CPU_BiasesPrint(ML2_LayerBiases biases, ML2_Int indent);
 ML2_FN void ML2_CPU_BiasesClear(ML2_LayerBiases biases);
 ML2_FN void ML2_CPU_BiasesCopy(ML2_LayerBiases dest, ML2_LayerBiases src);
@@ -858,6 +879,8 @@ ML2_FN void ML2_CPU_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradi
 
 ML2_FN ML2_Scalar *ML2_CPU_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
 ML2_FN ML2_Scalar *ML2_CPU_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CPU_LinearWeightsDataAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CPU_LinearBiasesDataAt(ML2_LayerLinear linear, ML2_Int o);
 ML2_FN ML2_LayerWeights ML2_CPU_LinearWeights(ML2_LayerLinear linear);
 ML2_FN ML2_LayerBiases ML2_CPU_LinearBiases(ML2_LayerLinear linear);
 ML2_FN void ML2_CPU_LinearPrint(ML2_LayerLinear linear, ML2_Int indent);
@@ -879,6 +902,7 @@ ML2_FN void ML2_CPU_LinearRMSPropOptimize(ML2_LayerLinear linear, ML2_LayerLinea
 ML2_FN void ML2_CPU_LinearAdamOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerLinear average, ML2_LayerLinear squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 
 ML2_FN ML2_Scalar *ML2_CPU_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CPU_FiltersDataAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
 ML2_FN void ML2_CPU_FiltersPrint(ML2_LayerFilters filters, ML2_Int indent);
 ML2_FN void ML2_CPU_FiltersClear(ML2_LayerFilters filters);
 ML2_FN void ML2_CPU_FiltersCopy(ML2_LayerFilters dest, ML2_LayerFilters src);
@@ -899,6 +923,8 @@ ML2_FN void ML2_CPU_FiltersAdamOptimize(ML2_LayerFilters filters, ML2_LayerFilte
 
 ML2_FN ML2_Scalar *ML2_CPU_ConvFiltersAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
 ML2_FN ML2_Scalar *ML2_CPU_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CPU_ConvFiltersDataAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CPU_ConvBiasesDataAt(ML2_LayerConv conv, ML2_Int o);
 ML2_FN ML2_LayerFilters ML2_CPU_ConvFilters(ML2_LayerConv conv);
 ML2_FN ML2_LayerBiases ML2_CPU_ConvBiases(ML2_LayerConv conv);
 ML2_FN void ML2_CPU_ConvPrint(ML2_LayerConv conv, ML2_Int indent);
@@ -932,6 +958,7 @@ ML2_FN void ML2_CPU_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML
 ML2_FN void ML2_CPU_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
 
 ML2_FN ML2_Scalar *ML2_CPU_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CPU_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
 ML2_FN ML2_LayerWeights ML2_CPU_FusedWeightsWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w);
 ML2_FN void ML2_CPU_FusedWeightsPrint(ML2_LayerFusedWeights fusedWeights, ML2_Int indent);
 ML2_FN void ML2_CPU_FusedWeightsClear(ML2_LayerFusedWeights fusedWeights);
@@ -955,6 +982,7 @@ ML2_FN void ML2_CPU_AttentionForwardMatrices(ML2_LayerInfoAttention attention, M
 ML2_FN void ML2_CPU_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors outputGradient);
 
 ML2_FN ML2_Scalar *ML2_CPU_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_CPU_ScalarsDataAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
 ML2_FN void ML2_CPU_ScalarsPrint(ML2_LayerCacheScalars scalars, ML2_Int indent);
 ML2_FN void ML2_CPU_ScalarsClear(ML2_LayerCacheScalars scalars);
 ML2_FN void ML2_CPU_ScalarsCopy(ML2_LayerCacheScalars dest, ML2_LayerCacheScalars src);
@@ -976,6 +1004,7 @@ ML2_FN ML2_Scalar ML2_CPU_ScalarsLossForwardBinaryCrossEntropy(ML2_LayerCacheSca
 ML2_FN void ML2_CPU_ScalarsLossBackwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected, ML2_LayerCacheScalars gradient);
 
 ML2_FN ML2_Scalar *ML2_CPU_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_CPU_VectorsDataAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
 ML2_FN void ML2_CPU_VectorsPrint(ML2_LayerCacheVectors vectors, ML2_Int indent);
 ML2_FN void ML2_CPU_VectorsClear(ML2_LayerCacheVectors vectors);
 ML2_FN void ML2_CPU_VectorsCopy(ML2_LayerCacheVectors dest, ML2_LayerCacheVectors src);
@@ -997,6 +1026,7 @@ ML2_FN ML2_Scalar ML2_CPU_VectorsLossForwardBinaryCrossEntropy(ML2_LayerCacheVec
 ML2_FN void ML2_CPU_VectorsLossBackwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected, ML2_LayerCacheVectors gradient);
 
 ML2_FN ML2_Scalar *ML2_CPU_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_CPU_MatricesDataAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
 ML2_FN void ML2_CPU_MatricesPrint(ML2_LayerCacheMatrices matrices, ML2_Int indent);
 ML2_FN void ML2_CPU_MatricesClear(ML2_LayerCacheMatrices matrices);
 ML2_FN void ML2_CPU_MatricesCopy(ML2_LayerCacheMatrices dest, ML2_LayerCacheMatrices src);
@@ -1025,8 +1055,10 @@ ML2_FN void ML2_CPU_MatricesLossBackwardBinaryCrossEntropy(ML2_LayerCacheMatrice
 ML2_FN void ML2_CUDA_DeviceInit();
 ML2_FN ML2_DeviceData ML2_CUDA_DeviceDataNew(ML2_Size size);
 ML2_FN void ML2_CUDA_DeviceDataDestroy(ML2_DeviceData *data);
+ML2_FN CUdeviceptr ML2_CUDA_DeviceDataAt(ML2_DeviceData data, ML2_Int index);
 
-ML2_FN ML2_Scalar *ML2_CUDA_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
+ML2_FN CUdeviceptr ML2_CUDA_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CUDA_WeightsDataAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
 ML2_FN void ML2_CUDA_WeightsPrint(ML2_LayerWeights weights, ML2_Int indent);
 ML2_FN void ML2_CUDA_WeightsClear(ML2_LayerWeights weights);
 ML2_FN void ML2_CUDA_WeightsCopy(ML2_LayerWeights dest, ML2_LayerWeights src);
@@ -1051,7 +1083,8 @@ ML2_FN void ML2_CUDA_WeightsAdagradOptimize(ML2_LayerWeights weights, ML2_LayerW
 ML2_FN void ML2_CUDA_WeightsRMSPropOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerWeights squareAverage);
 ML2_FN void ML2_CUDA_WeightsAdamOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerWeights average, ML2_LayerWeights squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 
-ML2_FN ML2_Scalar *ML2_CUDA_BiasesAt(ML2_LayerBiases biases, ML2_Int i);
+ML2_FN CUdeviceptr ML2_CUDA_BiasesAt(ML2_LayerBiases biases, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CUDA_BiasesDataAt(ML2_LayerBiases biases, ML2_Int i);
 ML2_FN void ML2_CUDA_BiasesPrint(ML2_LayerBiases biases, ML2_Int indent);
 ML2_FN void ML2_CUDA_BiasesClear(ML2_LayerBiases biases);
 ML2_FN void ML2_CUDA_BiasesCopy(ML2_LayerBiases dest, ML2_LayerBiases src);
@@ -1094,8 +1127,10 @@ ML2_FN void ML2_CUDA_SoftmaxForwardVectors(ML2_LayerCacheVectors input, ML2_Laye
 ML2_FN void ML2_CUDA_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CUDA_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
 
-ML2_FN ML2_Scalar *ML2_CUDA_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
-ML2_FN ML2_Scalar *ML2_CUDA_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o);
+ML2_FN CUdeviceptr ML2_CUDA_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
+ML2_FN CUdeviceptr ML2_CUDA_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CUDA_LinearWeightsDataAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CUDA_LinearBiasesDataAt(ML2_LayerLinear linear, ML2_Int o);
 ML2_FN ML2_LayerWeights ML2_CUDA_LinearWeights(ML2_LayerLinear linear);
 ML2_FN ML2_LayerBiases ML2_CUDA_LinearBiases(ML2_LayerLinear linear);
 ML2_FN void ML2_CUDA_LinearPrint(ML2_LayerLinear linear, ML2_Int indent);
@@ -1119,7 +1154,8 @@ ML2_FN void ML2_CUDA_LinearAdagradOptimize(ML2_LayerLinear linear, ML2_LayerLine
 ML2_FN void ML2_CUDA_LinearRMSPropOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerLinear squareAverage);
 ML2_FN void ML2_CUDA_LinearAdamOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerLinear average, ML2_LayerLinear squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 
-ML2_FN ML2_Scalar *ML2_CUDA_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN CUdeviceptr ML2_CUDA_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CUDA_FiltersDataAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
 ML2_FN void ML2_CUDA_FiltersPrint(ML2_LayerFilters filters, ML2_Int indent);
 ML2_FN void ML2_CUDA_FiltersClear(ML2_LayerFilters filters);
 ML2_FN void ML2_CUDA_FiltersCopy(ML2_LayerFilters dest, ML2_LayerFilters src);
@@ -1141,8 +1177,10 @@ ML2_FN void ML2_CUDA_FiltersAdagradOptimize(ML2_LayerFilters filters, ML2_LayerF
 ML2_FN void ML2_CUDA_FiltersRMSPropOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerFilters squareAverage);
 ML2_FN void ML2_CUDA_FiltersAdamOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerFilters average, ML2_LayerFilters squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 
-ML2_FN ML2_Scalar *ML2_CUDA_ConvFiltersAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
-ML2_FN ML2_Scalar *ML2_CUDA_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o);
+ML2_FN CUdeviceptr ML2_CUDA_ConvFiltersAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN CUdeviceptr ML2_CUDA_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CUDA_ConvFiltersDataAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_CUDA_ConvBiasesDataAt(ML2_LayerConv conv, ML2_Int o);
 ML2_FN ML2_LayerFilters ML2_CUDA_ConvFilters(ML2_LayerConv conv);
 ML2_FN ML2_LayerBiases ML2_CUDA_ConvBiases(ML2_LayerConv conv);
 ML2_FN void ML2_CUDA_ConvPrint(ML2_LayerConv conv, ML2_Int indent);
@@ -1178,7 +1216,8 @@ ML2_FN void ML2_CUDA_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage p
 ML2_FN void ML2_CUDA_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
 
-ML2_FN ML2_Scalar *ML2_CUDA_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
+ML2_FN CUdeviceptr ML2_CUDA_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_CUDA_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
 ML2_FN ML2_LayerWeights ML2_CUDA_FusedWeightsWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w);
 ML2_FN void ML2_CUDA_FusedWeightsPrint(ML2_LayerFusedWeights fusedWeights, ML2_Int indent);
 ML2_FN void ML2_CUDA_FusedWeightsClear(ML2_LayerFusedWeights fusedWeights);
@@ -1204,7 +1243,8 @@ ML2_FN void ML2_CUDA_FusedWeightsAdamOptimize(ML2_LayerFusedWeights fusedWeights
 ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
 ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors outputGradient);
 
-ML2_FN ML2_Scalar *ML2_CUDA_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
+ML2_FN CUdeviceptr ML2_CUDA_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_CUDA_ScalarsDataAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
 ML2_FN void ML2_CUDA_ScalarsPrint(ML2_LayerCacheScalars scalars, ML2_Int indent);
 ML2_FN void ML2_CUDA_ScalarsClear(ML2_LayerCacheScalars scalars);
 ML2_FN void ML2_CUDA_ScalarsCopy(ML2_LayerCacheScalars dest, ML2_LayerCacheScalars src);
@@ -1228,7 +1268,8 @@ ML2_FN void ML2_CUDA_ScalarsLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheScalar
 ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected);
 ML2_FN void ML2_CUDA_ScalarsLossBackwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected, ML2_LayerCacheScalars gradient);
 
-ML2_FN ML2_Scalar *ML2_CUDA_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
+ML2_FN CUdeviceptr ML2_CUDA_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_CUDA_VectorsDataAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
 ML2_FN void ML2_CUDA_VectorsPrint(ML2_LayerCacheVectors vectors, ML2_Int indent);
 ML2_FN void ML2_CUDA_VectorsClear(ML2_LayerCacheVectors vectors);
 ML2_FN void ML2_CUDA_VectorsCopy(ML2_LayerCacheVectors dest, ML2_LayerCacheVectors src);
@@ -1252,7 +1293,8 @@ ML2_FN void ML2_CUDA_VectorsLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheVector
 ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected);
 ML2_FN void ML2_CUDA_VectorsLossBackwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected, ML2_LayerCacheVectors gradient);
 
-ML2_FN ML2_Scalar *ML2_CUDA_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
+ML2_FN CUdeviceptr ML2_CUDA_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_CUDA_MatricesDataAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
 ML2_FN void ML2_CUDA_MatricesPrint(ML2_LayerCacheMatrices matrices, ML2_Int indent);
 ML2_FN void ML2_CUDA_MatricesClear(ML2_LayerCacheMatrices matrices);
 ML2_FN void ML2_CUDA_MatricesCopy(ML2_LayerCacheMatrices dest, ML2_LayerCacheMatrices src);
@@ -1295,7 +1337,7 @@ ML2_FN bool ML2_WeightsInfoForwardCompatible(ML2_LayerInfoWeights weights, ML2_L
 ML2_FN ML2_LayerCacheInfo ML2_WeightsInfoForward(ML2_LayerInfoWeights weights, ML2_LayerCacheInfo input);
 ML2_FN bool ML2_WeightsInfoSame(ML2_LayerInfoWeights a, ML2_LayerInfoWeights b);
 
-ML2_FN ML2_Scalar *ML2_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_WeightsDataAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i);
 ML2_FN void ML2_WeightsPrint(ML2_LayerWeights weights, ML2_Int indent);
 ML2_FN void ML2_WeightsClear(ML2_LayerWeights weights);
 ML2_FN void ML2_WeightsCopy(ML2_LayerWeights dest, ML2_LayerWeights src);
@@ -1350,7 +1392,7 @@ ML2_FN bool ML2_BiasesInfoForwardCompatible(ML2_LayerInfoBiases biases, ML2_Laye
 ML2_FN ML2_LayerCacheInfo ML2_BiasesInfoForward(ML2_LayerInfoBiases biases, ML2_LayerCacheInfo input);
 ML2_FN bool ML2_BiasesInfoSame(ML2_LayerInfoBiases a, ML2_LayerInfoBiases b);
 
-ML2_FN ML2_Scalar *ML2_BiasesAt(ML2_LayerBiases biases, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_BiasesDataAt(ML2_LayerBiases biases, ML2_Int i);
 ML2_FN void ML2_BiasesPrint(ML2_LayerBiases biases, ML2_Int indent);
 ML2_FN void ML2_BiasesClear(ML2_LayerBiases biases);
 ML2_FN void ML2_BiasesCopy(ML2_LayerBiases dest, ML2_LayerBiases src);
@@ -1493,8 +1535,8 @@ ML2_FN bool ML2_LinearInfoForwardCompatible(ML2_LayerInfoLinear linear, ML2_Laye
 ML2_FN ML2_LayerCacheInfo ML2_LinearInfoForward(ML2_LayerInfoLinear linear, ML2_LayerCacheInfo input);
 ML2_FN bool ML2_LinearInfoSame(ML2_LayerInfoLinear a, ML2_LayerInfoLinear b);
 
-ML2_FN ML2_Scalar *ML2_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
-ML2_FN ML2_Scalar *ML2_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_LinearWeightsDataAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_LinearBiasesDataAt(ML2_LayerLinear linear, ML2_Int o);
 ML2_FN ML2_LayerWeights ML2_LinearWeights(ML2_LayerLinear linear);
 ML2_FN ML2_LayerBiases ML2_LinearBiases(ML2_LayerLinear linear);
 ML2_FN void ML2_LinearPrint(ML2_LayerLinear linear, ML2_Int indent);
@@ -1547,7 +1589,7 @@ ML2_FN bool ML2_FiltersInfoForwardCompatible(ML2_LayerInfoFilters filters, ML2_L
 ML2_FN ML2_LayerCacheInfo ML2_FiltersInfoForward(ML2_LayerInfoFilters filters, ML2_LayerCacheInfo input);
 ML2_FN bool ML2_FiltersInfoSame(ML2_LayerInfoFilters a, ML2_LayerInfoFilters b);
 
-ML2_FN ML2_Scalar *ML2_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_FiltersDataAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
 ML2_FN void ML2_FiltersPrint(ML2_LayerFilters filters, ML2_Int indent);
 ML2_FN void ML2_FiltersClear(ML2_LayerFilters filters);
 ML2_FN void ML2_FiltersCopy(ML2_LayerFilters dest, ML2_LayerFilters src);
@@ -1598,8 +1640,8 @@ ML2_FN bool ML2_ConvInfoForwardCompatible(ML2_LayerInfoConv conv, ML2_LayerCache
 ML2_FN ML2_LayerCacheInfo ML2_ConvInfoForward(ML2_LayerInfoConv conv, ML2_LayerCacheInfo input);
 ML2_FN bool ML2_ConvInfoSame(ML2_LayerInfoConv a, ML2_LayerInfoConv b);
 
-ML2_FN ML2_Scalar *ML2_ConvFiltersAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
-ML2_FN ML2_Scalar *ML2_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_ConvFiltersDataAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o);
+ML2_FN ML2_DeviceData ML2_ConvBiasesDataAt(ML2_LayerConv conv, ML2_Int o);
 ML2_FN ML2_LayerFilters ML2_ConvFilters(ML2_LayerConv conv);
 ML2_FN ML2_LayerBiases ML2_ConvBiases(ML2_LayerConv conv);
 ML2_FN void ML2_ConvPrint(ML2_LayerConv conv, ML2_Int indent);
@@ -1754,7 +1796,7 @@ ML2_FN bool ML2_FusedWeightsInfoForwardCompatible(ML2_LayerInfoFusedWeights fuse
 ML2_FN ML2_LayerCacheInfo ML2_FusedWeightsInfoForward(ML2_LayerInfoFusedWeights fusedWeights, ML2_LayerCacheInfo input);
 ML2_FN bool ML2_FusedWeightsInfoSame(ML2_LayerInfoFusedWeights a, ML2_LayerInfoFusedWeights b);
 
-ML2_FN ML2_Scalar *ML2_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
+ML2_FN ML2_DeviceData ML2_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
 ML2_FN ML2_LayerWeights ML2_FusedWeightsWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w);
 ML2_FN void ML2_FusedWeightsPrint(ML2_LayerFusedWeights fusedWeights, ML2_Int indent);
 ML2_FN void ML2_FusedWeightsClear(ML2_LayerFusedWeights fusedWeights);
@@ -1864,7 +1906,7 @@ ML2_FN ML2_LayerCacheScalars ML2_LayerCacheAsScalars(ML2_LayerCache cache);
 ML2_FN void ML2_ScalarsInfoPrint(ML2_LayerCacheInfoScalars info, ML2_Int indent);
 ML2_FN bool ML2_ScalarsInfoSame(ML2_LayerCacheInfoScalars a, ML2_LayerCacheInfoScalars b);
 
-ML2_FN ML2_Scalar *ML2_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_ScalarsDataAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c);
 ML2_FN void ML2_ScalarsPrint(ML2_LayerCacheScalars scalars, ML2_Int indent);
 ML2_FN void ML2_ScalarsClear(ML2_LayerCacheScalars scalars);
 ML2_FN void ML2_ScalarsCopy(ML2_LayerCacheScalars dest, ML2_LayerCacheScalars src);
@@ -1902,7 +1944,7 @@ ML2_FN ML2_LayerCacheVectors ML2_LayerCacheAsVectors(ML2_LayerCache cache);
 ML2_FN void ML2_VectorsInfoPrint(ML2_LayerCacheInfoVectors info, ML2_Int indent);
 ML2_FN bool ML2_VectorsInfoSame(ML2_LayerCacheInfoVectors a, ML2_LayerCacheInfoVectors b);
 
-ML2_FN ML2_Scalar *ML2_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_VectorsDataAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c);
 ML2_FN void ML2_VectorsPrint(ML2_LayerCacheVectors vectors, ML2_Int indent);
 ML2_FN void ML2_VectorsClear(ML2_LayerCacheVectors vectors);
 ML2_FN void ML2_VectorsCopy(ML2_LayerCacheVectors dest, ML2_LayerCacheVectors src);
@@ -1940,7 +1982,7 @@ ML2_FN ML2_LayerCacheMatrices ML2_LayerCacheAsMatrices(ML2_LayerCache cache);
 ML2_FN void ML2_MatricesInfoPrint(ML2_LayerCacheInfoMatrices info, ML2_Int indent);
 ML2_FN bool ML2_MatricesInfoSame(ML2_LayerCacheInfoMatrices a, ML2_LayerCacheInfoMatrices b);
 
-ML2_FN ML2_Scalar *ML2_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
+ML2_FN ML2_DeviceData ML2_MatricesDataAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c);
 ML2_FN void ML2_MatricesPrint(ML2_LayerCacheMatrices matrices, ML2_Int indent);
 ML2_FN void ML2_MatricesClear(ML2_LayerCacheMatrices matrices);
 ML2_FN void ML2_MatricesCopy(ML2_LayerCacheMatrices dest, ML2_LayerCacheMatrices src);
@@ -2300,7 +2342,7 @@ ML2_FN ML2_CUDA_DeviceData *ML2_DeviceDataPtrAsCUDA(ML2_DeviceData *data) {
 // ML2_CPU ⬇️
 
 ML2_FN ML2_DeviceData ML2_CPU_DeviceDataNew(ML2_Size size) {
-    void *ptr = ML2_CALLOC(size);
+    void *ptr = ML2_Allocate(size);
     ML2_DeviceData data = {
         ML2_DeviceCPU,
         .as.cpu = {
@@ -2328,6 +2370,20 @@ ML2_FN ML2_Scalar *ML2_CPU_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_In
         "OUT OF BOUNDS INDICES"
     );
     return ML2_CPU_DeviceDataAt(weights.data, o * weights.info.inputs + i);
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_WeightsDataAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < weights.info.outputs &&
+        0 <= i && i < weights.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_WeightsAt(weights, o, i),
+        }
+    };
 }
 
 ML2_FN void ML2_CPU_WeightsPrint(ML2_LayerWeights weights, ML2_Int indent) {
@@ -2716,6 +2772,19 @@ ML2_FN ML2_Scalar *ML2_CPU_BiasesAt(ML2_LayerBiases biases, ML2_Int i) {
         "OUT OF BOUNDS INDICES"
     );
     return ML2_CPU_DeviceDataAt(biases.data, i);
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_BiasesDataAt(ML2_LayerBiases biases, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= i && i < biases.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_BiasesAt(biases, i),
+        }
+    };
 }
 
 ML2_FN void ML2_CPU_BiasesPrint(ML2_LayerBiases biases, ML2_Int indent) {
@@ -3431,14 +3500,41 @@ ML2_FN ML2_Scalar *ML2_CPU_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o) {
     return ML2_CPU_DeviceDataAt(linear.data, o + linear.info.outputs * linear.info.inputs);
 }
 
+ML2_FN ML2_DeviceData ML2_CPU_LinearWeightsDataAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < linear.info.outputs &&
+        0 <= i && i < linear.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_LinearWeightsAt(linear, o, i),
+        }
+    };
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_LinearBiasesDataAt(ML2_LayerLinear linear, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < linear.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_LinearBiasesAt(linear, o),
+        }
+    };
+}
+
 ML2_FN ML2_LayerWeights ML2_CPU_LinearWeights(ML2_LayerLinear linear) {
     ML2_HARD_ASSERT(linear.data.device == ML2_DeviceCPU);
-    return (ML2_LayerWeights){ML2_LinearInfoWeights(linear.info), {linear.data.device, .as.cpu = {ML2_CPU_LinearWeightsAt(linear, 0, 0)}}};
+    return (ML2_LayerWeights){ML2_LinearInfoWeights(linear.info), ML2_CPU_LinearWeightsDataAt(linear, 0, 0)};
 }
 
 ML2_FN ML2_LayerBiases ML2_CPU_LinearBiases(ML2_LayerLinear linear) {
     ML2_HARD_ASSERT(linear.data.device == ML2_DeviceCPU);
-    return (ML2_LayerBiases){ML2_LinearInfoBiases(linear.info), {linear.data.device, .as.cpu = {ML2_CPU_LinearBiasesAt(linear, 0)}}};
+    return (ML2_LayerBiases){ML2_LinearInfoBiases(linear.info), ML2_CPU_LinearBiasesDataAt(linear, 0)};
 }
 
 ML2_FN void ML2_CPU_LinearPrint(ML2_LayerLinear linear, ML2_Int indent) {
@@ -3560,6 +3656,22 @@ ML2_FN ML2_Scalar *ML2_CPU_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_In
         "OUT OF BOUNDS INDICES"
     );
     return ML2_CPU_DeviceDataAt(filters.data, ((y * filters.info.width + x) * filters.info.inputs + i) * filters.info.outputs + o);
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_FiltersDataAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= y && y < filters.info.height &&
+        0 <= x && x < filters.info.width &&
+        0 <= i && i < filters.info.inputs &&
+        0 <= o && o < filters.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_FiltersAt(filters, y, x, i, o),
+        }
+    };
 }
 
 ML2_FN void ML2_CPU_FiltersPrint(ML2_LayerFilters filters, ML2_Int indent) {
@@ -4011,14 +4123,43 @@ ML2_FN ML2_Scalar *ML2_CPU_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o) {
     return ML2_CPU_DeviceDataAt(conv.data, o + conv.info.height * conv.info.width * conv.info.inputs * conv.info.outputs);
 }
 
+ML2_FN ML2_DeviceData ML2_CPU_ConvFiltersDataAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= y && y < conv.info.height &&
+        0 <= x && x < conv.info.width &&
+        0 <= i && i < conv.info.inputs &&
+        0 <= o && o < conv.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_ConvFiltersAt(conv, y, x, i, o),
+        }
+    };
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_ConvBiasesDataAt(ML2_LayerConv conv, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < conv.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_ConvBiasesAt(conv, o),
+        }
+    };
+}
+
 ML2_FN ML2_LayerFilters ML2_CPU_ConvFilters(ML2_LayerConv conv) {
     ML2_HARD_ASSERT(conv.data.device == ML2_DeviceCPU);
-    return (ML2_LayerFilters){ML2_ConvInfoFilters(conv.info), {conv.data.device, .as.cpu = {ML2_CPU_ConvFiltersAt(conv, 0, 0, 0, 0)}}};
+    return (ML2_LayerFilters){ML2_ConvInfoFilters(conv.info), ML2_CPU_ConvFiltersDataAt(conv, 0, 0, 0, 0)};
 }
 
 ML2_FN ML2_LayerBiases ML2_CPU_ConvBiases(ML2_LayerConv conv) {
     ML2_HARD_ASSERT(conv.data.device == ML2_DeviceCPU);
-    return (ML2_LayerBiases){ML2_ConvInfoBiases(conv.info), {conv.data.device, .as.cpu = {ML2_CPU_ConvBiasesAt(conv, 0)}}};
+    return (ML2_LayerBiases){ML2_ConvInfoBiases(conv.info), ML2_CPU_ConvBiasesDataAt(conv, 0)};
 }
 
 ML2_FN void ML2_CPU_ConvPrint(ML2_LayerConv conv, ML2_Int indent) {
@@ -4518,6 +4659,21 @@ ML2_FN ML2_Scalar *ML2_CPU_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML
     return ML2_CPU_DeviceDataAt(fusedWeights.data, (w * fusedWeights.info.outputs + o) * fusedWeights.info.inputs + i);
 }
 
+ML2_FN ML2_DeviceData ML2_CPU_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= w && w < fusedWeights.info.weights &&
+        0 <= o && o < fusedWeights.info.outputs &&
+        0 <= i && i < fusedWeights.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_FusedWeightsAt(fusedWeights, w, o, i),
+        }
+    };
+}
+
 ML2_FN ML2_LayerWeights ML2_CPU_FusedWeightsWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w) {
     // NOTE(1/10/2026 00:21:43): ML2_HARD_ASSERT is used here because this function isnt used in performant code, just like ML2_LinearWeights
     ML2_HARD_ASSERT(
@@ -4525,7 +4681,7 @@ ML2_FN ML2_LayerWeights ML2_CPU_FusedWeightsWeightsAt(ML2_LayerFusedWeights fuse
         "OUT OF BOUNDS INDICES"
     );
     ML2_HARD_ASSERT(fusedWeights.data.device == ML2_DeviceCPU);
-    return (ML2_LayerWeights){ML2_FusedWeightsInfoWeights(fusedWeights.info), {fusedWeights.data.device, .as.cpu = {ML2_CPU_FusedWeightsAt(fusedWeights, w, 0, 0)}}};
+    return (ML2_LayerWeights){ML2_FusedWeightsInfoWeights(fusedWeights.info), ML2_CPU_FusedWeightsDataAt(fusedWeights, w, 0, 0)};
 }
 
 ML2_FN void ML2_CPU_FusedWeightsPrint(ML2_LayerFusedWeights fusedWeights, ML2_Int indent) {
@@ -4634,11 +4790,11 @@ ML2_FN void ML2_CPU_FusedWeightsForwardVectors(ML2_LayerFusedWeights fusedWeight
                 for (ML2_Int o = 0; o < outputs; o++) {
                     ML2_Scalar *restrict fusedWeightsPtr = ML2_CPU_FusedWeightsAt(fusedWeights, v, o, 0);
                     ML2_Scalar *restrict outputPtr = ML2_CPU_MatricesAt(output, s, m, v, 0);
-                    ML2_Scalar acc = {};
+                    ML2_Scalar outputScalar = {};
                     for (ML2_Int i = 0; i < inputs; i++) {
-                        acc += inputVectorsPtr[i] * fusedWeightsPtr[i];
+                        outputScalar += inputVectorsPtr[i] * fusedWeightsPtr[i];
                     }
-                    outputPtr[o] += acc;
+                    outputPtr[o] += outputScalar;
                 }
             }
         }
@@ -4902,6 +5058,20 @@ ML2_FN ML2_Scalar *ML2_CPU_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, M
         "OUT OF BOUNDS INDICES"
     );
     return ML2_CPU_DeviceDataAt(scalars.data, s * scalars.info.scalars + c);
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_ScalarsDataAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < scalars.info.samples &&
+        0 <= c && c < scalars.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_ScalarsAt(scalars, s, c),
+        },
+    };
 }
 
 ML2_FN void ML2_CPU_ScalarsPrint(ML2_LayerCacheScalars scalars, ML2_Int indent) {
@@ -5224,6 +5394,21 @@ ML2_FN ML2_Scalar *ML2_CPU_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, M
         "OUT OF BOUNDS INDICES"
     );
     return ML2_CPU_DeviceDataAt(vectors.data, (s * vectors.info.vectors + v) * vectors.info.scalars + c);
+}
+
+ML2_FN ML2_DeviceData ML2_CPU_VectorsDataAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < vectors.info.samples &&
+        0 <= v && v < vectors.info.vectors &&
+        0 <= c && c < vectors.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_VectorsAt(vectors, s, v, c),
+        },
+    };
 }
 
 ML2_FN void ML2_CPU_VectorsPrint(ML2_LayerCacheVectors vectors, ML2_Int indent) {
@@ -5594,6 +5779,22 @@ ML2_FN ML2_Scalar *ML2_CPU_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s
     return ML2_CPU_DeviceDataAt(matrices.data, ((s * matrices.info.matrices + m) * matrices.info.vectors + v) * matrices.info.scalars + c);
 }
 
+ML2_FN ML2_DeviceData ML2_CPU_MatricesDataAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < matrices.info.samples &&
+        0 <= m && m < matrices.info.matrices &&
+        0 <= v && v < matrices.info.vectors &&
+        0 <= c && c < matrices.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCPU,
+        .as.cpu = {
+            .ptr = ML2_CPU_MatricesAt(matrices, s, m, v, c),
+        },
+    };
+}
+
 ML2_FN void ML2_CPU_MatricesPrint(ML2_LayerCacheMatrices matrices, ML2_Int indent) {
     ML2_HARD_ASSERT(matrices.data.device == ML2_DeviceCPU);
     ML2_MatricesInfoPrint(matrices.info, indent);
@@ -5788,13 +5989,13 @@ ML2_FN void ML2_CPU_MatricesLossBackwardBinaryCrossEntropy(ML2_LayerCacheMatrice
 #ifdef ML2_CUDA_ENABLE
 
 ML2_FN void ML2_CUDA_DeviceInit() {
-    ML2_CUDA_CHECK_ERROR(cuInit(0), "Failed to initialize CUDA");
+    ML2_CUDA_CHECK_ERROR(cuInit(0));
 }
 
 ML2_FN ML2_DeviceData ML2_CUDA_DeviceDataNew(ML2_Size size) {
     CUdeviceptr ptr = {};
-    ML2_CUDA_CHECK_ERROR(cuMemAlloc(&ptr, size), "Failed to allocate memory");
-    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ptr, 0, size), "Failed to zero initialize memory");
+    ML2_CUDA_CHECK_ERROR(cuMemAlloc(&ptr, size));
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ptr, 0, size));
 
     ML2_DeviceData data = {
         ML2_DeviceCUDA,
@@ -5807,147 +6008,272 @@ ML2_FN ML2_DeviceData ML2_CUDA_DeviceDataNew(ML2_Size size) {
 
 ML2_FN void ML2_CUDA_DeviceDataDestroy(ML2_DeviceData *data) {
     ML2_HARD_ASSERT(data->device == ML2_DeviceCUDA);
-    ML2_CUDA_CHECK_ERROR(cuMemFree(ML2_DeviceDataPtrAsCUDA(data)->ptr), "Failed to free memory");
+    ML2_CUDA_CHECK_ERROR(cuMemFree(ML2_DeviceDataPtrAsCUDA(data)->ptr));
     *data = (ML2_DeviceData){};
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_WeightsAt(ML2_LayerWeights weights [[maybe_unused]], ML2_Int o [[maybe_unused]], ML2_Int i [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_WeightsAt");
+ML2_FN CUdeviceptr ML2_CUDA_DeviceDataAt(ML2_DeviceData data, ML2_Int index) {
+    ML2_SOFT_ASSERT(data.device == ML2_DeviceCUDA);
+    return data.as.cuda.ptr + index * sizeof(ML2_Scalar);
 }
 
-ML2_FN void ML2_CUDA_WeightsPrint(ML2_LayerWeights weights [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN CUdeviceptr ML2_CUDA_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < weights.info.outputs &&
+        0 <= i && i < weights.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(weights.data, o * weights.info.inputs + i);
+}
+
+ML2_FN ML2_DeviceData ML2_CUDA_WeightsDataAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < weights.info.outputs &&
+        0 <= i && i < weights.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_WeightsAt(weights, o, i),
+        }
+    };
+}
+
+ML2_FN void ML2_CUDA_WeightsPrint(ML2_LayerWeights weights, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_WeightsPrint");
 }
 
-ML2_FN void ML2_CUDA_WeightsClear(ML2_LayerWeights weights [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_WeightsClear");
+ML2_FN void ML2_CUDA_WeightsClear(ML2_LayerWeights weights) {
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(weights.data).ptr, 0, ML2_WeightsSizeof(weights)));
 }
 
-ML2_FN void ML2_CUDA_WeightsCopy(ML2_LayerWeights dest [[maybe_unused]], ML2_LayerWeights src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_WeightsCopy");
+ML2_FN void ML2_CUDA_WeightsCopy(ML2_LayerWeights dest, ML2_LayerWeights src) {
+    ML2_HARD_ASSERT(ML2_WeightsInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_WeightsSizeof(dest);
+    ML2_Size srcSize = ML2_WeightsSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_WeightsSum(ML2_LayerWeights dest [[maybe_unused]], ML2_LayerWeights src [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsSum(ML2_LayerWeights dest, ML2_LayerWeights src) {
     ML2_TODO("ML2_CUDA_WeightsSum");
 }
 
-ML2_FN void ML2_CUDA_WeightsRand(ML2_LayerWeights weights [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsRand(ML2_LayerWeights weights, ML2_Scalar low, ML2_Scalar high) {
     ML2_TODO("ML2_CUDA_WeightsRand");
 }
 
-ML2_FN void ML2_CUDA_WeightsXavierInit(ML2_LayerWeights weights [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_WeightsXavierInit");
+ML2_FN void ML2_CUDA_WeightsXavierInit(ML2_LayerWeights weights) {
+    ML2_HARD_ASSERT(weights.data.device == ML2_DeviceCUDA);
+    ML2_Scalar limit = ML2_SQRT(ML2_SCALAR_LITERAL(6.0) / (weights.info.inputs + weights.info.outputs));
+    ML2_CUDA_WeightsRand(weights, -limit, limit);
 }
 
-ML2_FN void ML2_CUDA_WeightsHeInit(ML2_LayerWeights weights [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsHeInit(ML2_LayerWeights weights) {
     ML2_TODO("ML2_CUDA_WeightsHeInit");
 }
 
 ML2_FN void ML2_CUDA_WeightsCopyHostToDevice(ML2_LayerWeights destDevice, ML2_LayerWeights srcHost) {
-    ML2_TODO("ML2_CUDA_WeightsCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_WeightsInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_WeightsSizeof(destDevice);
+    ML2_Size srcSize = ML2_WeightsSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_WeightsCopyDeviceToHost(ML2_LayerWeights destHost, ML2_LayerWeights srcDevice) {
-    ML2_TODO("ML2_CUDA_WeightsCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_WeightsInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_WeightsSizeof(destHost);
+    ML2_Size srcSize = ML2_WeightsSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_WeightsForwardScalars(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsForwardScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_WeightsForwardScalars");
+    ML2_HARD_ASSERT(ML2_WeightsForwardCompatibleScalars(weights.info, input.info, output.info));
+    ML2_HARD_ASSERT(
+        weights.data.device == ML2_DeviceCUDA &&
+        input.data.device == ML2_DeviceCUDA &&
+        output.data.device == ML2_DeviceCUDA
+    );
+
+    ML2_Int samples = input.info.samples;
+    ML2_Int outputs = weights.info.outputs;
+    ML2_Int inputs = weights.info.inputs;
+    const ML2_Scalar alpha = ML2_SCALAR_LITERAL(1.0);
+    const ML2_Scalar beta = ML2_SCALAR_LITERAL(1.0);
+    const ML2_Scalar *restrict weightsPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(weights.data).ptr;
+    const ML2_Scalar *restrict inputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
+    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
+
+    ML2_CUBLAS_CHECK_ERROR(
+        cublasSgemm(
+            nullptr, // cublasHandle_t handle
+            CUBLAS_OP_T,
+            CUBLAS_OP_T,
+            samples,
+            outputs,
+            inputs,
+            &alpha,
+            inputPtr,
+            inputs,
+            weightsPtr,
+            inputs,
+            &beta,
+            outputPtr,
+            outputs
+        )
+    );
 }
 
-ML2_FN void ML2_CUDA_WeightsForwardVectors(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsForwardVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
     ML2_TODO("ML2_CUDA_WeightsForwardVectors");
 }
 
-ML2_FN void ML2_CUDA_WeightsBackwardScalars(ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsBackwardScalars(ML2_LayerWeights weightsGradient, ML2_LayerCacheScalars input, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_WeightsBackwardScalars");
 }
 
-ML2_FN void ML2_CUDA_WeightsBackwardVectors(ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsBackwardVectors(ML2_LayerWeights weightsGradient, ML2_LayerCacheVectors input, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_WeightsBackwardVectors");
 }
 
-ML2_FN void ML2_CUDA_WeightsCacheBackwardScalars(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerCacheScalars inputGradient [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsCacheBackwardScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_WeightsCacheBackwardScalars");
 }
 
-ML2_FN void ML2_CUDA_WeightsCacheBackwardVectors(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerCacheVectors inputGradient [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsCacheBackwardVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_WeightsCacheBackwardVectors");
 }
 
-ML2_FN void ML2_CUDA_WeightsGradientDescentOptimize(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsGradientDescentOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_WeightsGradientDescentOptimize");
 }
 
-ML2_FN void ML2_CUDA_WeightsMomentumOptimize(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate [[maybe_unused]], ML2_LayerWeights average [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsMomentumOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerWeights average) {
     ML2_TODO("ML2_CUDA_WeightsMomentumOptimize");
 }
 
-ML2_FN void ML2_CUDA_WeightsAdagradOptimize(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_LayerWeights squareSum [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsAdagradOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_LayerWeights squareSum) {
     ML2_TODO("ML2_CUDA_WeightsAdagradOptimize");
 }
 
-ML2_FN void ML2_CUDA_WeightsRMSPropOptimize(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate [[maybe_unused]], ML2_LayerWeights squareAverage [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsRMSPropOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerWeights squareAverage) {
     ML2_TODO("ML2_CUDA_WeightsRMSPropOptimize");
 }
 
-ML2_FN void ML2_CUDA_WeightsAdamOptimize(ML2_LayerWeights weights [[maybe_unused]], ML2_LayerWeights weightsGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate1 [[maybe_unused]], ML2_Scalar decayRate2 [[maybe_unused]], ML2_LayerWeights average [[maybe_unused]], ML2_LayerWeights squareAverage [[maybe_unused]], ML2_Scalar decayingWeight1 [[maybe_unused]], ML2_Scalar decayingWeight2 [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_WeightsAdamOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerWeights average, ML2_LayerWeights squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2) {
     ML2_TODO("ML2_CUDA_WeightsAdamOptimize");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_BiasesAt(ML2_LayerBiases biases [[maybe_unused]], ML2_Int i [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_BiasesAt");
+ML2_FN CUdeviceptr ML2_CUDA_BiasesAt(ML2_LayerBiases biases, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= i && i < biases.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(biases.data, i);
 }
 
-ML2_FN void ML2_CUDA_BiasesPrint(ML2_LayerBiases biases [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_DeviceData ML2_CUDA_BiasesDataAt(ML2_LayerBiases biases, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= i && i < biases.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_BiasesAt(biases, i),
+        }
+    };
+}
+
+ML2_FN void ML2_CUDA_BiasesPrint(ML2_LayerBiases biases, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_BiasesPrint");
 }
 
-ML2_FN void ML2_CUDA_BiasesClear(ML2_LayerBiases biases [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_BiasesClear");
+ML2_FN void ML2_CUDA_BiasesClear(ML2_LayerBiases biases) {
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(biases.data).ptr, 0, ML2_BiasesSizeof(biases)));
 }
 
-ML2_FN void ML2_CUDA_BiasesCopy(ML2_LayerBiases dest [[maybe_unused]], ML2_LayerBiases src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_BiasesCopy");
+ML2_FN void ML2_CUDA_BiasesCopy(ML2_LayerBiases dest, ML2_LayerBiases src) {
+    ML2_HARD_ASSERT(ML2_BiasesInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_BiasesSizeof(dest);
+    ML2_Size srcSize = ML2_BiasesSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_BiasesSum(ML2_LayerBiases dest [[maybe_unused]], ML2_LayerBiases src [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesSum(ML2_LayerBiases dest, ML2_LayerBiases src) {
     ML2_TODO("ML2_CUDA_BiasesSum");
 }
 
-ML2_FN void ML2_CUDA_BiasesRand(ML2_LayerBiases biases [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesRand(ML2_LayerBiases biases, ML2_Scalar low, ML2_Scalar high) {
     ML2_TODO("ML2_CUDA_BiasesRand");
 }
 
 ML2_FN void ML2_CUDA_BiasesXavierInit(ML2_LayerBiases biases) {
-    ML2_TODO();
+    ML2_CUDA_BiasesClear(biases);
 }
 
 ML2_FN void ML2_CUDA_BiasesHeInit(ML2_LayerBiases biases) {
-    ML2_TODO();
+    ML2_CUDA_BiasesClear(biases);
 }
 
 ML2_FN void ML2_CUDA_BiasesCopyHostToDevice(ML2_LayerBiases destDevice, ML2_LayerBiases srcHost) {
-    ML2_TODO("ML2_CUDA_BiasesCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_BiasesInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_BiasesSizeof(destDevice);
+    ML2_Size srcSize = ML2_BiasesSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_BiasesCopyDeviceToHost(ML2_LayerBiases destHost, ML2_LayerBiases srcDevice) {
-    ML2_TODO("ML2_CUDA_BiasesCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_BiasesInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_BiasesSizeof(destHost);
+    ML2_Size srcSize = ML2_BiasesSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_BiasesForwardScalars(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesForwardScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_BiasesForwardScalars");
 }
 
-ML2_FN void ML2_CUDA_BiasesForwardMatrices(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesForwardMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_BiasesForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_BiasesBackwardScalars(ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesBackwardScalars(ML2_LayerBiases biasesGradient, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_BiasesBackwardScalars");
 }
 
-ML2_FN void ML2_CUDA_BiasesBackwardMatrices(ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesBackwardMatrices(ML2_LayerBiases biasesGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_BiasesBackwardMatrices");
 }
 
@@ -5959,112 +6285,162 @@ ML2_FN void ML2_CUDA_BiasesCacheBackwardMatrices(ML2_LayerCacheMatrices inputGra
     ML2_TODO();
 }
 
-ML2_FN void ML2_CUDA_BiasesGradientDescentOptimize(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesGradientDescentOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_BiasesGradientDescentOptimize");
 }
 
-ML2_FN void ML2_CUDA_BiasesMomentumOptimize(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate [[maybe_unused]], ML2_LayerBiases average [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesMomentumOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerBiases average) {
     ML2_TODO("ML2_CUDA_BiasesMomentumOptimize");
 }
 
-ML2_FN void ML2_CUDA_BiasesAdagradOptimize(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_LayerBiases squareSum [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesAdagradOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate, ML2_LayerBiases squareSum) {
     ML2_TODO("ML2_CUDA_BiasesAdagradOptimize");
 }
 
-ML2_FN void ML2_CUDA_BiasesRMSPropOptimize(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate [[maybe_unused]], ML2_LayerBiases squareAverage [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesRMSPropOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerBiases squareAverage) {
     ML2_TODO("ML2_CUDA_BiasesRMSPropOptimize");
 }
 
-ML2_FN void ML2_CUDA_BiasesAdamOptimize(ML2_LayerBiases biases [[maybe_unused]], ML2_LayerBiases biasesGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate1 [[maybe_unused]], ML2_Scalar decayRate2 [[maybe_unused]], ML2_LayerBiases average [[maybe_unused]], ML2_LayerBiases squareAverage [[maybe_unused]], ML2_Scalar decayingWeight1 [[maybe_unused]], ML2_Scalar decayingWeight2 [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_BiasesAdamOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerBiases average, ML2_LayerBiases squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2) {
     ML2_TODO("ML2_CUDA_BiasesAdamOptimize");
 }
 
-ML2_FN void ML2_CUDA_ActivationForwardScalars(ML2_LayerInfoActivation activation [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationForwardScalars(ML2_LayerInfoActivation activation, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_ActivationForwardScalars");
 }
 
-ML2_FN void ML2_CUDA_ActivationForwardVectors(ML2_LayerInfoActivation activation [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationForwardVectors(ML2_LayerInfoActivation activation, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
     ML2_TODO("ML2_CUDA_ActivationForwardVectors");
 }
 
-ML2_FN void ML2_CUDA_ActivationForwardMatrices(ML2_LayerInfoActivation activation [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationForwardMatrices(ML2_LayerInfoActivation activation, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_ActivationForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardInputScalars(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars inputGradient [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardInputScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardInputScalars");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardInputVectors(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheVectors inputGradient [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardInputVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardInputVectors");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardInputMatrices(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardInputMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardInputMatrices");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputScalars(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheScalars inputGradient [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputScalars(ML2_ActivationType type, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardOutputScalars");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputVectors(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheVectors inputGradient [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputVectors(ML2_ActivationType type, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardOutputVectors");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputMatrices(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardOutputMatrices");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputScalars(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars inputGradient [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardInputOutputScalars");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputVectors(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheVectors inputGradient [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardInputOutputVectors");
 }
 
-ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationType type [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_ActivationCacheBackwardInputOutputMatrices");
 }
 
-ML2_FN void ML2_CUDA_SoftmaxForwardScalars(ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_SoftmaxForwardScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_SoftmaxForwardScalars");
 }
 
-ML2_FN void ML2_CUDA_SoftmaxForwardVectors(ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_SoftmaxForwardVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
     ML2_TODO("ML2_CUDA_SoftmaxForwardVectors");
 }
 
-ML2_FN void ML2_CUDA_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGradient [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_SoftmaxCacheBackwardScalars");
 }
 
-ML2_FN void ML2_CUDA_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_SoftmaxCacheBackwardVectors");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_LinearWeightsAt(ML2_LayerLinear linear [[maybe_unused]], ML2_Int o [[maybe_unused]], ML2_Int i [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_LinearWeightsAt");
+ML2_FN CUdeviceptr ML2_CUDA_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < linear.info.outputs &&
+        0 <= i && i < linear.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(linear.data, o * linear.info.inputs + i);
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_LinearBiasesAt(ML2_LayerLinear linear [[maybe_unused]], ML2_Int o [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_LinearBiasesAt");
+ML2_FN CUdeviceptr ML2_CUDA_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < linear.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(linear.data, o + linear.info.outputs * linear.info.inputs);
 }
 
-ML2_FN ML2_LayerWeights ML2_CUDA_LinearWeights(ML2_LayerLinear linear [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_LinearWeights");
+ML2_FN ML2_DeviceData ML2_CUDA_LinearWeightsDataAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < linear.info.outputs &&
+        0 <= i && i < linear.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_LinearWeightsAt(linear, o, i),
+        }
+    };
 }
 
-ML2_FN void ML2_CUDA_LinearPrint(ML2_LayerLinear linear [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_DeviceData ML2_CUDA_LinearBiasesDataAt(ML2_LayerLinear linear, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < linear.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_LinearBiasesAt(linear, o),
+        }
+    };
+}
+
+ML2_FN ML2_LayerWeights ML2_CUDA_LinearWeights(ML2_LayerLinear linear) {
+    ML2_HARD_ASSERT(linear.data.device == ML2_DeviceCUDA);
+    return (ML2_LayerWeights){ML2_LinearInfoWeights(linear.info), ML2_CUDA_LinearWeightsDataAt(linear, 0, 0)};
+}
+
+ML2_FN ML2_LayerBiases ML2_CUDA_LinearBiases(ML2_LayerLinear linear) {
+    ML2_HARD_ASSERT(linear.data.device == ML2_DeviceCUDA);
+    return (ML2_LayerBiases){ML2_LinearInfoBiases(linear.info), ML2_CUDA_LinearBiasesDataAt(linear, 0)};
+}
+
+ML2_FN void ML2_CUDA_LinearPrint(ML2_LayerLinear linear, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_LinearPrint");
 }
 
 ML2_FN void ML2_CUDA_LinearClear(ML2_LayerLinear linear) {
-    ML2_TODO("ML2_CUDA_LinearClear");
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(linear.data).ptr, 0, ML2_LinearSizeof(linear)));
 }
 
 ML2_FN void ML2_CUDA_LinearCopy(ML2_LayerLinear dest, ML2_LayerLinear src) {
-    ML2_TODO("ML2_CUDA_LinearCopy");
+    ML2_HARD_ASSERT(ML2_LinearInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_LinearSizeof(dest);
+    ML2_Size srcSize = ML2_LinearSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_LinearSum(ML2_LayerLinear dest, ML2_LayerLinear src) {
@@ -6076,26 +6452,40 @@ ML2_FN void ML2_CUDA_LinearRand(ML2_LayerLinear linear, ML2_Scalar low, ML2_Scal
 }
 
 ML2_FN void ML2_CUDA_LinearXavierInit(ML2_LayerLinear linear) {
-    ML2_TODO("ML2_CUDA_LinearXavierInit");
+    ML2_CUDA_WeightsXavierInit(ML2_CUDA_LinearWeights(linear));
+    ML2_CUDA_BiasesXavierInit(ML2_CUDA_LinearBiases(linear));
 }
 
 ML2_FN void ML2_CUDA_LinearHeInit(ML2_LayerLinear linear) {
-    ML2_TODO("ML2_CUDA_LinearHeInit");
+    ML2_CUDA_WeightsHeInit(ML2_CUDA_LinearWeights(linear));
+    ML2_CUDA_BiasesHeInit(ML2_CUDA_LinearBiases(linear));
 }
 
 ML2_FN void ML2_CUDA_LinearCopyHostToDevice(ML2_LayerLinear destDevice, ML2_LayerLinear srcHost) {
-    ML2_TODO("ML2_CUDA_LinearCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_LinearInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_LinearSizeof(destDevice);
+    ML2_Size srcSize = ML2_LinearSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_LinearCopyDeviceToHost(ML2_LayerLinear destHost, ML2_LayerLinear srcDevice) {
-    ML2_TODO("ML2_CUDA_LinearCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_LinearInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_LinearSizeof(destHost);
+    ML2_Size srcSize = ML2_LinearSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN ML2_LayerBiases ML2_CUDA_LinearBiases(ML2_LayerLinear linear [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_LinearBiases");
-}
-
-ML2_FN void ML2_CUDA_LinearForwardScalars(ML2_LayerLinear linear [[maybe_unused]], ML2_LayerCacheScalars input [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_LinearForwardScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_LinearForwardScalars");
 }
 
@@ -6127,131 +6517,244 @@ ML2_FN void ML2_CUDA_LinearAdamOptimize(ML2_LayerLinear linear, ML2_LayerLinear 
     ML2_TODO("ML2_CUDA_LinearAdamOptimize");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_FiltersAt(ML2_LayerFilters filters [[maybe_unused]], ML2_Int y [[maybe_unused]], ML2_Int x [[maybe_unused]], ML2_Int i [[maybe_unused]], ML2_Int o [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FiltersAt");
+ML2_FN CUdeviceptr ML2_CUDA_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= y && y < filters.info.height &&
+        0 <= x && x < filters.info.width &&
+        0 <= i && i < filters.info.inputs &&
+        0 <= o && o < filters.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(filters.data, ((y * filters.info.width + x) * filters.info.inputs + i) * filters.info.outputs + o);
 }
 
-ML2_FN void ML2_CUDA_FiltersPrint(ML2_LayerFilters filters [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_DeviceData ML2_CUDA_FiltersDataAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= y && y < filters.info.height &&
+        0 <= x && x < filters.info.width &&
+        0 <= i && i < filters.info.inputs &&
+        0 <= o && o < filters.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_FiltersAt(filters, y, x, i, o),
+        }
+    };
+}
+
+ML2_FN void ML2_CUDA_FiltersPrint(ML2_LayerFilters filters, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_FiltersPrint");
 }
 
-ML2_FN void ML2_CUDA_FiltersClear(ML2_LayerFilters filters [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FiltersClear");
+ML2_FN void ML2_CUDA_FiltersClear(ML2_LayerFilters filters) {
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(filters.data).ptr, 0, ML2_FiltersSizeof(filters)));
 }
 
-ML2_FN void ML2_CUDA_FiltersCopy(ML2_LayerFilters dest [[maybe_unused]], ML2_LayerFilters src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FiltersCopy");
+ML2_FN void ML2_CUDA_FiltersCopy(ML2_LayerFilters dest, ML2_LayerFilters src) {
+    ML2_HARD_ASSERT(ML2_FiltersInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_FiltersSizeof(dest);
+    ML2_Size srcSize = ML2_FiltersSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_FiltersSum(ML2_LayerFilters dest [[maybe_unused]], ML2_LayerFilters src [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersSum(ML2_LayerFilters dest, ML2_LayerFilters src) {
     ML2_TODO("ML2_CUDA_FiltersSum");
 }
 
-ML2_FN void ML2_CUDA_FiltersRand(ML2_LayerFilters filters [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersRand(ML2_LayerFilters filters, ML2_Scalar low, ML2_Scalar high) {
     ML2_TODO("ML2_CUDA_FiltersRand");
 }
 
-ML2_FN void ML2_CUDA_FiltersXavierInit(ML2_LayerFilters filters [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FiltersXavierInit");
+ML2_FN void ML2_CUDA_FiltersXavierInit(ML2_LayerFilters filters) {
+    ML2_HARD_ASSERT(filters.data.device == ML2_DeviceCUDA);
+    ML2_Scalar limit = ML2_SQRT(ML2_SCALAR_LITERAL(6.0) / (filters.info.inputs + filters.info.outputs));
+    ML2_CUDA_FiltersRand(filters, -limit, limit);
 }
 
-ML2_FN void ML2_CUDA_FiltersHeInit(ML2_LayerFilters filters [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersHeInit(ML2_LayerFilters filters) {
     ML2_TODO("ML2_CUDA_FiltersHeInit");
 }
 
 ML2_FN void ML2_CUDA_FiltersCopyHostToDevice(ML2_LayerFilters destDevice, ML2_LayerFilters srcHost) {
-    ML2_TODO("ML2_CUDA_FiltersCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_FiltersInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_FiltersSizeof(destDevice);
+    ML2_Size srcSize = ML2_FiltersSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_FiltersCopyDeviceToHost(ML2_LayerFilters destHost, ML2_LayerFilters srcDevice) {
-    ML2_TODO("ML2_CUDA_FiltersCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_FiltersInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_FiltersSizeof(destHost);
+    ML2_Size srcSize = ML2_FiltersSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_FiltersForwardMatrices(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersForwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_FiltersForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_FiltersBackwardMatrices(ML2_LayerFilters filtersGradient [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersBackwardMatrices(ML2_LayerFilters filtersGradient, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_FiltersBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_FiltersCacheBackwardMatrices(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersCacheBackwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_FiltersCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_FiltersGradientDescentOptimize(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerFilters filtersGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersGradientDescentOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_FiltersGradientDescentOptimize");
 }
 
-ML2_FN void ML2_CUDA_FiltersMomentumOptimize(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerFilters filtersGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate [[maybe_unused]], ML2_LayerFilters average [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersMomentumOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerFilters average) {
     ML2_TODO("ML2_CUDA_FiltersMomentumOptimize");
 }
 
-ML2_FN void ML2_CUDA_FiltersAdagradOptimize(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerFilters filtersGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_LayerFilters squareSum [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersAdagradOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate, ML2_LayerFilters squareSum) {
     ML2_TODO("ML2_CUDA_FiltersAdagradOptimize");
 }
 
-ML2_FN void ML2_CUDA_FiltersRMSPropOptimize(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerFilters filtersGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate [[maybe_unused]], ML2_LayerFilters squareAverage [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersRMSPropOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate, ML2_Scalar decayRate, ML2_LayerFilters squareAverage) {
     ML2_TODO("ML2_CUDA_FiltersRMSPropOptimize");
 }
 
-ML2_FN void ML2_CUDA_FiltersAdamOptimize(ML2_LayerFilters filters [[maybe_unused]], ML2_LayerFilters filtersGradient [[maybe_unused]], ML2_Scalar learningRate [[maybe_unused]], ML2_Scalar decayRate1 [[maybe_unused]], ML2_Scalar decayRate2 [[maybe_unused]], ML2_LayerFilters average [[maybe_unused]], ML2_LayerFilters squareAverage [[maybe_unused]], ML2_Scalar decayingWeight1 [[maybe_unused]], ML2_Scalar decayingWeight2 [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FiltersAdamOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_LayerFilters average, ML2_LayerFilters squareAverage, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2) {
     ML2_TODO("ML2_CUDA_FiltersAdamOptimize");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_ConvFiltersAt(ML2_LayerConv conv [[maybe_unused]], ML2_Int y [[maybe_unused]], ML2_Int x [[maybe_unused]], ML2_Int i [[maybe_unused]], ML2_Int o [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ConvFiltersAt");
+ML2_FN CUdeviceptr ML2_CUDA_ConvFiltersAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= y && y < conv.info.height &&
+        0 <= x && x < conv.info.width &&
+        0 <= i && i < conv.info.inputs &&
+        0 <= o && o < conv.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(conv.data, ((y * conv.info.width + x) * conv.info.inputs + i) * conv.info.outputs + o);
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_ConvBiasesAt(ML2_LayerConv conv [[maybe_unused]], ML2_Int o [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ConvBiasesAt");
+ML2_FN CUdeviceptr ML2_CUDA_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < conv.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(conv.data, o + conv.info.height * conv.info.width * conv.info.inputs * conv.info.outputs);
 }
 
-ML2_FN ML2_LayerFilters ML2_CUDA_ConvFilters(ML2_LayerConv conv [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ConvFilters");
+ML2_FN ML2_DeviceData ML2_CUDA_ConvFiltersDataAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= y && y < conv.info.height &&
+        0 <= x && x < conv.info.width &&
+        0 <= i && i < conv.info.inputs &&
+        0 <= o && o < conv.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_ConvFiltersAt(conv, y, x, i, o),
+        }
+    };
 }
 
-ML2_FN ML2_LayerBiases ML2_CUDA_ConvBiases(ML2_LayerConv conv [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ConvBiases");
+ML2_FN ML2_DeviceData ML2_CUDA_ConvBiasesDataAt(ML2_LayerConv conv, ML2_Int o) {
+    ML2_SOFT_ASSERT(
+        0 <= o && o < conv.info.outputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_ConvBiasesAt(conv, o),
+        }
+    };
 }
 
-ML2_FN void ML2_CUDA_ConvPrint(ML2_LayerConv conv [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_LayerFilters ML2_CUDA_ConvFilters(ML2_LayerConv conv) {
+    ML2_HARD_ASSERT(conv.data.device == ML2_DeviceCUDA);
+    return (ML2_LayerFilters){ML2_ConvInfoFilters(conv.info), ML2_CUDA_ConvFiltersDataAt(conv, 0, 0, 0, 0)};
+}
+
+ML2_FN ML2_LayerBiases ML2_CUDA_ConvBiases(ML2_LayerConv conv) {
+    ML2_HARD_ASSERT(conv.data.device == ML2_DeviceCUDA);
+    return (ML2_LayerBiases){ML2_ConvInfoBiases(conv.info), ML2_CUDA_ConvBiasesDataAt(conv, 0)};
+}
+
+ML2_FN void ML2_CUDA_ConvPrint(ML2_LayerConv conv, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_ConvPrint");
 }
 
 ML2_FN void ML2_CUDA_ConvClear(ML2_LayerConv conv) {
-    ML2_TODO("ML2_CUDA_ConvClear");
+    ML2_CUDA_FiltersClear(ML2_CUDA_ConvFilters(conv));
+    ML2_CUDA_BiasesClear(ML2_CUDA_ConvBiases(conv));
 }
 
 ML2_FN void ML2_CUDA_ConvCopy(ML2_LayerConv dest, ML2_LayerConv src) {
-    ML2_TODO("ML2_CUDA_ConvCopy");
+    ML2_CUDA_FiltersCopy(ML2_CUDA_ConvFilters(dest), ML2_CUDA_ConvFilters(src));
+    ML2_CUDA_BiasesCopy(ML2_CUDA_ConvBiases(dest), ML2_CUDA_ConvBiases(src));
 }
 
 ML2_FN void ML2_CUDA_ConvSum(ML2_LayerConv dest, ML2_LayerConv src) {
-    ML2_TODO("ML2_CUDA_ConvSum");
+    ML2_CUDA_FiltersSum(ML2_CUDA_ConvFilters(dest), ML2_CUDA_ConvFilters(src));
+    ML2_CUDA_BiasesSum(ML2_CUDA_ConvBiases(dest), ML2_CUDA_ConvBiases(src));
 }
 
 ML2_FN void ML2_CUDA_ConvRand(ML2_LayerConv conv, ML2_Scalar low, ML2_Scalar high) {
-    ML2_TODO("ML2_CUDA_ConvRand");
+    ML2_CUDA_FiltersRand(ML2_CUDA_ConvFilters(conv), low, high);
+    ML2_CUDA_BiasesRand(ML2_CUDA_ConvBiases(conv), low, high);
 }
 
 ML2_FN void ML2_CUDA_ConvXavierInit(ML2_LayerConv conv) {
-    ML2_TODO("ML2_CUDA_ConvXavierInit");
+    ML2_CUDA_FiltersXavierInit(ML2_CUDA_ConvFilters(conv));
+    ML2_CUDA_BiasesXavierInit(ML2_CUDA_ConvBiases(conv));
 }
 
 ML2_FN void ML2_CUDA_ConvHeInit(ML2_LayerConv conv) {
-    ML2_TODO("ML2_CUDA_ConvHeInit");
+    ML2_CUDA_FiltersHeInit(ML2_CUDA_ConvFilters(conv));
+    ML2_CUDA_BiasesHeInit(ML2_CUDA_ConvBiases(conv));
 }
 
 ML2_FN void ML2_CUDA_ConvCopyHostToDevice(ML2_LayerConv destDevice, ML2_LayerConv srcHost) {
-    ML2_TODO("ML2_CUDA_ConvCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_ConvInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_ConvSizeof(destDevice);
+    ML2_Size srcSize = ML2_ConvSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_ConvCopyDeviceToHost(ML2_LayerConv destHost, ML2_LayerConv srcDevice) {
-    ML2_TODO("ML2_CUDA_ConvCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_ConvInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_ConvSizeof(destHost);
+    ML2_Size srcSize = ML2_ConvSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_ConvForwardMatrices(ML2_LayerConv conv [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ConvForwardMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_ConvForwardMatrices");
 }
 
@@ -6283,91 +6786,168 @@ ML2_FN void ML2_CUDA_ConvAdamOptimize(ML2_LayerConv conv, ML2_LayerConv convGrad
     ML2_TODO("ML2_CUDA_ConvAdamOptimize");
 }
 
-ML2_FN void ML2_CUDA_FlattenForwardMatrices(ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheScalars output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FlattenForwardMatrices(ML2_LayerCacheMatrices input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_FlattenForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_FlattenCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheScalars outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FlattenCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheScalars outputGradient) {
     ML2_TODO("ML2_CUDA_FlattenCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolMaxForwardMatrices(ML2_LayerInfoPoolMax pool [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_PoolMaxForwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_PoolMaxForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_PoolMaxCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolAverageForwardMatrices(ML2_LayerInfoPoolAverage pool [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_PoolAverageForwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_PoolAverageForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage pool [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_PoolAverageCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_PoolSoftmaxForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_PoolSoftmaxCacheBackwardMatrices");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights [[maybe_unused]], ML2_Int w [[maybe_unused]], ML2_Int o [[maybe_unused]], ML2_Int i [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsAt");
+ML2_FN CUdeviceptr ML2_CUDA_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= w && w < fusedWeights.info.weights &&
+        0 <= o && o < fusedWeights.info.outputs &&
+        0 <= i && i < fusedWeights.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(fusedWeights.data, (w * fusedWeights.info.outputs + o) * fusedWeights.info.inputs + i);
 }
 
-ML2_FN ML2_LayerWeights ML2_CUDA_FusedWeightsWeightsAt(ML2_LayerFusedWeights fusedWeights [[maybe_unused]], ML2_Int w [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsWeightsAt");
+ML2_FN ML2_DeviceData ML2_CUDA_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i) {
+    ML2_SOFT_ASSERT(
+        0 <= w && w < fusedWeights.info.weights &&
+        0 <= o && o < fusedWeights.info.outputs &&
+        0 <= i && i < fusedWeights.info.inputs &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_FusedWeightsAt(fusedWeights, w, o, i),
+        }
+    };
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsPrint(ML2_LayerFusedWeights fusedWeights [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_LayerWeights ML2_CUDA_FusedWeightsWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w) {
+    // NOTE(1/10/2026 00:21:43): ML2_HARD_ASSERT is used here because this function isnt used in performant code, just like ML2_LinearWeights
+    ML2_HARD_ASSERT(
+        0 <= w && w < fusedWeights.info.weights &&
+        "OUT OF BOUNDS INDICES"
+    );
+    ML2_HARD_ASSERT(fusedWeights.data.device == ML2_DeviceCUDA);
+    return (ML2_LayerWeights){ML2_FusedWeightsInfoWeights(fusedWeights.info), ML2_CUDA_FusedWeightsDataAt(fusedWeights, w, 0, 0)};
+}
+
+ML2_FN void ML2_CUDA_FusedWeightsPrint(ML2_LayerFusedWeights fusedWeights, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_FusedWeightsPrint");
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsClear(ML2_LayerFusedWeights fusedWeights [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsClear");
+ML2_FN void ML2_CUDA_FusedWeightsClear(ML2_LayerFusedWeights fusedWeights) {
+    ML2_HARD_ASSERT(fusedWeights.data.device == ML2_DeviceCUDA);
+    for (ML2_Int w = 0; w < fusedWeights.info.weights; w++) {
+        ML2_CUDA_WeightsClear(ML2_CUDA_FusedWeightsWeightsAt(fusedWeights, w));
+    }
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsCopy(ML2_LayerFusedWeights dest [[maybe_unused]], ML2_LayerFusedWeights src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsCopy");
+ML2_FN void ML2_CUDA_FusedWeightsCopy(ML2_LayerFusedWeights dest, ML2_LayerFusedWeights src) {
+    ML2_HARD_ASSERT(ML2_FusedWeightsInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+
+    ML2_Int weights = dest.info.weights;
+
+    for (ML2_Int w = 0; w < weights; w++) {
+        ML2_CUDA_WeightsCopy(ML2_CUDA_FusedWeightsWeightsAt(dest, w), ML2_CUDA_FusedWeightsWeightsAt(src, w));
+    }
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsSum(ML2_LayerFusedWeights dest [[maybe_unused]], ML2_LayerFusedWeights src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsSum");
+ML2_FN void ML2_CUDA_FusedWeightsSum(ML2_LayerFusedWeights dest, ML2_LayerFusedWeights src) {
+    ML2_HARD_ASSERT(ML2_FusedWeightsInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+
+    ML2_Int weights = dest.info.weights;
+
+    for (ML2_Int w = 0; w < weights; w++) {
+        ML2_CUDA_WeightsSum(ML2_CUDA_FusedWeightsWeightsAt(dest, w), ML2_CUDA_FusedWeightsWeightsAt(src, w));
+    }
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsRand(ML2_LayerFusedWeights fusedWeights [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsRand");
+ML2_FN void ML2_CUDA_FusedWeightsRand(ML2_LayerFusedWeights fusedWeights, ML2_Scalar low, ML2_Scalar high) {
+    ML2_HARD_ASSERT(fusedWeights.data.device == ML2_DeviceCUDA);
+    for (ML2_Int w = 0; w < fusedWeights.info.weights; w++) {
+        ML2_CUDA_WeightsRand(ML2_CUDA_FusedWeightsWeightsAt(fusedWeights, w), low, high);
+    }
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsXavierInit(ML2_LayerFusedWeights fusedWeights [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsXavierInit");
+// TODO(3/9/2026 17:22:04): this doesnt take into account the size of the entire structure, not sure if this is correct
+ML2_FN void ML2_CUDA_FusedWeightsXavierInit(ML2_LayerFusedWeights fusedWeights) {
+    ML2_HARD_ASSERT(fusedWeights.data.device == ML2_DeviceCUDA);
+    for (ML2_Int w = 0; w < fusedWeights.info.weights; w++) {
+        ML2_CUDA_WeightsXavierInit(ML2_CUDA_FusedWeightsWeightsAt(fusedWeights, w));
+    }
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsHeInit(ML2_LayerFusedWeights fusedWeights [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_FusedWeightsHeInit");
+// TODO(3/9/2026 17:22:04): this doesnt take into account the size of the entire structure, not sure if this is correct
+ML2_FN void ML2_CUDA_FusedWeightsHeInit(ML2_LayerFusedWeights fusedWeights) {
+    ML2_HARD_ASSERT(fusedWeights.data.device == ML2_DeviceCUDA);
+    for (ML2_Int w = 0; w < fusedWeights.info.weights; w++) {
+        ML2_CUDA_WeightsHeInit(ML2_CUDA_FusedWeightsWeightsAt(fusedWeights, w));
+    }
 }
 
 ML2_FN void ML2_CUDA_FusedWeightsCopyHostToDevice(ML2_LayerFusedWeights destDevice, ML2_LayerFusedWeights srcHost) {
-    ML2_TODO("ML2_CUDA_FusedWeightsCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_FusedWeightsInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_FusedWeightsSizeof(destDevice);
+    ML2_Size srcSize = ML2_FusedWeightsSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_FusedWeightsCopyDeviceToHost(ML2_LayerFusedWeights destHost, ML2_LayerFusedWeights srcDevice) {
-    ML2_TODO("ML2_CUDA_FusedWeightsCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_FusedWeightsInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_FusedWeightsSizeof(destHost);
+    ML2_Size srcSize = ML2_FusedWeightsSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsForwardVectors(ML2_LayerFusedWeights fusedWeights [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheMatrices output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FusedWeightsForwardVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_FusedWeightsForwardVectors");
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsBackwardVectors(ML2_LayerFusedWeights fusedWeightsGradient [[maybe_unused]], ML2_LayerCacheVectors input [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FusedWeightsBackwardVectors(ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_FusedWeightsBackwardVectors");
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fusedWeights [[maybe_unused]], ML2_LayerCacheVectors inputGradient [[maybe_unused]], ML2_LayerCacheMatrices outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_FusedWeightsCacheBackwardVectors");
 }
 
@@ -6391,227 +6971,368 @@ ML2_FN void ML2_CUDA_FusedWeightsAdamOptimize(ML2_LayerFusedWeights fusedWeights
     ML2_TODO("ML2_CUDA_FusedWeightsAdamOptimize");
 }
 
-ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheVectors output [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_TODO("ML2_CUDA_AttentionForwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention [[maybe_unused]], ML2_LayerCacheMatrices input [[maybe_unused]], ML2_LayerCacheMatrices inputGradient [[maybe_unused]], ML2_LayerCacheVectors outputGradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_AttentionCacheBackwardMatrices");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_ScalarsAt(ML2_LayerCacheScalars scalars [[maybe_unused]], ML2_Int s [[maybe_unused]], ML2_Int c [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ScalarsAt");
+ML2_FN CUdeviceptr ML2_CUDA_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < scalars.info.samples &&
+        0 <= c && c < scalars.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(scalars.data, s * scalars.info.scalars + c);
 }
 
-ML2_FN void ML2_CUDA_ScalarsPrint(ML2_LayerCacheScalars scalars [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_DeviceData ML2_CUDA_ScalarsDataAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < scalars.info.samples &&
+        0 <= c && c < scalars.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_ScalarsAt(scalars, s, c),
+        },
+    };
+}
+
+ML2_FN void ML2_CUDA_ScalarsPrint(ML2_LayerCacheScalars scalars, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_ScalarsPrint");
 }
 
-ML2_FN void ML2_CUDA_ScalarsClear(ML2_LayerCacheScalars scalars [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ScalarsClear");
+ML2_FN void ML2_CUDA_ScalarsClear(ML2_LayerCacheScalars scalars) {
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(scalars.data).ptr, 0, ML2_ScalarsSizeof(scalars)));
 }
 
-ML2_FN void ML2_CUDA_ScalarsCopy(ML2_LayerCacheScalars dest [[maybe_unused]], ML2_LayerCacheScalars src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ScalarsCopy");
+ML2_FN void ML2_CUDA_ScalarsCopy(ML2_LayerCacheScalars dest, ML2_LayerCacheScalars src) {
+    ML2_HARD_ASSERT(ML2_ScalarsInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_ScalarsSizeof(dest);
+    ML2_Size srcSize = ML2_ScalarsSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_ScalarsSum(ML2_LayerCacheScalars dest [[maybe_unused]], ML2_LayerCacheScalars src [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsSum(ML2_LayerCacheScalars dest, ML2_LayerCacheScalars src) {
     ML2_TODO("ML2_CUDA_ScalarsSum");
 }
 
-ML2_FN void ML2_CUDA_ScalarsRand(ML2_LayerCacheScalars scalars [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsRand(ML2_LayerCacheScalars scalars, ML2_Scalar low, ML2_Scalar high) {
     ML2_TODO("ML2_CUDA_ScalarsRand");
 }
 
-ML2_FN void ML2_CUDA_ScalarsXavierInit(ML2_LayerCacheScalars scalars [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_ScalarsXavierInit");
+ML2_FN void ML2_CUDA_ScalarsXavierInit(ML2_LayerCacheScalars scalars) {
+    ML2_HARD_ASSERT(scalars.data.device == ML2_DeviceCUDA);
+    ML2_Scalar limit = ML2_SQRT(ML2_SCALAR_LITERAL(6.0) / (scalars.info.samples + scalars.info.scalars));
+    ML2_CUDA_ScalarsRand(scalars, -limit, limit);
 }
 
-ML2_FN void ML2_CUDA_ScalarsHeInit(ML2_LayerCacheScalars scalars [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsHeInit(ML2_LayerCacheScalars scalars) {
     ML2_TODO("ML2_CUDA_ScalarsHeInit");
 }
 
 ML2_FN void ML2_CUDA_ScalarsCopyHostToDevice(ML2_LayerCacheScalars destDevice, ML2_LayerCacheScalars srcHost) {
-    ML2_TODO("ML2_CUDA_ScalarsCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_ScalarsInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_ScalarsSizeof(destDevice);
+    ML2_Size srcSize = ML2_ScalarsSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_ScalarsCopyDeviceToHost(ML2_LayerCacheScalars destHost, ML2_LayerCacheScalars srcDevice) {
-    ML2_TODO("ML2_CUDA_ScalarsCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_ScalarsInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_ScalarsSizeof(destHost);
+    ML2_Size srcSize = ML2_ScalarsSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardSquareAverage(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardSquareAverage(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected) {
     ML2_TODO("ML2_CUDA_ScalarsLossForwardSquareAverage");
 }
 
-ML2_FN void ML2_CUDA_ScalarsLossBackwardSquareAverage(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]], ML2_LayerCacheScalars gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsLossBackwardSquareAverage(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected, ML2_LayerCacheScalars gradient) {
     ML2_TODO("ML2_CUDA_ScalarsLossBackwardSquareAverage");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardCrossEntropy(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected) {
     ML2_TODO("ML2_CUDA_ScalarsLossForwardCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_ScalarsLossBackwardCrossEntropy(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]], ML2_LayerCacheScalars gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsLossBackwardCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected, ML2_LayerCacheScalars gradient) {
     ML2_TODO("ML2_CUDA_ScalarsLossBackwardCrossEntropy");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardSoftmaxCrossEntropy(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardSoftmaxCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected) {
     ML2_TODO("ML2_CUDA_ScalarsLossForwardSoftmaxCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_ScalarsLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]], ML2_LayerCacheScalars gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected, ML2_LayerCacheScalars gradient) {
     ML2_TODO("ML2_CUDA_ScalarsLossBackwardSoftmaxCrossEntropy");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_ScalarsLossForwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected) {
     ML2_TODO("ML2_CUDA_ScalarsLossForwardBinaryCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_ScalarsLossBackwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted [[maybe_unused]], ML2_LayerCacheScalars expected [[maybe_unused]], ML2_LayerCacheScalars gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_ScalarsLossBackwardBinaryCrossEntropy(ML2_LayerCacheScalars predicted, ML2_LayerCacheScalars expected, ML2_LayerCacheScalars gradient) {
     ML2_TODO("ML2_CUDA_ScalarsLossBackwardBinaryCrossEntropy");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_VectorsAt(ML2_LayerCacheVectors vectors [[maybe_unused]], ML2_Int s [[maybe_unused]], ML2_Int v [[maybe_unused]], ML2_Int c [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_VectorsAt");
+ML2_FN CUdeviceptr ML2_CUDA_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < vectors.info.samples &&
+        0 <= v && v < vectors.info.vectors &&
+        0 <= c && c < vectors.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(vectors.data, (s * vectors.info.vectors + v) * vectors.info.scalars + c);
 }
 
-ML2_FN void ML2_CUDA_VectorsPrint(ML2_LayerCacheVectors vectors [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_DeviceData ML2_CUDA_VectorsDataAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < vectors.info.samples &&
+        0 <= v && v < vectors.info.vectors &&
+        0 <= c && c < vectors.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_VectorsAt(vectors, s, v, c),
+        },
+    };
+}
+
+ML2_FN void ML2_CUDA_VectorsPrint(ML2_LayerCacheVectors vectors, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_VectorsPrint");
 }
 
-ML2_FN void ML2_CUDA_VectorsClear(ML2_LayerCacheVectors vectors [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_VectorsClear");
+ML2_FN void ML2_CUDA_VectorsClear(ML2_LayerCacheVectors vectors) {
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(vectors.data).ptr, 0, ML2_VectorsSizeof(vectors)));
 }
 
-ML2_FN void ML2_CUDA_VectorsCopy(ML2_LayerCacheVectors dest [[maybe_unused]], ML2_LayerCacheVectors src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_VectorsCopy");
+ML2_FN void ML2_CUDA_VectorsCopy(ML2_LayerCacheVectors dest, ML2_LayerCacheVectors src) {
+    ML2_HARD_ASSERT(ML2_VectorsInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_VectorsSizeof(dest);
+    ML2_Size srcSize = ML2_VectorsSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_VectorsSum(ML2_LayerCacheVectors dest [[maybe_unused]], ML2_LayerCacheVectors src [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsSum(ML2_LayerCacheVectors dest, ML2_LayerCacheVectors src) {
     ML2_TODO("ML2_CUDA_VectorsSum");
 }
 
-ML2_FN void ML2_CUDA_VectorsRand(ML2_LayerCacheVectors vectors [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsRand(ML2_LayerCacheVectors vectors, ML2_Scalar low, ML2_Scalar high) {
     ML2_TODO("ML2_CUDA_VectorsRand");
 }
 
-ML2_FN void ML2_CUDA_VectorsXavierInit(ML2_LayerCacheVectors vectors [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_VectorsXavierInit");
+ML2_FN void ML2_CUDA_VectorsXavierInit(ML2_LayerCacheVectors vectors) {
+    ML2_HARD_ASSERT(vectors.data.device == ML2_DeviceCUDA);
+    ML2_Scalar limit = ML2_SQRT(ML2_SCALAR_LITERAL(6.0) / (vectors.info.samples + vectors.info.vectors));
+    ML2_CUDA_VectorsRand(vectors, -limit, limit);
 }
 
-ML2_FN void ML2_CUDA_VectorsHeInit(ML2_LayerCacheVectors vectors [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsHeInit(ML2_LayerCacheVectors vectors) {
     ML2_TODO("ML2_CUDA_VectorsHeInit");
 }
 
 ML2_FN void ML2_CUDA_VectorsCopyHostToDevice(ML2_LayerCacheVectors destDevice, ML2_LayerCacheVectors srcHost) {
-    ML2_TODO("ML2_CUDA_VectorsCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_VectorsInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_VectorsSizeof(destDevice);
+    ML2_Size srcSize = ML2_VectorsSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_VectorsCopyDeviceToHost(ML2_LayerCacheVectors destHost, ML2_LayerCacheVectors srcDevice) {
-    ML2_TODO("ML2_CUDA_VectorsCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_VectorsInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_VectorsSizeof(destHost);
+    ML2_Size srcSize = ML2_VectorsSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardSquareAverage(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardSquareAverage(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected) {
     ML2_TODO("ML2_CUDA_VectorsLossForwardSquareAverage");
 }
 
-ML2_FN void ML2_CUDA_VectorsLossBackwardSquareAverage(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]], ML2_LayerCacheVectors gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsLossBackwardSquareAverage(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected, ML2_LayerCacheVectors gradient) {
     ML2_TODO("ML2_CUDA_VectorsLossBackwardSquareAverage");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardCrossEntropy(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected) {
     ML2_TODO("ML2_CUDA_VectorsLossForwardCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_VectorsLossBackwardCrossEntropy(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]], ML2_LayerCacheVectors gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsLossBackwardCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected, ML2_LayerCacheVectors gradient) {
     ML2_TODO("ML2_CUDA_VectorsLossBackwardCrossEntropy");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardSoftmaxCrossEntropy(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardSoftmaxCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected) {
     ML2_TODO("ML2_CUDA_VectorsLossForwardSoftmaxCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_VectorsLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]], ML2_LayerCacheVectors gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected, ML2_LayerCacheVectors gradient) {
     ML2_TODO("ML2_CUDA_VectorsLossBackwardSoftmaxCrossEntropy");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_VectorsLossForwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected) {
     ML2_TODO("ML2_CUDA_VectorsLossForwardBinaryCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_VectorsLossBackwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted [[maybe_unused]], ML2_LayerCacheVectors expected [[maybe_unused]], ML2_LayerCacheVectors gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_VectorsLossBackwardBinaryCrossEntropy(ML2_LayerCacheVectors predicted, ML2_LayerCacheVectors expected, ML2_LayerCacheVectors gradient) {
     ML2_TODO("ML2_CUDA_VectorsLossBackwardBinaryCrossEntropy");
 }
 
-ML2_FN ML2_Scalar *ML2_CUDA_MatricesAt(ML2_LayerCacheMatrices matrices [[maybe_unused]], ML2_Int s [[maybe_unused]], ML2_Int m [[maybe_unused]], ML2_Int v [[maybe_unused]], ML2_Int c [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_MatricesAt");
+ML2_FN CUdeviceptr ML2_CUDA_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < matrices.info.samples &&
+        0 <= m && m < matrices.info.matrices &&
+        0 <= v && v < matrices.info.vectors &&
+        0 <= c && c < matrices.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return ML2_CUDA_DeviceDataAt(matrices.data, ((s * matrices.info.matrices + m) * matrices.info.vectors + v) * matrices.info.scalars + c);
 }
 
-ML2_FN void ML2_CUDA_MatricesPrint(ML2_LayerCacheMatrices matrices [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
+ML2_FN ML2_DeviceData ML2_CUDA_MatricesDataAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c) {
+    ML2_SOFT_ASSERT(
+        0 <= s && s < matrices.info.samples &&
+        0 <= m && m < matrices.info.matrices &&
+        0 <= v && v < matrices.info.vectors &&
+        0 <= c && c < matrices.info.scalars &&
+        "OUT OF BOUNDS INDICES"
+    );
+    return (ML2_DeviceData){
+        ML2_DeviceCUDA,
+        .as.cuda = {
+            .ptr = ML2_CUDA_MatricesAt(matrices, s, m, v, c),
+        },
+    };
+}
+
+ML2_FN void ML2_CUDA_MatricesPrint(ML2_LayerCacheMatrices matrices, ML2_Int indent) {
     ML2_TODO("ML2_CUDA_MatricesPrint");
 }
 
-ML2_FN void ML2_CUDA_MatricesClear(ML2_LayerCacheMatrices matrices [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_MatricesClear");
+ML2_FN void ML2_CUDA_MatricesClear(ML2_LayerCacheMatrices matrices) {
+    ML2_CUDA_CHECK_ERROR(cuMemsetD8(ML2_DeviceDataAsCUDA(matrices.data).ptr, 0, ML2_MatricesSizeof(matrices)));
 }
 
-ML2_FN void ML2_CUDA_MatricesCopy(ML2_LayerCacheMatrices dest [[maybe_unused]], ML2_LayerCacheMatrices src [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_MatricesCopy");
+ML2_FN void ML2_CUDA_MatricesCopy(ML2_LayerCacheMatrices dest, ML2_LayerCacheMatrices src) {
+    ML2_HARD_ASSERT(ML2_MatricesInfoSame(dest.info, src.info));
+    ML2_HARD_ASSERT(
+        dest.data.device == ML2_DeviceCUDA &&
+        src.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_MatricesSizeof(dest);
+    ML2_Size srcSize = ML2_MatricesSizeof(src);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoD(ML2_DeviceDataAsCUDA(dest.data).ptr, ML2_DeviceDataAsCUDA(src.data).ptr, destSize));
 }
 
-ML2_FN void ML2_CUDA_MatricesSum(ML2_LayerCacheMatrices dest [[maybe_unused]], ML2_LayerCacheMatrices src [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesSum(ML2_LayerCacheMatrices dest, ML2_LayerCacheMatrices src) {
     ML2_TODO("ML2_CUDA_MatricesSum");
 }
 
-ML2_FN void ML2_CUDA_MatricesRand(ML2_LayerCacheMatrices matrices [[maybe_unused]], ML2_Scalar low [[maybe_unused]], ML2_Scalar high [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesRand(ML2_LayerCacheMatrices matrices, ML2_Scalar low, ML2_Scalar high) {
     ML2_TODO("ML2_CUDA_MatricesRand");
 }
 
-ML2_FN void ML2_CUDA_MatricesXavierInit(ML2_LayerCacheMatrices matrices [[maybe_unused]]) {
-    ML2_TODO("ML2_CUDA_MatricesXavierInit");
+ML2_FN void ML2_CUDA_MatricesXavierInit(ML2_LayerCacheMatrices matrices) {
+    ML2_HARD_ASSERT(matrices.data.device == ML2_DeviceCUDA);
+    ML2_Scalar limit = ML2_SQRT(ML2_SCALAR_LITERAL(6.0) / (matrices.info.samples + matrices.info.matrices));
+    ML2_CUDA_MatricesRand(matrices, -limit, limit);
 }
 
-ML2_FN void ML2_CUDA_MatricesHeInit(ML2_LayerCacheMatrices matrices [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesHeInit(ML2_LayerCacheMatrices matrices) {
     ML2_TODO("ML2_CUDA_MatricesHeInit");
 }
 
 ML2_FN void ML2_CUDA_MatricesCopyHostToDevice(ML2_LayerCacheMatrices destDevice, ML2_LayerCacheMatrices srcHost) {
-    ML2_TODO("ML2_CUDA_MatricesCopyHostToDevice");
+    ML2_HARD_ASSERT(ML2_MatricesInfoSame(destDevice.info, srcHost.info));
+    ML2_HARD_ASSERT(
+        destDevice.data.device == ML2_DeviceCUDA &&
+        srcHost.data.device == ML2_DeviceCPU
+    );
+    ML2_Size destSize = ML2_MatricesSizeof(destDevice);
+    ML2_Size srcSize = ML2_MatricesSizeof(srcHost);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyHtoD(ML2_DeviceDataAsCUDA(destDevice.data).ptr, ML2_DeviceDataAsCPU(srcHost.data).ptr, destSize));
 }
 
 ML2_FN void ML2_CUDA_MatricesCopyDeviceToHost(ML2_LayerCacheMatrices destHost, ML2_LayerCacheMatrices srcDevice) {
-    ML2_TODO("ML2_CUDA_MatricesCopyDeviceToHost");
+    ML2_HARD_ASSERT(ML2_MatricesInfoSame(destHost.info, srcDevice.info));
+    ML2_HARD_ASSERT(
+        destHost.data.device == ML2_DeviceCPU &&
+        srcDevice.data.device == ML2_DeviceCUDA
+    );
+    ML2_Size destSize = ML2_MatricesSizeof(destHost);
+    ML2_Size srcSize = ML2_MatricesSizeof(srcDevice);
+    ML2_HARD_ASSERT(destSize == srcSize);
+    ML2_CUDA_CHECK_ERROR(cuMemcpyDtoH(ML2_DeviceDataAsCPU(destHost.data).ptr, ML2_DeviceDataAsCUDA(srcDevice.data).ptr, destSize));
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardSquareAverage(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardSquareAverage(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected) {
     ML2_TODO("ML2_CUDA_MatricesLossForwardSquareAverage");
 }
 
-ML2_FN void ML2_CUDA_MatricesLossBackwardSquareAverage(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]], ML2_LayerCacheMatrices gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesLossBackwardSquareAverage(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected, ML2_LayerCacheMatrices gradient) {
     ML2_TODO("ML2_CUDA_MatricesLossBackwardSquareAverage");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardCrossEntropy(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardCrossEntropy(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected) {
     ML2_TODO("ML2_CUDA_MatricesLossForwardCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_MatricesLossBackwardCrossEntropy(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]], ML2_LayerCacheMatrices gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesLossBackwardCrossEntropy(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected, ML2_LayerCacheMatrices gradient) {
     ML2_TODO("ML2_CUDA_MatricesLossBackwardCrossEntropy");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardSoftmaxCrossEntropy(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardSoftmaxCrossEntropy(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected) {
     ML2_TODO("ML2_CUDA_MatricesLossForwardSoftmaxCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_MatricesLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]], ML2_LayerCacheMatrices gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesLossBackwardSoftmaxCrossEntropy(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected, ML2_LayerCacheMatrices gradient) {
     ML2_TODO("ML2_CUDA_MatricesLossBackwardSoftmaxCrossEntropy");
 }
 
-ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardBinaryCrossEntropy(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]]) {
+ML2_FN ML2_Scalar ML2_CUDA_MatricesLossForwardBinaryCrossEntropy(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected) {
     ML2_TODO("ML2_CUDA_MatricesLossForwardBinaryCrossEntropy");
 }
 
-ML2_FN void ML2_CUDA_MatricesLossBackwardBinaryCrossEntropy(ML2_LayerCacheMatrices predicted [[maybe_unused]], ML2_LayerCacheMatrices expected [[maybe_unused]], ML2_LayerCacheMatrices gradient [[maybe_unused]]) {
+ML2_FN void ML2_CUDA_MatricesLossBackwardBinaryCrossEntropy(ML2_LayerCacheMatrices predicted, ML2_LayerCacheMatrices expected, ML2_LayerCacheMatrices gradient) {
     ML2_TODO("ML2_CUDA_MatricesLossBackwardBinaryCrossEntropy");
 }
 
@@ -6696,11 +7417,11 @@ ML2_FN bool ML2_WeightsInfoSame(ML2_LayerInfoWeights a, ML2_LayerInfoWeights b) 
            a.inputs == b.inputs;
 }
 
-ML2_FN ML2_Scalar *ML2_WeightsAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i) {
+ML2_FN ML2_DeviceData ML2_WeightsDataAt(ML2_LayerWeights weights, ML2_Int o, ML2_Int i) {
     switch (weights.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_WeightsAt(weights, o, i);
+        case ML2_DeviceCPU: return ML2_CPU_WeightsDataAt(weights, o, i);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_WeightsAt(weights, o, i);
+        case ML2_DeviceCUDA: return ML2_CUDA_WeightsDataAt(weights, o, i);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -7154,11 +7875,11 @@ ML2_FN bool ML2_BiasesInfoSame(ML2_LayerInfoBiases a, ML2_LayerInfoBiases b) {
     return a.inputs == b.inputs;
 }
 
-ML2_FN ML2_Scalar *ML2_BiasesAt(ML2_LayerBiases biases, ML2_Int i) {
+ML2_FN ML2_DeviceData ML2_BiasesDataAt(ML2_LayerBiases biases, ML2_Int i) {
     switch (biases.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_BiasesAt(biases, i);
+        case ML2_DeviceCPU: return ML2_CPU_BiasesDataAt(biases, i);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_BiasesAt(biases, i);
+        case ML2_DeviceCUDA: return ML2_CUDA_BiasesDataAt(biases, i);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -8194,21 +8915,21 @@ ML2_FN bool ML2_LinearInfoSame(ML2_LayerInfoLinear a, ML2_LayerInfoLinear b) {
     return ML2_WeightsInfoSame(ML2_LinearInfoWeights(a), ML2_LinearInfoWeights(b));
 }
 
-ML2_FN ML2_Scalar *ML2_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i) {
+ML2_FN ML2_DeviceData ML2_LinearWeightsDataAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i) {
     switch (linear.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_LinearWeightsAt(linear, o, i);
+        case ML2_DeviceCPU: return ML2_CPU_LinearWeightsDataAt(linear, o, i);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_LinearWeightsAt(linear, o, i);
+        case ML2_DeviceCUDA: return ML2_CUDA_LinearWeightsDataAt(linear, o, i);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
 }
 
-ML2_FN ML2_Scalar *ML2_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o) {
+ML2_FN ML2_DeviceData ML2_LinearBiasesDataAt(ML2_LayerLinear linear, ML2_Int o) {
     switch (linear.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_LinearBiasesAt(linear, o);
+        case ML2_DeviceCPU: return ML2_CPU_LinearBiasesDataAt(linear, o);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_LinearBiasesAt(linear, o);
+        case ML2_DeviceCUDA: return ML2_CUDA_LinearBiasesDataAt(linear, o);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -8632,11 +9353,11 @@ ML2_FN bool ML2_FiltersInfoSame(ML2_LayerInfoFilters a, ML2_LayerInfoFilters b) 
            a.strideWidth == b.strideWidth;
 }
 
-ML2_FN ML2_Scalar *ML2_FiltersAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+ML2_FN ML2_DeviceData ML2_FiltersDataAt(ML2_LayerFilters filters, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
     switch (filters.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_FiltersAt(filters, y, x, i, o);
+        case ML2_DeviceCPU: return ML2_CPU_FiltersDataAt(filters, y, x, i, o);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_FiltersAt(filters, y, x, i, o);
+        case ML2_DeviceCUDA: return ML2_CUDA_FiltersDataAt(filters, y, x, i, o);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -9013,21 +9734,21 @@ ML2_FN bool ML2_ConvInfoSame(ML2_LayerInfoConv a, ML2_LayerInfoConv b) {
     return ML2_FiltersInfoSame(ML2_ConvInfoFilters(a), ML2_ConvInfoFilters(b));
 }
 
-ML2_FN ML2_Scalar *ML2_ConvFiltersAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
+ML2_FN ML2_DeviceData ML2_ConvFiltersDataAt(ML2_LayerConv conv, ML2_Int y, ML2_Int x, ML2_Int i, ML2_Int o) {
     switch (conv.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_ConvFiltersAt(conv, y, x, i, o);
+        case ML2_DeviceCPU: return ML2_CPU_ConvFiltersDataAt(conv, y, x, i, o);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_ConvFiltersAt(conv, y, x, i, o);
+        case ML2_DeviceCUDA: return ML2_CUDA_ConvFiltersDataAt(conv, y, x, i, o);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
 }
 
-ML2_FN ML2_Scalar *ML2_ConvBiasesAt(ML2_LayerConv conv, ML2_Int o) {
+ML2_FN ML2_DeviceData ML2_ConvBiasesDataAt(ML2_LayerConv conv, ML2_Int o) {
     switch (conv.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_ConvBiasesAt(conv, o);
+        case ML2_DeviceCPU: return ML2_CPU_ConvBiasesDataAt(conv, o);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_ConvBiasesAt(conv, o);
+        case ML2_DeviceCUDA: return ML2_CUDA_ConvBiasesDataAt(conv, o);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -9355,7 +10076,7 @@ ML2_FN void ML2_ConvAdamOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient,
 }
 
 ML2_FN ML2_Size ML2_ConvSizeof(ML2_LayerConv conv) {
-    return (conv.info.height + conv.info.width + conv.info.inputs + conv.info.outputs + conv.info.outputs) * sizeof(ML2_Scalar);
+    return (conv.info.height * conv.info.width * conv.info.inputs * conv.info.outputs + conv.info.outputs) * sizeof(ML2_Scalar);
 }
 
 // ML2_LayerConv ⬆️
@@ -10061,11 +10782,11 @@ ML2_FN bool ML2_FusedWeightsInfoSame(ML2_LayerInfoFusedWeights a, ML2_LayerInfoF
            a.inputs == b.inputs;
 }
 
-ML2_FN ML2_Scalar *ML2_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i) {
+ML2_FN ML2_DeviceData ML2_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i) {
     switch (fusedWeights.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_FusedWeightsAt(fusedWeights, w, o, i);
+        case ML2_DeviceCPU: return ML2_CPU_FusedWeightsDataAt(fusedWeights, w, o, i);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_FusedWeightsAt(fusedWeights, w, o, i);
+        case ML2_DeviceCUDA: return ML2_CUDA_FusedWeightsDataAt(fusedWeights, w, o, i);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -11068,11 +11789,11 @@ ML2_FN bool ML2_ScalarsInfoSame(ML2_LayerCacheInfoScalars a, ML2_LayerCacheInfoS
     return a.samples == b.samples && a.scalars == b.scalars;
 }
 
-ML2_FN ML2_Scalar *ML2_ScalarsAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c) {
+ML2_FN ML2_DeviceData ML2_ScalarsDataAt(ML2_LayerCacheScalars scalars, ML2_Int s, ML2_Int c) {
     switch (scalars.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_ScalarsAt(scalars, s, c);
+        case ML2_DeviceCPU: return ML2_CPU_ScalarsDataAt(scalars, s, c);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_ScalarsAt(scalars, s, c);
+        case ML2_DeviceCUDA: return ML2_CUDA_ScalarsDataAt(scalars, s, c);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -11357,11 +12078,11 @@ ML2_FN bool ML2_VectorsInfoSame(ML2_LayerCacheInfoVectors a, ML2_LayerCacheInfoV
            a.scalars == b.scalars;
 }
 
-ML2_FN ML2_Scalar *ML2_VectorsAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c) {
+ML2_FN ML2_DeviceData ML2_VectorsDataAt(ML2_LayerCacheVectors vectors, ML2_Int s, ML2_Int v, ML2_Int c) {
     switch (vectors.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_VectorsAt(vectors, s, v, c);
+        case ML2_DeviceCPU: return ML2_CPU_VectorsDataAt(vectors, s, v, c);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_VectorsAt(vectors, s, v, c);
+        case ML2_DeviceCUDA: return ML2_CUDA_VectorsDataAt(vectors, s, v, c);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -11647,11 +12368,11 @@ ML2_FN bool ML2_MatricesInfoSame(ML2_LayerCacheInfoMatrices a, ML2_LayerCacheInf
            a.scalars == b.scalars;
 }
 
-ML2_FN ML2_Scalar *ML2_MatricesAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c) {
+ML2_FN ML2_DeviceData ML2_MatricesDataAt(ML2_LayerCacheMatrices matrices, ML2_Int s, ML2_Int m, ML2_Int v, ML2_Int c) {
     switch (matrices.data.device) {
-        case ML2_DeviceCPU: return ML2_CPU_MatricesAt(matrices, s, m, v, c);
+        case ML2_DeviceCPU: return ML2_CPU_MatricesDataAt(matrices, s, m, v, c);
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: return ML2_CUDA_MatricesAt(matrices, s, m, v, c);
+        case ML2_DeviceCUDA: return ML2_CUDA_MatricesDataAt(matrices, s, m, v, c);
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -12044,7 +12765,7 @@ ML2_FN ML2_Size ML2_LayerCacheSizeof(ML2_LayerCache cache) {
 // ML2_Arch ⬇️
 
 ML2_FN ML2_Arch ML2_ArchNew(ML2_Int layers, ML2_LayerInfo infos[static layers]) {
-    ML2_Arch arch = {layers, ML2_Calloc(layers * sizeof(*arch.infos))};
+    ML2_Arch arch = {layers, ML2_Allocate(layers * sizeof(*arch.infos))};
     for (ML2_Int i = 0; i < layers; i++) {
         arch.infos[i] = infos[i];
     }
@@ -12063,7 +12784,7 @@ ML2_FN void ML2_ArchDestroy(ML2_Arch *arch) {
 ML2_FN ML2_Model ML2_ModelNew(ML2_Device device, ML2_Arch arch) {
     ML2_Model model = {
         .layerCount = arch.layerCount,
-        .layers = ML2_Calloc(arch.layerCount * sizeof(*model.layers)),
+        .layers = ML2_Allocate(arch.layerCount * sizeof(*model.layers)),
     };
     for (ML2_Int i = 0; i < arch.layerCount; i++) {
         model.layers[i] = ML2_LayerNew(device, arch.infos[i]);
@@ -12282,7 +13003,7 @@ ML2_FN ML2_Size ML2_ModelSizeof(ML2_Model model) {
 // ML2_ModelCache ⬇️
 
 ML2_FN ML2_ModelCache ML2_ModelCacheNew(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info) {
-    ML2_ModelCache modelCache = {arch.layerCount, ML2_Calloc(arch.layerCount * sizeof(*modelCache.layers))};
+    ML2_ModelCache modelCache = {arch.layerCount, ML2_Allocate(arch.layerCount * sizeof(*modelCache.layers))};
 
     ML2_LayerCacheInfo prevInfo = info.input;
     for (ML2_Int i = 0; i < modelCache.layerCount; i++) {
@@ -12500,7 +13221,7 @@ ML2_FN ML2_OptimizerMomentum ML2_MomentumNew(ML2_Device device, ML2_OptimizerPar
         parameters,
         {
             arch.layerCount,
-            ML2_Calloc(arch.layerCount * sizeof(*momentum.state.averageLayers)),
+            ML2_Allocate(arch.layerCount * sizeof(*momentum.state.averageLayers)),
         },
     };
     for (ML2_Int i = 0; i < momentum.state.layerCount; i++) {
@@ -12566,7 +13287,7 @@ ML2_FN ML2_OptimizerAdagrad ML2_AdagradNew(ML2_Device device, ML2_OptimizerParam
         parameters,
         {
             arch.layerCount,
-            ML2_Calloc(arch.layerCount * sizeof(*adagrad.state.squareSumLayers)),
+            ML2_Allocate(arch.layerCount * sizeof(*adagrad.state.squareSumLayers)),
         },
     };
     for (ML2_Int i = 0; i < adagrad.state.layerCount; i++) {
@@ -12631,7 +13352,7 @@ ML2_FN ML2_OptimizerRMSProp ML2_RMSPropNew(ML2_Device device, ML2_OptimizerParam
         parameters,
         {
             arch.layerCount,
-            ML2_Calloc(arch.layerCount * sizeof(*RMSProp.state.squareAverageLayers)),
+            ML2_Allocate(arch.layerCount * sizeof(*RMSProp.state.squareAverageLayers)),
         },
     };
     for (ML2_Int i = 0; i < RMSProp.state.layerCount; i++) {
@@ -12697,8 +13418,8 @@ ML2_FN ML2_OptimizerAdam ML2_AdamNew(ML2_Device device, ML2_OptimizerParametersA
         parameters,
         {
             arch.layerCount,
-            ML2_Calloc(arch.layerCount * sizeof(*adam.state.averageLayers)),
-            ML2_Calloc(arch.layerCount * sizeof(*adam.state.squareAverageLayers)),
+            ML2_Allocate(arch.layerCount * sizeof(*adam.state.averageLayers)),
+            ML2_Allocate(arch.layerCount * sizeof(*adam.state.squareAverageLayers)),
             parameters.decayRate1,
             parameters.decayRate2,
         },
