@@ -298,11 +298,13 @@ typedef enum : ML2_Int {
     ML2_CUDA_KernelActivationCacheBackwardOutput,
     ML2_CUDA_KernelActivationCacheBackwardInputOutput,
     ML2_CUDA_KernelAttentionForwardMatrices,
+    ML2_CUDA_KernelAttentionForwardStateMatrices,
     ML2_CUDA_KernelAttentionCacheBackwardMatrices,
-    ML2_CUDA_KernelAttentionPredictMatrices,
+    ML2_CUDA_KernelAttentionCacheBackwardStateMatrices,
     ML2_CUDA_KernelAttentionFullForwardMatrices,
+    ML2_CUDA_KernelAttentionFullForwardStateMatrices,
     ML2_CUDA_KernelAttentionFullCacheBackwardMatrices,
-    ML2_CUDA_KernelAttentionFullPredictMatrices,
+    ML2_CUDA_KernelAttentionFullCacheBackwardStateMatrices,
     ML2_CUDA_KernelLossBackwardSoftmaxCrossEntropy,
     ML2_CUDA_KernelAdamOptimize,
     ML2_CUDA_KernelAdamWOptimize,
@@ -318,16 +320,18 @@ ML2_VAR const char *ML2_CUDA_FunctionNames[ML2_CUDA_KernelCount] = {
     [ML2_CUDA_KernelActivationCacheBackwardOutput] = "ML2_CUDA_FunctionActivationCacheBackwardOutput",
     [ML2_CUDA_KernelActivationCacheBackwardInputOutput] = "ML2_CUDA_FunctionActivationCacheBackwardInputOutput",
     [ML2_CUDA_KernelAttentionForwardMatrices] = "ML2_CUDA_FunctionAttentionForwardMatrices",
+    [ML2_CUDA_KernelAttentionForwardStateMatrices] = "ML2_CUDA_FunctionAttentionForwardStateMatrices",
     [ML2_CUDA_KernelAttentionCacheBackwardMatrices] = "ML2_CUDA_FunctionAttentionCacheBackwardMatrices",
-    [ML2_CUDA_KernelAttentionPredictMatrices] = "ML2_CUDA_FunctionAttentionPredictMatrices",
+    [ML2_CUDA_KernelAttentionCacheBackwardStateMatrices] = "ML2_CUDA_FunctionAttentionCacheBackwardStateMatrices",
     [ML2_CUDA_KernelAttentionFullForwardMatrices] = "ML2_CUDA_FunctionAttentionFullForwardMatrices",
+    [ML2_CUDA_KernelAttentionFullForwardStateMatrices] = "ML2_CUDA_FunctionAttentionFullForwardStateMatrices",
     [ML2_CUDA_KernelAttentionFullCacheBackwardMatrices] = "ML2_CUDA_FunctionAttentionFullCacheBackwardMatrices",
-    [ML2_CUDA_KernelAttentionFullPredictMatrices] = "ML2_CUDA_FunctionAttentionFullPredictMatrices",
+    [ML2_CUDA_KernelAttentionFullCacheBackwardStateMatrices] = "ML2_CUDA_FunctionAttentionFullCacheBackwardStateMatrices",
     [ML2_CUDA_KernelLossBackwardSoftmaxCrossEntropy] = "ML2_CUDA_FunctionLossBackwardSoftmaxCrossEntropy",
     [ML2_CUDA_KernelAdamOptimize] = "ML2_CUDA_FunctionAdamOptimize",
     [ML2_CUDA_KernelAdamWOptimize] = "ML2_CUDA_FunctionAdamWOptimize",
 };
-static_assert(ML2_CUDA_KernelCount == 16, "you forgot to add the name");
+static_assert(ML2_CUDA_KernelCount == 18, "you forgot to add the name");
 
 typedef struct {
     bool init;
@@ -1214,8 +1218,6 @@ ML2_FN void ML2_CPU_WeightsBackwardScalars(ML2_LayerWeights weightsGradient, ML2
 ML2_FN void ML2_CPU_WeightsBackwardVectors(ML2_LayerWeights weightsGradient, ML2_LayerCacheVectors input, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CPU_WeightsCacheBackwardScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CPU_WeightsCacheBackwardVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CPU_WeightsPredictScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CPU_WeightsPredictVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 ML2_FN void ML2_CPU_WeightsGradientDescentOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CPU_WeightsMomentumOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_LayerWeights decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1244,9 +1246,6 @@ ML2_FN void ML2_CPU_BiasesBackwardMatrices(ML2_LayerBiases biasesGradient, ML2_L
 ML2_FN void ML2_CPU_BiasesCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CPU_BiasesCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CPU_BiasesCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_BiasesPredictScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CPU_BiasesPredictVectors(ML2_LayerBiases biases, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CPU_BiasesPredictMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_BiasesGradientDescentOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CPU_BiasesMomentumOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_LayerBiases decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1267,16 +1266,11 @@ ML2_FN void ML2_CPU_ActivationCacheBackwardOutputMatrices(ML2_ActivationType typ
 ML2_FN void ML2_CPU_ActivationCacheBackwardInputOutputScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CPU_ActivationCacheBackwardInputOutputVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CPU_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_ActivationPredictScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CPU_ActivationPredictVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CPU_ActivationPredictMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_SoftmaxForwardScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
 ML2_FN void ML2_CPU_SoftmaxForwardVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 ML2_FN void ML2_CPU_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CPU_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CPU_SoftmaxPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CPU_SoftmaxPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 ML2_FN ML2_Scalar *ML2_CPU_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
 ML2_FN ML2_Scalar *ML2_CPU_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o);
@@ -1299,8 +1293,6 @@ ML2_FN void ML2_CPU_LinearBackwardScalars(ML2_LayerLinear linearGradient, ML2_La
 ML2_FN void ML2_CPU_LinearBackwardVectors(ML2_LayerLinear linearGradient, ML2_LayerCacheVectors input, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CPU_LinearCacheBackwardScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CPU_LinearCacheBackwardVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CPU_LinearPredictScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CPU_LinearPredictVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 ML2_FN void ML2_CPU_LinearGradientDescentOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CPU_LinearMomentumOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_LayerLinear decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1323,7 +1315,6 @@ ML2_FN bool ML2_CPU_FiltersCompare(ML2_LayerFilters a, ML2_LayerFilters b, ML2_S
 ML2_FN void ML2_CPU_FiltersForwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CPU_FiltersBackwardMatrices(ML2_LayerFilters filtersGradient, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices outputGradient);
 ML2_FN void ML2_CPU_FiltersCacheBackwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_FiltersPredictMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_FiltersGradientDescentOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CPU_FiltersMomentumOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_LayerFilters decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1350,7 +1341,6 @@ ML2_FN bool ML2_CPU_ConvCompare(ML2_LayerConv a, ML2_LayerConv b, ML2_Scalar thr
 ML2_FN void ML2_CPU_ConvForwardMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CPU_ConvBackwardMatrices(ML2_LayerConv convGradient, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices outputGradient);
 ML2_FN void ML2_CPU_ConvCacheBackwardMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_ConvPredictMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_ConvGradientDescentOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CPU_ConvMomentumOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_LayerConv decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1361,15 +1351,12 @@ ML2_FN void ML2_CPU_ConvAdamWOptimize(ML2_LayerConv conv, ML2_LayerConv convGrad
 
 ML2_FN void ML2_CPU_PoolMaxForwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CPU_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_PoolMaxPredictMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_PoolAverageForwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CPU_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_PoolAveragePredictMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CPU_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_PoolSoftmaxPredictMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN ML2_Scalar *ML2_CPU_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
 ML2_FN ML2_DeviceData ML2_CPU_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
@@ -1386,7 +1373,6 @@ ML2_FN bool ML2_CPU_FusedWeightsCompare(ML2_LayerFusedWeights a, ML2_LayerFusedW
 ML2_FN void ML2_CPU_FusedWeightsForwardVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CPU_FusedWeightsBackwardVectors(ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices outputGradient);
 ML2_FN void ML2_CPU_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CPU_FusedWeightsPredictVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CPU_FusedWeightsGradientDescentOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CPU_FusedWeightsMomentumOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1395,13 +1381,17 @@ ML2_FN void ML2_CPU_FusedWeightsRMSPropOptimize(ML2_LayerFusedWeights fusedWeigh
 ML2_FN void ML2_CPU_FusedWeightsAdamOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_LayerFusedWeights decayingSquareSum, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 ML2_FN void ML2_CPU_FusedWeightsAdamWOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_LayerFusedWeights decayingSquareSum, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2, ML2_Scalar parameterDecay);
 
-ML2_FN void ML2_CPU_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CPU_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CPU_AttentionPredictMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CPU_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CPU_AttentionForwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
 
-ML2_FN void ML2_CPU_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CPU_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CPU_AttentionFullPredictMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CPU_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN void ML2_CPU_AttentionCacheBackwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+
+ML2_FN void ML2_CPU_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CPU_AttentionFullForwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+
+ML2_FN void ML2_CPU_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN void ML2_CPU_AttentionFullCacheBackwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
 
 ML2_FN ML2_Scalar *ML2_CPU_AttentionStateAt(ML2_LayerStateAttention attention, ML2_Int s, ML2_Int v, ML2_Int h);
 ML2_FN ML2_Scalar *ML2_CPU_AttentionFullStateAt(ML2_LayerStateAttentionFull attentionFull, ML2_Int s, ML2_Int v, ML2_Int h);
@@ -1508,8 +1498,6 @@ ML2_FN void ML2_CUDA_WeightsBackwardScalars(ML2_LayerWeights weightsGradient, ML
 ML2_FN void ML2_CUDA_WeightsBackwardVectors(ML2_LayerWeights weightsGradient, ML2_LayerCacheVectors input, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CUDA_WeightsCacheBackwardScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CUDA_WeightsCacheBackwardVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CUDA_WeightsPredictScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CUDA_WeightsPredictVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 ML2_FN void ML2_CUDA_WeightsGradientDescentOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CUDA_WeightsMomentumOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_LayerWeights decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1541,9 +1529,6 @@ ML2_FN void ML2_CUDA_BiasesBackwardMatrices(ML2_LayerBiases biasesGradient, ML2_
 ML2_FN void ML2_CUDA_BiasesCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CUDA_BiasesCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CUDA_BiasesCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_BiasesPredictScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CUDA_BiasesPredictVectors(ML2_LayerBiases biases, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CUDA_BiasesPredictMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_BiasesGradientDescentOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CUDA_BiasesMomentumOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_LayerBiases decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1564,16 +1549,11 @@ ML2_FN void ML2_CUDA_ActivationCacheBackwardOutputMatrices(ML2_ActivationType ty
 ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_ActivationPredictScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CUDA_ActivationPredictVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CUDA_ActivationPredictMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_SoftmaxForwardScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
 ML2_FN void ML2_CUDA_SoftmaxForwardVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 ML2_FN void ML2_CUDA_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CUDA_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CUDA_SoftmaxPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CUDA_SoftmaxPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 ML2_FN CUdeviceptr ML2_CUDA_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i);
 ML2_FN CUdeviceptr ML2_CUDA_LinearBiasesAt(ML2_LayerLinear linear, ML2_Int o);
@@ -1599,8 +1579,6 @@ ML2_FN void ML2_CUDA_LinearBackwardScalars(ML2_LayerLinear linearGradient, ML2_L
 ML2_FN void ML2_CUDA_LinearBackwardVectors(ML2_LayerLinear linearGradient, ML2_LayerCacheVectors input, ML2_LayerCacheVectors outputGradient);
 ML2_FN void ML2_CUDA_LinearCacheBackwardScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars outputGradient);
 ML2_FN void ML2_CUDA_LinearCacheBackwardVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CUDA_LinearPredictScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN void ML2_CUDA_LinearPredictVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 ML2_FN void ML2_CUDA_LinearGradientDescentOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CUDA_LinearMomentumOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_LayerLinear decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1626,7 +1604,6 @@ ML2_FN void ML2_CUDA_FiltersCopyDeviceToHost(ML2_LayerFilters dstHost, ML2_Layer
 ML2_FN void ML2_CUDA_FiltersForwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_FiltersBackwardMatrices(ML2_LayerFilters filtersGradient, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices outputGradient);
 ML2_FN void ML2_CUDA_FiltersCacheBackwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_FiltersPredictMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_FiltersGradientDescentOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CUDA_FiltersMomentumOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_LayerFilters decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1656,7 +1633,6 @@ ML2_FN void ML2_CUDA_ConvCopyDeviceToHost(ML2_LayerConv dstHost, ML2_LayerConv s
 ML2_FN void ML2_CUDA_ConvForwardMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_ConvBackwardMatrices(ML2_LayerConv convGradient, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices outputGradient);
 ML2_FN void ML2_CUDA_ConvCacheBackwardMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_ConvPredictMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_ConvGradientDescentOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CUDA_ConvMomentumOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_LayerConv decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1667,15 +1643,12 @@ ML2_FN void ML2_CUDA_ConvAdamWOptimize(ML2_LayerConv conv, ML2_LayerConv convGra
 
 ML2_FN void ML2_CUDA_PoolMaxForwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_PoolMaxPredictMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_PoolAverageForwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_PoolAveragePredictMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_PoolSoftmaxPredictMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
 
 ML2_FN CUdeviceptr ML2_CUDA_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
 ML2_FN ML2_DeviceData ML2_CUDA_FusedWeightsDataAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i);
@@ -1695,7 +1668,6 @@ ML2_FN void ML2_CUDA_FusedWeightsCopyDeviceToHost(ML2_LayerFusedWeights dstHost,
 ML2_FN void ML2_CUDA_FusedWeightsForwardVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output);
 ML2_FN void ML2_CUDA_FusedWeightsBackwardVectors(ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices outputGradient);
 ML2_FN void ML2_CUDA_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheMatrices outputGradient);
-ML2_FN void ML2_CUDA_FusedWeightsPredictVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output);
 
 ML2_FN void ML2_CUDA_FusedWeightsGradientDescentOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_CUDA_FusedWeightsMomentumOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1704,13 +1676,17 @@ ML2_FN void ML2_CUDA_FusedWeightsRMSPropOptimize(ML2_LayerFusedWeights fusedWeig
 ML2_FN void ML2_CUDA_FusedWeightsAdamOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_LayerFusedWeights decayingSquareSum, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2);
 ML2_FN void ML2_CUDA_FusedWeightsAdamWOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_LayerFusedWeights decayingSquareSum, ML2_Scalar learningRate, ML2_Scalar decayRate1, ML2_Scalar decayRate2, ML2_Scalar decayingWeight1, ML2_Scalar decayingWeight2, ML2_Scalar parameterDecay);
 
-ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CUDA_AttentionPredictMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CUDA_AttentionForwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
 
-ML2_FN void ML2_CUDA_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN void ML2_CUDA_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN void ML2_CUDA_AttentionFullPredictMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN void ML2_CUDA_AttentionCacheBackwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+
+ML2_FN void ML2_CUDA_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN void ML2_CUDA_AttentionFullForwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+
+ML2_FN void ML2_CUDA_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN void ML2_CUDA_AttentionFullCacheBackwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
 
 ML2_FN CUdeviceptr ML2_CUDA_AttentionStateAt(ML2_LayerStateAttention attention, ML2_Int s, ML2_Int v, ML2_Int h);
 ML2_FN CUdeviceptr ML2_CUDA_AttentionFullStateAt(ML2_LayerStateAttentionFull attentionFull, ML2_Int s, ML2_Int v, ML2_Int h);
@@ -1824,15 +1800,6 @@ ML2_FN void ML2_IdentityCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradie
 ML2_FN bool ML2_IdentityCacheBackwardCompatible(ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_IdentityCacheBackward(ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_IdentityPredictCompatibleScalars(ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output);
-ML2_FN void ML2_IdentityPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN bool ML2_IdentityPredictCompatibleVectors(ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_IdentityPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_IdentityPredictCompatibleMatrices(ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_IdentityPredictMatrices(ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_IdentityPredictCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_IdentityPredict(ML2_LayerCache input, ML2_LayerCache output);
-
 // ML2_LayerIdentity ⬆️
 
 // ML2_LayerWeights ⬇️
@@ -1891,13 +1858,6 @@ ML2_FN bool ML2_WeightsCacheBackwardCompatibleVectors(ML2_LayerInfoWeights weigh
 ML2_FN void ML2_WeightsCacheBackwardVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors outputGradient);
 ML2_FN bool ML2_WeightsCacheBackwardCompatible(ML2_LayerInfoWeights weights, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_WeightsCacheBackward(ML2_LayerWeights weights, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_WeightsPredictCompatibleScalars(ML2_LayerInfoWeights weights, ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output);
-ML2_FN void ML2_WeightsPredictScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN bool ML2_WeightsPredictCompatibleVectors(ML2_LayerInfoWeights weights, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_WeightsPredictVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_WeightsPredictCompatible(ML2_LayerInfoWeights weights, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_WeightsPredict(ML2_LayerWeights weights, ML2_LayerCache input, ML2_LayerCache output);
 
 ML2_FN void ML2_WeightsGradientDescentOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_WeightsMomentumOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_LayerWeights decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -1972,15 +1932,6 @@ ML2_FN bool ML2_BiasesCacheBackwardCompatibleMatrices(ML2_LayerCacheInfoMatrices
 ML2_FN void ML2_BiasesCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
 ML2_FN bool ML2_BiasesCacheBackwardCompatible(ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_BiasesCacheBackward(ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_BiasesPredictCompatibleScalars(ML2_LayerInfoBiases biases, ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output);
-ML2_FN void ML2_BiasesPredictScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN bool ML2_BiasesPredictCompatibleVectors(ML2_LayerInfoBiases biases, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_BiasesPredictVectors(ML2_LayerBiases biases, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_BiasesPredictCompatibleMatrices(ML2_LayerInfoBiases biases, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_BiasesPredictMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_BiasesPredictCompatible(ML2_LayerInfoBiases biases, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_BiasesPredict(ML2_LayerBiases biases, ML2_LayerCache input, ML2_LayerCache output);
 
 ML2_FN void ML2_BiasesGradientDescentOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_BiasesMomentumOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_LayerBiases decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -2057,15 +2008,6 @@ ML2_FN void ML2_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationType ty
 ML2_FN bool ML2_ActivationCacheBackwardCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_ActivationCacheBackward(ML2_LayerInfoActivation activation, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_ActivationPredictCompatibleScalars(ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output);
-ML2_FN void ML2_ActivationPredictScalars(ML2_LayerInfoActivation activation, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN bool ML2_ActivationPredictCompatibleVectors(ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_ActivationPredictVectors(ML2_LayerInfoActivation activation, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_ActivationPredictCompatibleMatrices(ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_ActivationPredictMatrices(ML2_LayerInfoActivation activation, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_ActivationPredictCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_ActivationPredict(ML2_LayerInfoActivation activation, ML2_LayerCache input, ML2_LayerCache output);
-
 // ML2_LayerActivation ⬆️
 
 // ML2_LayerSoftmax ⬇️
@@ -2086,13 +2028,6 @@ ML2_FN bool ML2_SoftmaxCacheBackwardCompatibleScalars(ML2_LayerCacheInfoScalars 
 ML2_FN void ML2_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGradient, ML2_LayerCacheScalars output, ML2_LayerCacheScalars outputGradient);
 ML2_FN bool ML2_SoftmaxCacheBackwardCompatibleVectors(ML2_LayerCacheInfoVectors inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
 ML2_FN void ML2_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-
-ML2_FN bool ML2_SoftmaxPredictCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_SoftmaxPredict(ML2_LayerCache input, ML2_LayerCache output);
-ML2_FN bool ML2_SoftmaxPredictCompatibleScalars(ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output);
-ML2_FN void ML2_SoftmaxPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN bool ML2_SoftmaxPredictCompatibleVectors(ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_SoftmaxPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
 
 // ML2_LayerSoftmax ⬆️
 
@@ -2158,13 +2093,6 @@ ML2_FN void ML2_LinearCacheBackwardVectors(ML2_LayerLinear linear, ML2_LayerCach
 ML2_FN bool ML2_LinearCacheBackwardCompatible(ML2_LayerInfoLinear linear, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_LinearCacheBackward(ML2_LayerLinear linear, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_LinearPredictCompatibleScalars(ML2_LayerInfoLinear linear, ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output);
-ML2_FN void ML2_LinearPredictScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output);
-ML2_FN bool ML2_LinearPredictCompatibleVectors(ML2_LayerInfoLinear linear, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_LinearPredictVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_LinearPredictCompatible(ML2_LayerInfoLinear linear, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_LinearPredict(ML2_LayerLinear linear, ML2_LayerCache input, ML2_LayerCache output);
-
 ML2_FN void ML2_LinearGradientDescentOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_LinearMomentumOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_LayerLinear decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
 ML2_FN void ML2_LinearAdagradOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_LayerLinear squareSum, ML2_Scalar learningRate);
@@ -2224,11 +2152,6 @@ ML2_FN bool ML2_FiltersCacheBackwardCompatibleMatrices(ML2_LayerInfoFilters filt
 ML2_FN void ML2_FiltersCacheBackwardMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
 ML2_FN bool ML2_FiltersCacheBackwardCompatible(ML2_LayerInfoFilters filters, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_FiltersCacheBackward(ML2_LayerFilters filters, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_FiltersPredictCompatibleMatrices(ML2_LayerInfoFilters filters, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_FiltersPredictMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_FiltersPredictCompatible(ML2_LayerInfoFilters filters, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_FiltersPredict(ML2_LayerFilters filters, ML2_LayerCache input, ML2_LayerCache output);
 
 ML2_FN void ML2_FiltersGradientDescentOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_FiltersMomentumOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_LayerFilters decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -2293,11 +2216,6 @@ ML2_FN void ML2_ConvCacheBackwardMatrices(ML2_LayerConv conv, ML2_LayerCacheMatr
 ML2_FN bool ML2_ConvCacheBackwardCompatible(ML2_LayerInfoConv conv, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_ConvCacheBackward(ML2_LayerConv conv, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_ConvPredictCompatibleMatrices(ML2_LayerInfoConv conv, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_ConvPredictMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_ConvPredictCompatible(ML2_LayerInfoConv conv, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_ConvPredict(ML2_LayerConv conv, ML2_LayerCache input, ML2_LayerCache output);
-
 ML2_FN void ML2_ConvGradientDescentOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_ConvMomentumOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_LayerConv decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
 ML2_FN void ML2_ConvAdagradOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_LayerConv squareSum, ML2_Scalar learningRate);
@@ -2326,9 +2244,6 @@ ML2_FN void ML2_PoolForward(ML2_LayerInfoPool pool, ML2_LayerCache input, ML2_La
 ML2_FN bool ML2_PoolCacheBackwardCompatible(ML2_LayerInfoPool pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_PoolCacheBackward(ML2_LayerInfoPool pool, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_PoolPredictCompatible(ML2_LayerInfoPool pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_PoolPredict(ML2_LayerInfoPool pool, ML2_LayerCache input, ML2_LayerCache output);
-
 // ML2_LayerPoolMax ⬇️
 
 ML2_FN ML2_LayerInfo ML2_PoolMax(ML2_Int height, ML2_Int width, ML2_Int paddingHeight, ML2_Int paddingWidth, ML2_Int strideHeight, ML2_Int strideWidth);
@@ -2352,11 +2267,6 @@ ML2_FN bool ML2_PoolMaxCacheBackwardCompatibleMatrices(ML2_LayerInfoPoolMax pool
 ML2_FN void ML2_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient);
 ML2_FN bool ML2_PoolMaxCacheBackwardCompatible(ML2_LayerInfoPoolMax pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_PoolMaxCacheBackward(ML2_LayerInfoPoolMax pool, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_PoolMaxPredictCompatibleMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_PoolMaxPredictMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_PoolMaxPredictCompatible(ML2_LayerInfoPoolMax pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_PoolMaxPredict(ML2_LayerInfoPoolMax pool, ML2_LayerCache input, ML2_LayerCache output);
 
 // ML2_LayerPoolMax ⬆️
 
@@ -2384,11 +2294,6 @@ ML2_FN void ML2_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage pool, 
 ML2_FN bool ML2_PoolAverageCacheBackwardCompatible(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_PoolAverageCacheBackward(ML2_LayerInfoPoolAverage pool, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_PoolAveragePredictCompatibleMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_PoolAveragePredictMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_PoolAveragePredictCompatible(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_PoolAveragePredict(ML2_LayerInfoPoolAverage pool, ML2_LayerCache input, ML2_LayerCache output);
-
 // ML2_LayerPoolAverage ⬆️
 
 // ML2_LayerPoolSoftmax ⬇️
@@ -2414,11 +2319,6 @@ ML2_FN bool ML2_PoolSoftmaxCacheBackwardCompatibleMatrices(ML2_LayerInfoPoolSoft
 ML2_FN void ML2_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient);
 ML2_FN bool ML2_PoolSoftmaxCacheBackwardCompatible(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_PoolSoftmaxCacheBackward(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_PoolSoftmaxPredictCompatibleMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_PoolSoftmaxPredictMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_PoolSoftmaxPredictCompatible(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_PoolSoftmaxPredict(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCache input, ML2_LayerCache output);
 
 // ML2_LayerPoolSoftmax ⬆️
 
@@ -2475,11 +2375,6 @@ ML2_FN void ML2_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fusedWeig
 ML2_FN bool ML2_FusedWeightsCacheBackwardCompatible(ML2_LayerInfoFusedWeights fusedWeights, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
 ML2_FN void ML2_FusedWeightsCacheBackward(ML2_LayerFusedWeights fusedWeights, ML2_LayerCache inputGradient, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_FusedWeightsPredictCompatibleVectors(ML2_LayerInfoFusedWeights fusedWeights, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoMatrices output);
-ML2_FN void ML2_FusedWeightsPredictVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output);
-ML2_FN bool ML2_FusedWeightsPredictCompatible(ML2_LayerInfoFusedWeights fusedWeights, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_FusedWeightsPredict(ML2_LayerFusedWeights fusedWeights, ML2_LayerCache input, ML2_LayerCache output);
-
 ML2_FN void ML2_FusedWeightsGradientDescentOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_Scalar learningRate);
 ML2_FN void ML2_FusedWeightsMomentumOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
 ML2_FN void ML2_FusedWeightsAdagradOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_LayerFusedWeights squareSum, ML2_Scalar learningRate);
@@ -2499,25 +2394,28 @@ ML2_FN ML2_LayerInfoAttention *ML2_LayerPtrAsAttention(ML2_Layer *layer);
 ML2_FN void ML2_AttentionInfoPrint(ML2_LayerInfoAttention info, ML2_Int indent);
 ML2_FN bool ML2_AttentionInfoSame(ML2_LayerInfoAttention a, ML2_LayerInfoAttention b);
 
-ML2_FN bool ML2_AttentionInfoForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices matrices);
-ML2_FN ML2_LayerCacheInfo ML2_AttentionInfoForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices matrices);
+ML2_FN bool ML2_AttentionInfoForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input);
+ML2_FN ML2_LayerCacheInfo ML2_AttentionInfoForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input);
 ML2_FN bool ML2_AttentionInfoForwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input);
 ML2_FN ML2_LayerCacheInfo ML2_AttentionInfoForward(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input);
 
-ML2_FN bool ML2_AttentionForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_AttentionForwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_AttentionForward(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_AttentionForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
+ML2_FN void ML2_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN bool ML2_AttentionForwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_AttentionForward(ML2_LayerInfoAttention attention, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_AttentionForwardStateCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
+ML2_FN void ML2_AttentionForwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN bool ML2_AttentionForwardStateCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_AttentionForwardState(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache output);
 
-ML2_FN bool ML2_AttentionCacheBackwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
-ML2_FN void ML2_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN bool ML2_AttentionCacheBackwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_AttentionCacheBackward(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_AttentionPredictCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_AttentionPredictMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_AttentionPredictCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_AttentionPredict(ML2_LayerInfoAttention attention, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_AttentionCacheBackwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
+ML2_FN void ML2_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN bool ML2_AttentionCacheBackwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_AttentionCacheBackward(ML2_LayerInfoAttention attention, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
+ML2_FN bool ML2_AttentionCacheBackwardStateCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
+ML2_FN void ML2_AttentionCacheBackwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN bool ML2_AttentionCacheBackwardStateCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_AttentionCacheBackwardState(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
 
 // ML2_LayerAttention ⬆️
 
@@ -2531,25 +2429,28 @@ ML2_FN ML2_LayerInfoAttentionFull *ML2_LayerPtrAsAttentionFull(ML2_Layer *layer)
 ML2_FN void ML2_AttentionFullInfoPrint(ML2_LayerInfoAttentionFull info, ML2_Int indent);
 ML2_FN bool ML2_AttentionFullInfoSame(ML2_LayerInfoAttentionFull a, ML2_LayerInfoAttentionFull b);
 
-ML2_FN bool ML2_AttentionFullInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices matrices);
-ML2_FN ML2_LayerCacheInfo ML2_AttentionFullInfoForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices matrices);
+ML2_FN bool ML2_AttentionFullInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input);
+ML2_FN ML2_LayerCacheInfo ML2_AttentionFullInfoForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input);
 ML2_FN bool ML2_AttentionFullInfoForwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input);
 ML2_FN ML2_LayerCacheInfo ML2_AttentionFullInfoForward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input);
 
-ML2_FN bool ML2_AttentionFullForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_AttentionFullForwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_AttentionFullForward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_AttentionFullForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
+ML2_FN void ML2_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN bool ML2_AttentionFullForwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_AttentionFullForward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_AttentionFullForwardStateCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
+ML2_FN void ML2_AttentionFullForwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
+ML2_FN bool ML2_AttentionFullForwardStateCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_AttentionFullForwardState(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache output);
 
-ML2_FN bool ML2_AttentionFullCacheBackwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
-ML2_FN void ML2_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
-ML2_FN bool ML2_AttentionFullCacheBackwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_AttentionFullCacheBackward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_AttentionFullPredictCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output);
-ML2_FN void ML2_AttentionFullPredictMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output);
-ML2_FN bool ML2_AttentionFullPredictCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_AttentionFullPredict(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_AttentionFullCacheBackwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
+ML2_FN void ML2_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN bool ML2_AttentionFullCacheBackwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_AttentionFullCacheBackward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
+ML2_FN bool ML2_AttentionFullCacheBackwardStateCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient);
+ML2_FN void ML2_AttentionFullCacheBackwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient);
+ML2_FN bool ML2_AttentionFullCacheBackwardStateCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_AttentionFullCacheBackwardState(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
 
 // ML2_LayerAttentionFull ⬆️
 
@@ -2579,17 +2480,20 @@ ML2_FN ML2_Size ML2_LayerSizeof(ML2_Layer layer);
 ML2_FN void ML2_LayerCopyHostToDevice(ML2_Layer dstDevice, ML2_Layer srcHost);
 ML2_FN void ML2_LayerCopyDeviceToHost(ML2_Layer dstHost, ML2_Layer srcDevice);
 
-ML2_FN bool ML2_LayerForwardCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_LayerForward(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_LayerForwardCompatible(ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_LayerForward(ML2_Layer layer, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_LayerForwardStateCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_LayerForwardState(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output);
 
-ML2_FN bool ML2_LayerBackwardCompatible(ML2_LayerInfo gradient, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_LayerBackward(ML2_Layer gradient, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient);
+ML2_FN bool ML2_LayerBackwardCompatible(ML2_LayerInfo gradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_LayerBackward(ML2_Layer gradient, ML2_LayerCache input, ML2_LayerCache outputGradient);
+ML2_FN bool ML2_LayerBackwardStateCompatible(ML2_LayerInfo gradient, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_LayerBackwardState(ML2_Layer gradient, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient);
 
-ML2_FN bool ML2_LayerCacheBackwardCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_LayerCacheBackward(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
-
-ML2_FN bool ML2_LayerPredictCompatible(ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_LayerPredict(ML2_Layer layer, ML2_LayerCache input, ML2_LayerCache output);
+ML2_FN bool ML2_LayerCacheBackwardCompatible(ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_LayerCacheBackward(ML2_Layer layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
+ML2_FN bool ML2_LayerCacheBackwardStateCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_LayerCacheBackwardState(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient);
 
 ML2_FN void ML2_LayerGradientDescentOptimize(ML2_Layer layer, ML2_Layer gradient, ML2_Scalar learningRate);
 ML2_FN void ML2_LayerMomentumOptimize(ML2_Layer layer, ML2_Layer gradient, ML2_Layer decayingSum, ML2_Scalar learningRate, ML2_Scalar decayRate);
@@ -2617,8 +2521,8 @@ ML2_FN void ML2_AttentionStateInfoPrint(ML2_LayerStateInfoAttention attention, M
 ML2_FN bool ML2_AttentionStateInfoSame(ML2_LayerStateInfoAttention a, ML2_LayerStateInfoAttention b);
 ML2_FN ML2_Size ML2_AttentionStateInfoSizeof(ML2_LayerStateInfoAttention attention);
 
-ML2_FN bool ML2_AttentionStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices matrices);
-ML2_FN ML2_LayerStateInfo ML2_AttentionStateInfoForwardMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices matrices);
+ML2_FN bool ML2_AttentionStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices input);
+ML2_FN ML2_LayerStateInfo ML2_AttentionStateInfoForwardMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices input);
 ML2_FN bool ML2_AttentionStateInfoForwardCompatible(ML2_LayerInfoAttention info, ML2_LayerCacheInfo input);
 ML2_FN ML2_LayerStateInfo ML2_AttentionStateInfoForward(ML2_LayerInfoAttention info, ML2_LayerCacheInfo input);
 
@@ -2648,8 +2552,8 @@ ML2_FN void ML2_AttentionFullStateInfoPrint(ML2_LayerStateInfoAttentionFull atte
 ML2_FN bool ML2_AttentionFullStateInfoSame(ML2_LayerStateInfoAttentionFull a, ML2_LayerStateInfoAttentionFull b);
 ML2_FN ML2_Size ML2_AttentionFullStateInfoSizeof(ML2_LayerStateInfoAttentionFull attentionFull);
 
-ML2_FN bool ML2_AttentionFullStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices matrices);
-ML2_FN ML2_LayerStateInfo ML2_AttentionFullStateInfoForwardMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices matrices);
+ML2_FN bool ML2_AttentionFullStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices input);
+ML2_FN ML2_LayerStateInfo ML2_AttentionFullStateInfoForwardMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices input);
 ML2_FN bool ML2_AttentionFullStateInfoForwardCompatible(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfo input);
 ML2_FN ML2_LayerStateInfo ML2_AttentionFullStateInfoForward(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfo input);
 
@@ -2774,7 +2678,7 @@ ML2_FN void ML2_VectorsLossBackwardBinaryCrossEntropy(ML2_LayerCacheVectors pred
 
 // ML2_LayerCacheMatrices ⬇️
 
-ML2_FN ML2_LayerCacheInfo ML2_Matrices(ML2_Int samples, ML2_Int height, ML2_Int width, ML2_Int channels);
+ML2_FN ML2_LayerCacheInfo ML2_Matrices(ML2_Int samples, ML2_Int matrices, ML2_Int vectors, ML2_Int scalars);
 ML2_FN ML2_LayerCache ML2_MatricesMake(ML2_LayerCacheInfoMatrices info, ML2_DeviceData data);
 ML2_FN ML2_LayerCache ML2_MatricesNew(ML2_Device device, ML2_LayerCacheInfoMatrices info);
 ML2_FN void ML2_MatricesDestroy(ML2_LayerCacheMatrices *matrices);
@@ -2841,7 +2745,6 @@ ML2_FN void ML2_LayerCacheCopyDeviceToHost(ML2_LayerCache dstHost, ML2_LayerCach
 
 // ML2_Arch ⬇️
 
-#define ML2_ArchMake(...) ((ML2_Arch){sizeof((ML2_LayerInfo[]){__VA_ARGS__}) / sizeof(ML2_LayerInfo), (ML2_LayerInfo[]){__VA_ARGS__}})
 #ifdef __cplusplus
 ML2_FN ML2_Arch ML2_ArchNew(ML2_Int count, ML2_LayerInfo *infos);
 #else
@@ -2864,28 +2767,34 @@ ML2_FN bool ML2_ReinterpretInfoForwardInputCompatible(ML2_TransformReinterpret r
 ML2_FN void ML2_ReinterpretInfoForwardInput(ML2_TransformReinterpret reinterpret, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput);
 
 ML2_FN bool ML2_ReinterpretInfoForwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_ReinterpretInfoForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput);
+ML2_FN void ML2_ReinterpretInfoForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput);
+ML2_FN bool ML2_ReinterpretInfoForwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_ReinterpretInfoForwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput);
 
 ML2_FN bool ML2_ReinterpretInfoBackwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_ReinterpretInfoBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutputGradient);
+ML2_FN void ML2_ReinterpretInfoBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutputGradient);
+ML2_FN bool ML2_ReinterpretInfoBackwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_ReinterpretInfoBackwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutputGradient);
 
 ML2_FN bool ML2_ReinterpretInfoBackwardFullCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_ReinterpretInfoBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedInputGradient, ML2_LayerCacheInfo *reinterpretedOutput, ML2_LayerCacheInfo *reinterpretedOutputGradient);
+ML2_FN void ML2_ReinterpretInfoBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedInputGradient, ML2_LayerCacheInfo *reinterpretedOutput, ML2_LayerCacheInfo *reinterpretedOutputGradient);
+ML2_FN bool ML2_ReinterpretInfoBackwardFullStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_ReinterpretInfoBackwardFullState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedInputGradient, ML2_LayerCacheInfo *reinterpretedOutput, ML2_LayerCacheInfo *reinterpretedOutputGradient);
 
-ML2_FN bool ML2_ReinterpretInfoPredictCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_ReinterpretInfoPredict(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput);
+ML2_FN bool ML2_ReinterpretForwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_ReinterpretForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput);
+ML2_FN bool ML2_ReinterpretForwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_ReinterpretForwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput);
 
-ML2_FN bool ML2_ReinterpretForwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_ReinterpretForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput);
+ML2_FN bool ML2_ReinterpretBackwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_ReinterpretBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutputGradient);
+ML2_FN bool ML2_ReinterpretBackwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_ReinterpretBackwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutputGradient);
 
-ML2_FN bool ML2_ReinterpretBackwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_ReinterpretBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutputGradient);
-
-ML2_FN bool ML2_ReinterpretBackwardFullCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_ReinterpretBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedInputGradient, ML2_LayerCache *reinterpretedOutput, ML2_LayerCache *reinterpretedOutputGradient);
-
-ML2_FN bool ML2_ReinterpretPredictCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_ReinterpretPredict(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput);
+ML2_FN bool ML2_ReinterpretBackwardFullCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_ReinterpretBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedInputGradient, ML2_LayerCache *reinterpretedOutput, ML2_LayerCache *reinterpretedOutputGradient);
+ML2_FN bool ML2_ReinterpretBackwardFullStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_ReinterpretBackwardFullState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedInputGradient, ML2_LayerCache *reinterpretedOutput, ML2_LayerCache *reinterpretedOutputGradient);
 
 // ML2_TransformReinterpret ⬆️
 
@@ -2895,28 +2804,34 @@ ML2_FN bool ML2_TransformInfoForwardInputCompatible(ML2_Transform transform, ML2
 ML2_FN void ML2_TransformInfoForwardInput(ML2_Transform transform, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput);
 
 ML2_FN bool ML2_TransformInfoForwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformInfoForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
+ML2_FN void ML2_TransformInfoForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
+ML2_FN bool ML2_TransformInfoForwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformInfoForwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
 
 ML2_FN bool ML2_TransformInfoBackwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformInfoBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN void ML2_TransformInfoBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN bool ML2_TransformInfoBackwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformInfoBackwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
 
 ML2_FN bool ML2_TransformInfoBackwardFullCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_TransformInfoBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN void ML2_TransformInfoBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN bool ML2_TransformInfoBackwardFullStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_TransformInfoBackwardFullState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
 
-ML2_FN bool ML2_TransformInfoPredictCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformInfoPredict(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
+ML2_FN bool ML2_TransformForwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_TransformForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
+ML2_FN bool ML2_TransformForwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_TransformForwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
 
-ML2_FN bool ML2_TransformForwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_TransformForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
+ML2_FN bool ML2_TransformBackwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
+ML2_FN bool ML2_TransformBackwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformBackwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
 
-ML2_FN bool ML2_TransformBackwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_TransformBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformBackwardFullCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_TransformBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformPredictCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_TransformPredict(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
+ML2_FN bool ML2_TransformBackwardFullCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
+ML2_FN bool ML2_TransformBackwardFullStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformBackwardFullState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
 
 // ML2_Transforms ⬇️
 
@@ -2931,59 +2846,38 @@ ML2_FN ML2_Transform *ML2_TransformsAt(ML2_Transforms transforms, ML2_Int t);
 ML2_FN void ML2_TransformsSort(ML2_Transforms transforms);
 ML2_FN bool ML2_TransformsIsSorted(ML2_Transforms transforms);
 
-ML2_FN bool ML2_TransformsInfoForwardInputAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoForwardInputAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput);
+ML2_FN bool ML2_TransformsInfoForwardInputAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformsInfoForwardInputAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput);
 
-ML2_FN bool ML2_TransformsInfoForwardAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoForwardAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
+ML2_FN bool ML2_TransformsInfoForwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformsInfoForwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
+ML2_FN bool ML2_TransformsInfoForwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformsInfoForwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
 
-ML2_FN bool ML2_TransformsInfoBackwardAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoBackwardAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN bool ML2_TransformsInfoBackwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformsInfoBackwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN bool ML2_TransformsInfoBackwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
+ML2_FN void ML2_TransformsInfoBackwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
 
-ML2_FN bool ML2_TransformsInfoBackwardFullAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_TransformsInfoBackwardFullAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN bool ML2_TransformsInfoBackwardFullAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_TransformsInfoBackwardFullAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
+ML2_FN bool ML2_TransformsInfoBackwardFullStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_TransformsInfoBackwardFullStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
 
-ML2_FN bool ML2_TransformsInfoPredictAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoPredictAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
+ML2_FN bool ML2_TransformsForwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_TransformsForwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
+ML2_FN bool ML2_TransformsForwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
+ML2_FN void ML2_TransformsForwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
 
-ML2_FN bool ML2_TransformsInfoForwardInputAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoForwardInputAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput);
+ML2_FN bool ML2_TransformsBackwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformsBackwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
+ML2_FN bool ML2_TransformsBackwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformsBackwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
 
-ML2_FN bool ML2_TransformsInfoForwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoForwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
-
-ML2_FN bool ML2_TransformsInfoBackwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoBackwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformsInfoBackwardFullAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_TransformsInfoBackwardFullAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformsInfoPredictAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input);
-ML2_FN void ML2_TransformsInfoPredictAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput);
-
-ML2_FN bool ML2_TransformsForwardAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_TransformsForwardAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
-
-ML2_FN bool ML2_TransformsBackwardAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_TransformsBackwardAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformsBackwardFullAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_TransformsBackwardFullAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformsPredictAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_TransformsPredictAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
-
-ML2_FN bool ML2_TransformsForwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_TransformsForwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
-
-ML2_FN bool ML2_TransformsBackwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_TransformsBackwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformsBackwardFullAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
-ML2_FN void ML2_TransformsBackwardFullAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
-
-ML2_FN bool ML2_TransformsPredictAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output);
-ML2_FN void ML2_TransformsPredictAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput);
+ML2_FN bool ML2_TransformsBackwardFullAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformsBackwardFullAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
+ML2_FN bool ML2_TransformsBackwardFullStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient);
+ML2_FN void ML2_TransformsBackwardFullStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient);
 
 // ML2_Transforms ⬆️
 
@@ -3007,9 +2901,6 @@ ML2_FN void ML2_SumCacheBackward(ML2_OperationSum sum, ML2_ModelCache modelCache
 ML2_FN bool ML2_SumCacheBackwardFullCompatible(ML2_OperationSum sum, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient);
 ML2_FN void ML2_SumCacheBackwardFull(ML2_OperationSum sum, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient);
 
-ML2_FN bool ML2_SumPredictCompatible(ML2_OperationSum sum, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_SumPredict(ML2_OperationSum sum, ML2_ModelCache modelCache, ML2_LayerCache input);
-
 // ML2_OperationSum ⬆️
 
 ML2_FN ML2_Int ML2_OperationExecuteIndex(ML2_Operation operation);
@@ -3022,9 +2913,6 @@ ML2_FN void ML2_OperationCacheBackward(ML2_Operation operation, ML2_ModelCache m
 
 ML2_FN bool ML2_OperationCacheBackwardFullCompatible(ML2_Operation operation, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient);
 ML2_FN void ML2_OperationCacheBackwardFull(ML2_Operation operation, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient);
-
-ML2_FN bool ML2_OperationPredictCompatible(ML2_Operation operation, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_OperationPredict(ML2_Operation operation, ML2_ModelCache modelCache, ML2_LayerCache input);
 
 // ML2_Operations ⬇️
 
@@ -3039,29 +2927,14 @@ ML2_FN ML2_Operation *ML2_OperationsAt(ML2_Operations operations, ML2_Int o);
 ML2_FN void ML2_OperationsSort(ML2_Operations operations);
 ML2_FN bool ML2_OperationsIsSorted(ML2_Operations operations);
 
-ML2_FN bool ML2_OperationsForwardAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_OperationsForwardAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input);
+ML2_FN bool ML2_OperationsForwardAtCompatible(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
+ML2_FN void ML2_OperationsForwardAt(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input);
 
-ML2_FN bool ML2_OperationsCacheBackwardAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient);
-ML2_FN void ML2_OperationsCacheBackwardAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient);
+ML2_FN bool ML2_OperationsCacheBackwardAtCompatible(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient);
+ML2_FN void ML2_OperationsCacheBackwardAt(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient);
 
-ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_OperationsCacheBackwardFullAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient);
-
-ML2_FN bool ML2_OperationsPredictAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_OperationsPredictAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input);
-
-ML2_FN bool ML2_OperationsForwardAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_OperationsForwardAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input);
-
-ML2_FN bool ML2_OperationsCacheBackwardAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient);
-ML2_FN void ML2_OperationsCacheBackwardAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient);
-
-ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_OperationsCacheBackwardFullAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient);
-
-ML2_FN bool ML2_OperationsPredictAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_OperationsPredictAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input);
+ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatible(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_OperationsCacheBackwardFullAt(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient);
 
 // ML2_Operations ⬆️
 
@@ -3087,33 +2960,56 @@ ML2_FN bool ML2_ModelCompare(ML2_Model a, ML2_Model b, ML2_Scalar threshold);
 ML2_FN void ML2_ModelCopyHostToDevice(ML2_Model dstDevice, ML2_Model srcHost);
 ML2_FN void ML2_ModelCopyDeviceToHost(ML2_Model dstHost, ML2_Model srcDevice);
 
-ML2_FN bool ML2_ModelForwardCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_ModelForward(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input);
-ML2_FN bool ML2_ModelForwardTransformsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms);
-ML2_FN void ML2_ModelForwardTransforms(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms);
-ML2_FN bool ML2_ModelForwardOperationsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations);
-ML2_FN void ML2_ModelForwardOperations(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelForwardCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
+ML2_FN void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input);
+ML2_FN bool ML2_ModelForwardStateCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
+ML2_FN void ML2_ModelForwardState(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input);
+ML2_FN bool ML2_ModelForwardTransformsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms);
+ML2_FN void ML2_ModelForwardTransforms(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms);
+ML2_FN bool ML2_ModelForwardStateTransformsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms);
+ML2_FN void ML2_ModelForwardStateTransforms(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms);
+ML2_FN bool ML2_ModelForwardOperationsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations);
+ML2_FN void ML2_ModelForwardOperations(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelForwardStateOperationsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations);
+ML2_FN void ML2_ModelForwardStateOperations(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelForwardTransformsOperationsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN void ML2_ModelForwardTransformsOperations(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN bool ML2_ModelForwardStateTransformsOperationsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN void ML2_ModelForwardStateTransformsOperations(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations);
 
-ML2_FN bool ML2_ModelBackwardCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input);
-ML2_FN void ML2_ModelBackward(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input);
-ML2_FN bool ML2_ModelBackwardTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms);
-ML2_FN void ML2_ModelBackwardTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms);
-ML2_FN bool ML2_ModelBackwardOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Operations operations);
-ML2_FN void ML2_ModelBackwardOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input);
+ML2_FN void ML2_ModelBackward(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input);
+ML2_FN bool ML2_ModelBackwardStateCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input);
+ML2_FN void ML2_ModelBackwardState(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input);
+ML2_FN bool ML2_ModelBackwardTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms);
+ML2_FN void ML2_ModelBackwardTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms);
+ML2_FN bool ML2_ModelBackwardStateTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms);
+ML2_FN void ML2_ModelBackwardStateTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms);
+ML2_FN bool ML2_ModelBackwardOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardStateOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardStateOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardStateTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardStateTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations);
 
-ML2_FN bool ML2_ModelBackwardFullCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
-ML2_FN void ML2_ModelBackwardFull(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient);
-ML2_FN bool ML2_ModelBackwardFullTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms);
-ML2_FN void ML2_ModelBackwardFullTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms);
-ML2_FN bool ML2_ModelBackwardFullOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Operations operations);
-ML2_FN void ML2_ModelBackwardFullOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Operations operations);
-
-ML2_FN bool ML2_ModelPredictCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input);
-ML2_FN void ML2_ModelPredict(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input);
-ML2_FN bool ML2_ModelPredictTransformsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms);
-ML2_FN void ML2_ModelPredictTransforms(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms);
-ML2_FN bool ML2_ModelPredictOperationsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations);
-ML2_FN void ML2_ModelPredictOperations(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardFullCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_ModelBackwardFull(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient);
+ML2_FN bool ML2_ModelBackwardFullStateCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient);
+ML2_FN void ML2_ModelBackwardFullState(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient);
+ML2_FN bool ML2_ModelBackwardFullTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms);
+ML2_FN void ML2_ModelBackwardFullTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms);
+ML2_FN bool ML2_ModelBackwardFullStateTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms);
+ML2_FN void ML2_ModelBackwardFullStateTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms);
+ML2_FN bool ML2_ModelBackwardFullOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardFullOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardFullStateOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardFullStateOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardFullTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardFullTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN bool ML2_ModelBackwardFullStateTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms, ML2_Operations operations);
+ML2_FN void ML2_ModelBackwardFullStateTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms, ML2_Operations operations);
 
 ML2_FN bool ML2_ModelGradientDescentOptimizeCompatible(ML2_Model model, ML2_Model modelGradient);
 ML2_FN void ML2_ModelGradientDescentOptimize(ML2_Model model, ML2_Model modelGradient, ML2_OptimizerGradientDescent gradientDescent);
@@ -3136,7 +3032,8 @@ ML2_FN ML2_Size ML2_ModelSizeof(ML2_Model model);
 // ML2_ModelState ⬇️
 
 ML2_FN ML2_ModelState ML2_ModelStateNew(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info);
-ML2_FN ML2_ModelState ML2_ModelStateNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput);
+ML2_FN ML2_ModelState ML2_ModelStateNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms);
+ML2_FN ML2_ModelState ML2_ModelStateNewTransformsOutput(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput);
 ML2_FN void ML2_ModelStateDestroy(ML2_ModelState *modelState);
 ML2_FN void ML2_ModelStateInfoPrint(ML2_ModelState modelState, ML2_Int indent);
 ML2_FN bool ML2_ModelStateInfoSame(ML2_ModelState a, ML2_ModelState b);
@@ -3157,7 +3054,8 @@ ML2_FN ML2_Size ML2_ModelStateSizeof(ML2_ModelState modelState);
 // ML2_ModelCache ⬇️
 
 ML2_FN ML2_ModelCache ML2_ModelCacheNew(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info);
-ML2_FN ML2_ModelCache ML2_ModelCacheNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput);
+ML2_FN ML2_ModelCache ML2_ModelCacheNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms);
+ML2_FN ML2_ModelCache ML2_ModelCacheNewTransformsOutput(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput);
 ML2_FN void ML2_ModelCacheDestroy(ML2_ModelCache *modelCache);
 ML2_FN void ML2_ModelCacheInfoPrint(ML2_ModelCache modelCache, ML2_Int indent);
 ML2_FN bool ML2_ModelCacheInfoSame(ML2_ModelCache a, ML2_ModelCache b);
@@ -4235,53 +4133,6 @@ ML2_FN void ML2_CPU_WeightsCacheBackwardVectors(ML2_LayerWeights weights, ML2_La
     );
 }
 
-ML2_FN void ML2_CPU_WeightsPredictScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatibleScalars(weights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        weights.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int outputs = weights.info.outputs;
-    ML2_Int inputs = weights.info.inputs;
-
-    ML2_CPU_FunctionMultMatrixMatrix(
-        samples, outputs, inputs,
-        false, false,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(weights.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_WeightsPredictVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatibleVectors(weights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        weights.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int outputs = weights.info.outputs;
-    ML2_Int inputs = weights.info.inputs;
-
-    ML2_CPU_FunctionMultMatrixMatrix(
-        samples * vectors, outputs, inputs,
-        false, false,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(weights.data).ptr
-    );
-}
-
 ML2_FN void ML2_CPU_WeightsGradientDescentOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_WeightsInfoSame(weights.info, weightsGradient.info)
@@ -4671,72 +4522,6 @@ ML2_FN void ML2_CPU_BiasesCacheBackwardMatrices(ML2_LayerCacheMatrices inputGrad
     ML2_CPU_MatricesSum(inputGradient, outputGradient);
 }
 
-ML2_FN void ML2_CPU_BiasesPredictScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatibleScalars(biases.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        biases.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int scalars = biases.info.inputs;
-
-    ML2_CPU_FunctionAddMatrixVector(
-        samples, scalars,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(biases.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_BiasesPredictVectors(ML2_LayerBiases biases, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatibleVectors(biases.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        biases.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int scalars = biases.info.inputs;
-
-    ML2_CPU_FunctionAddMatrixVector(
-        samples * vectors, scalars,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(biases.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_BiasesPredictMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatibleMatrices(biases.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        biases.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int matrices = input.info.matrices;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_CPU_FunctionAddMatrixVector(
-        samples * matrices * vectors, scalars,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(biases.data).ptr
-    );
-}
-
 ML2_FN void ML2_CPU_BiasesGradientDescentOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_BiasesInfoSame(biases.info, biasesGradient.info)
@@ -5111,66 +4896,6 @@ ML2_FN void ML2_CPU_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationTyp
     );
 }
 
-ML2_FN void ML2_CPU_ActivationPredictScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleScalars(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_CPU_FunctionActivationForward(
-        samples * scalars,
-        type,
-        ML2_DeviceDataAsCPU(input.data).ptr, ML2_DeviceDataAsCPU(output.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_ActivationPredictVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleVectors(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_CPU_FunctionActivationForward(
-        samples * vectors * scalars,
-        type,
-        ML2_DeviceDataAsCPU(input.data).ptr, ML2_DeviceDataAsCPU(output.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_ActivationPredictMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleMatrices(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int matrices = input.info.matrices;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_CPU_FunctionActivationForward(
-        samples * matrices * vectors * scalars,
-        type,
-        ML2_DeviceDataAsCPU(input.data).ptr, ML2_DeviceDataAsCPU(output.data).ptr
-    );
-}
-
 ML2_FN void ML2_CPU_SoftmaxForwardScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_HARD_ASSERT(
         ML2_SoftmaxForwardCompatibleScalars(input.info, output.info)
@@ -5244,43 +4969,6 @@ ML2_FN void ML2_CPU_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradi
     ML2_CPU_FunctionSoftmaxCacheBackward(
         samples * vectors, scalars,
         ML2_DeviceDataAsCPU(inputGradient.data).ptr, ML2_DeviceDataAsCPU(output.data).ptr, ML2_DeviceDataAsCPU(outputGradient.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_SoftmaxPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_SoftmaxPredictCompatibleScalars(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int scalars = output.info.scalars;
-
-    ML2_CPU_FunctionSoftmaxForward(
-        samples, scalars,
-        ML2_DeviceDataAsCPU(input.data).ptr, ML2_DeviceDataAsCPU(output.data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_SoftmaxPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_SoftmaxPredictCompatibleVectors(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int vectors = output.info.vectors;
-    ML2_Int scalars = output.info.scalars;
-
-    ML2_CPU_FunctionSoftmaxForward(
-        samples * vectors, scalars,
-        ML2_DeviceDataAsCPU(input.data).ptr, ML2_DeviceDataAsCPU(output.data).ptr
     );
 }
 
@@ -5558,63 +5246,6 @@ ML2_FN void ML2_CPU_LinearCacheBackwardVectors(ML2_LayerLinear linear, ML2_Layer
     );
 
     ML2_CPU_WeightsCacheBackwardVectors(ML2_CPU_LinearWeights(linear), inputGradient, outputGradient);
-}
-
-ML2_FN void ML2_CPU_LinearPredictScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_LinearPredictCompatibleScalars(linear.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        linear.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int outputs = linear.info.outputs;
-    ML2_Int inputs = linear.info.inputs;
-
-    ML2_CPU_FunctionMultMatrixMatrix(
-        samples, outputs, inputs,
-        false, false,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(ML2_CPU_LinearWeights(linear).data).ptr
-    );
-    ML2_CPU_FunctionSumMatrixVector(
-        samples, outputs,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(ML2_CPU_LinearBiases(linear).data).ptr
-    );
-}
-
-ML2_FN void ML2_CPU_LinearPredictVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_LinearPredictCompatibleVectors(linear.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        linear.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int vectors = output.info.vectors;
-    ML2_Int outputs = linear.info.outputs;
-    ML2_Int inputs = linear.info.inputs;
-
-    ML2_CPU_FunctionMultMatrixMatrix(
-        samples * vectors, outputs, inputs,
-        false, false,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(ML2_CPU_LinearWeights(linear).data).ptr
-    );
-    ML2_CPU_FunctionSumMatrixVector(
-        samples * vectors, outputs,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(ML2_CPU_LinearBiases(linear).data).ptr
-    );
 }
 
 ML2_FN void ML2_CPU_LinearGradientDescentOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate) {
@@ -6090,60 +5721,6 @@ ML2_FN void ML2_CPU_FiltersCacheBackwardMatrices(ML2_LayerFilters filters, ML2_L
     }
 }
 
-ML2_FN void ML2_CPU_FiltersPredictMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_FiltersPredictCompatibleMatrices(filters.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        filters.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int outputs = filters.info.outputs;
-    ML2_Int inputs = filters.info.inputs;
-
-    ML2_Int inputHeight = input.info.matrices;
-    ML2_Int inputWidth = input.info.vectors;
-    ML2_Int outputHeight = output.info.matrices;
-    ML2_Int outputWidth = output.info.vectors;
-    ML2_Int filtersHeight = filters.info.height;
-    ML2_Int filtersWidth = filters.info.width;
-    ML2_Int paddingHeight = filters.info.paddingHeight;
-    ML2_Int paddingWidth = filters.info.paddingWidth;
-    ML2_Int strideHeight = filters.info.strideHeight;
-    ML2_Int strideWidth = filters.info.strideWidth;
-
-    // TODO(5/10/2026 00:39:05): find a way to not need to clear
-    ML2_CPU_MatricesClear(output);
-    for (ML2_Int s = 0; s < samples; s++) {
-        for (ML2_Int yo = 0; yo < outputHeight; yo++) {
-            for (ML2_Int xo = 0; xo < outputWidth; xo++) {
-                ML2_Scalar *restrict outputPtr = ML2_CPU_MatricesAt(output, s, yo, xo, 0);
-                ML2_Int yfMin = ML2_IntMax(paddingHeight - yo * strideHeight, 0);
-                ML2_Int yfMax = ML2_IntMin(inputHeight - 1 + paddingHeight - yo * strideHeight, filtersHeight - 1);
-                ML2_Int xfMin = ML2_IntMax(paddingWidth - xo * strideWidth, 0);
-                ML2_Int xfMax = ML2_IntMin(inputWidth - 1 + paddingWidth - xo * strideWidth, filtersWidth - 1);
-                for (ML2_Int yf = yfMin; yf <= yfMax; yf++) {
-                    for (ML2_Int xf = xfMin; xf <= xfMax; xf++) {
-                        ML2_Int yi = yo * strideHeight + yf - paddingHeight;
-                        ML2_Int xi = xo * strideWidth + xf - paddingWidth;
-                        const ML2_Scalar *restrict inputPtr = ML2_CPU_MatricesAt(input, s, yi, xi, 0);
-                        for (ML2_Int i = 0; i < inputs; i++) {
-                            const ML2_Scalar *restrict filtersPtr = ML2_CPU_FiltersAt(filters, yf, xf, i, 0);
-                            ML2_Scalar inputScalar = inputPtr[i];
-                            for (ML2_Int o = 0; o < outputs; o++) {
-                                outputPtr[o] += inputScalar * filtersPtr[o];
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 ML2_FN void ML2_CPU_FiltersGradientDescentOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_FiltersInfoSame(filters.info, filtersGradient.info)
@@ -6515,29 +6092,6 @@ ML2_FN void ML2_CPU_ConvCacheBackwardMatrices(ML2_LayerConv conv, ML2_LayerCache
     ML2_CPU_FiltersCacheBackwardMatrices(ML2_CPU_ConvFilters(conv), inputGradient, outputGradient);
 }
 
-ML2_FN void ML2_CPU_ConvPredictMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_ConvPredictCompatibleMatrices(conv.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        conv.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int matrices = output.info.matrices;
-    ML2_Int vectors = output.info.vectors;
-    ML2_Int scalars = output.info.scalars;
-
-    ML2_CPU_FiltersPredictMatrices(ML2_CPU_ConvFilters(conv), input, output);
-    ML2_CPU_FunctionSumMatrixVector(
-        samples * matrices * vectors, scalars,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(ML2_CPU_ConvBiases(conv).data).ptr
-    );
-}
-
 ML2_FN void ML2_CPU_ConvGradientDescentOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_ConvInfoSame(conv.info, convGradient.info)
@@ -6787,57 +6341,6 @@ ML2_FN void ML2_CPU_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool, ML2_
     }
 }
 
-ML2_FN void ML2_CPU_PoolMaxPredictMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolMaxPredictCompatibleMatrices(pool, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_Int inputHeight = input.info.matrices;
-    ML2_Int inputWidth = input.info.vectors;
-    ML2_Int outputHeight = output.info.matrices;
-    ML2_Int outputWidth = output.info.vectors;
-    ML2_Int poolHeight = pool.height;
-    ML2_Int poolWidth = pool.width;
-    ML2_Int paddingHeight = pool.paddingHeight;
-    ML2_Int paddingWidth = pool.paddingWidth;
-    ML2_Int strideHeight = pool.strideHeight;
-    ML2_Int strideWidth = pool.strideWidth;
-
-    // TODO(5/10/2026 00:39:05): find a way to not need to clear
-    // TODO(8/10/2026 00:23:21): ML2_MatricesSet(output, ML2_NegInf); and all the other layers
-    ML2_CPU_FunctionSet(
-        samples * outputHeight * outputWidth * scalars,
-        ML2_NegInf,
-        ML2_DeviceDataAsCPU(output.data).ptr
-    );
-    for (ML2_Int s = 0; s < samples; s++) {
-        for (ML2_Int yo = 0; yo < outputHeight; yo++) {
-            for (ML2_Int xo = 0; xo < outputWidth; xo++) {
-                ML2_Scalar *restrict outputPtr = ML2_CPU_MatricesAt(output, s, yo, xo, 0);
-                ML2_Int yiMin = ML2_IntMax(yo * strideHeight - paddingHeight, 0);
-                ML2_Int yiMax = ML2_IntMin(yo * strideHeight - paddingHeight + poolHeight - 1, inputHeight - 1);
-                ML2_Int xiMin = ML2_IntMax(xo * strideWidth - paddingWidth, 0);
-                ML2_Int xiMax = ML2_IntMin(xo * strideWidth - paddingWidth + poolWidth - 1, inputWidth - 1);
-                for (ML2_Int yi = yiMin; yi <= yiMax; yi++) {
-                    for (ML2_Int xi = xiMin; xi <= xiMax; xi++) {
-                        const ML2_Scalar *restrict inputPtr = ML2_CPU_MatricesAt(input, s, yi, xi, 0);
-                        for (ML2_Int c = 0; c < scalars; c++) {
-                            outputPtr[c] = ML2_Fmax(outputPtr[c], inputPtr[c]);
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 ML2_FN void ML2_CPU_PoolAverageForwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_HARD_ASSERT(
         ML2_PoolAverageForwardCompatibleMatrices(pool, input.info, output.info)
@@ -6927,56 +6430,6 @@ ML2_FN void ML2_CPU_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage po
                             inputGradientPtr[c] += outputGradientPtr[c] / poolArea;
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-ML2_FN void ML2_CPU_PoolAveragePredictMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolAveragePredictCompatibleMatrices(pool, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_Int inputHeight = input.info.matrices;
-    ML2_Int inputWidth = input.info.vectors;
-    ML2_Int outputHeight = output.info.matrices;
-    ML2_Int outputWidth = output.info.vectors;
-    ML2_Int poolHeight = pool.height;
-    ML2_Int poolWidth = pool.width;
-    ML2_Int paddingHeight = pool.paddingHeight;
-    ML2_Int paddingWidth = pool.paddingWidth;
-    ML2_Int strideHeight = pool.strideHeight;
-    ML2_Int strideWidth = pool.strideWidth;
-
-    // TODO(5/10/2026 00:39:05): find a way to not need to clear
-    ML2_CPU_MatricesClear(output);
-    for (ML2_Int s = 0; s < samples; s++) {
-        for (ML2_Int yo = 0; yo < outputHeight; yo++) {
-            for (ML2_Int xo = 0; xo < outputWidth; xo++) {
-                ML2_Scalar *restrict outputPtr = ML2_CPU_MatricesAt(output, s, yo, xo, 0);
-                ML2_Int yiMin = ML2_IntMax(yo * strideHeight - paddingHeight, 0);
-                ML2_Int yiMax = ML2_IntMin(yo * strideHeight - paddingHeight + poolHeight - 1, inputHeight - 1);
-                ML2_Int xiMin = ML2_IntMax(xo * strideWidth - paddingWidth, 0);
-                ML2_Int xiMax = ML2_IntMin(xo * strideWidth - paddingWidth + poolWidth - 1, inputWidth - 1);
-                ML2_Scalar poolArea = (yiMax - yiMin + 1) * (xiMax - xiMin + 1);
-                for (ML2_Int yi = yiMin; yi <= yiMax; yi++) {
-                    for (ML2_Int xi = xiMin; xi <= xiMax; xi++) {
-                        const ML2_Scalar *restrict inputPtr = ML2_CPU_MatricesAt(input, s, yi, xi, 0);
-                        for (ML2_Int c = 0; c < scalars; c++) {
-                            outputPtr[c] += inputPtr[c];
-                        }
-                    }
-                }
-                for (ML2_Int c = 0; c < scalars; c++) {
-                    outputPtr[c] /= poolArea;
                 }
             }
         }
@@ -7098,63 +6551,6 @@ ML2_FN void ML2_CPU_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax po
                             *ML2_CPU_MatricesAt(inputGradient, s, yi, xi, c) += e / sum * (inputScalar + ML2_One - outputScalar) * outputGradientPtr[c];
                         }
                     }
-                }
-            }
-        }
-    }
-}
-
-ML2_FN void ML2_CPU_PoolSoftmaxPredictMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolSoftmaxPredictCompatibleMatrices(pool, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_Int inputHeight = input.info.matrices;
-    ML2_Int inputWidth = input.info.vectors;
-    ML2_Int outputHeight = output.info.matrices;
-    ML2_Int outputWidth = output.info.vectors;
-    ML2_Int poolHeight = pool.height;
-    ML2_Int poolWidth = pool.width;
-    ML2_Int paddingHeight = pool.paddingHeight;
-    ML2_Int paddingWidth = pool.paddingWidth;
-    ML2_Int strideHeight = pool.strideHeight;
-    ML2_Int strideWidth = pool.strideWidth;
-
-    for (ML2_Int s = 0; s < samples; s++) {
-        for (ML2_Int yo = 0; yo < outputHeight; yo++) {
-            for (ML2_Int xo = 0; xo < outputWidth; xo++) {
-                ML2_Scalar *restrict outputPtr = ML2_CPU_MatricesAt(output, s, yo, xo, 0);
-                ML2_Int yiMin = ML2_IntMax(yo * strideHeight - paddingHeight, 0);
-                ML2_Int yiMax = ML2_IntMin(yo * strideHeight - paddingHeight + poolHeight - 1, inputHeight - 1);
-                ML2_Int xiMin = ML2_IntMax(xo * strideWidth - paddingWidth, 0);
-                ML2_Int xiMax = ML2_IntMin(xo * strideWidth - paddingWidth + poolWidth - 1, inputWidth - 1);
-                // TODO(5/10/2026 1:53:25): find a way to make the scalars loop last for cache friendlyness,
-                //                          its not too important no one uses softmax pool (altough i am proud i came up with it)
-                for (ML2_Int c = 0; c < scalars; c++) {
-                    ML2_Scalar max = ML2_NegInf;
-                    for (ML2_Int yi = yiMin; yi <= yiMax; yi++) {
-                        for (ML2_Int xi = xiMin; xi <= xiMax; xi++) {
-                            max = ML2_Fmax(max, *ML2_CPU_MatricesAt(input, s, yi, xi, c));
-                        }
-                    }
-                    ML2_Scalar sum = {};
-                    ML2_Scalar weightedSum = {};
-                    for (ML2_Int yi = yiMin; yi <= yiMax; yi++) {
-                        for (ML2_Int xi = xiMin; xi <= xiMax; xi++) {
-                            ML2_Scalar inputScalar = *ML2_CPU_MatricesAt(input, s, yi, xi, c);
-                            ML2_Scalar e = ML2_Exp(inputScalar - max);
-                            sum += e;
-                            weightedSum += e * inputScalar;
-                        }
-                    }
-                    outputPtr[c] = weightedSum / sum;
                 }
             }
         }
@@ -7412,31 +6808,6 @@ ML2_FN void ML2_CPU_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fused
     );
 }
 
-ML2_FN void ML2_CPU_FusedWeightsPredictVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_FusedWeightsPredictCompatibleVectors(fusedWeights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        fusedWeights.data.device == ML2_DeviceCPU &&
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int matrices = output.info.matrices;
-    ML2_Int vectors = output.info.vectors;
-    ML2_Int outputs = fusedWeights.info.outputs;
-    ML2_Int inputs = fusedWeights.info.inputs;
-
-    ML2_CPU_FunctionMultMatrixMatrix(
-        samples * matrices, vectors * outputs, inputs,
-        false, false,
-        ML2_DeviceDataAsCPU(output.data).ptr,
-        ML2_DeviceDataAsCPU(input.data).ptr,
-        ML2_DeviceDataAsCPU(fusedWeights.data).ptr
-    );
-}
-
 ML2_FN void ML2_CPU_FusedWeightsGradientDescentOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_FusedWeightsInfoSame(fusedWeights.info, fusedWeightsGradient.info)
@@ -7571,9 +6942,74 @@ ML2_FN void ML2_CPU_FusedWeightsAdamWOptimize(ML2_LayerFusedWeights fusedWeights
     );
 }
 
-ML2_FN void ML2_CPU_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_CPU_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionForwardCompatibleMatrices(attention, state.info, input.info, output.info)
+        ML2_AttentionForwardCompatibleMatrices(attention, input.info, output.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == ML2_DeviceCPU &&
+        output.data.device == ML2_DeviceCPU
+    );
+
+    ML2_Int samples = input.info.samples;
+    ML2_Int matrices = input.info.matrices;
+    ML2_Int scalars = input.info.scalars;
+    ML2_Int heads = attention.heads;
+    ML2_Int headScalars = scalars / heads;
+    ML2_Int queryVectors = matrices;
+
+    ML2_Scalar scale = ML2_One / ML2_Sqrt(headScalars);
+
+    for (ML2_Int s = 0; s < samples; s++) {
+        for (ML2_Int qv = 0; qv < queryVectors; qv++) {
+            for (ML2_Int h = 0; h < heads; h++) {
+                ML2_Int headOffset = h * headScalars;
+                const ML2_Scalar *restrict inputQueryPtr = ML2_CPU_MatricesAt(input, s, qv, ML2_AttentionInputIndexQuery, headOffset);
+                ML2_Scalar *restrict outputPtr = ML2_CPU_VectorsAt(output, s, qv, headOffset);
+
+                ML2_Int keyVectorsEnd = qv + 1;
+
+                ML2_Scalar scoreMax = {};
+                /* kv = 0 */ {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, 0, ML2_AttentionInputIndexKey, headOffset);
+                    const ML2_Scalar *restrict inputValuePtr = ML2_CPU_MatricesAt(input, s, 0, ML2_AttentionInputIndexValue, headOffset);
+
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreMax += inputQueryPtr[hc] * inputKeyPtr[hc];
+                        outputPtr[hc] = inputValuePtr[hc];
+                    }
+                    scoreMax *= scale;
+                }
+                ML2_Scalar softmaxSum = ML2_One;
+                for (ML2_Int kv = 1; kv < keyVectorsEnd; kv++) {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexKey, headOffset);
+                    const ML2_Scalar *restrict inputValuePtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexValue, headOffset);
+
+                    ML2_Scalar scoreScalar = {};
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreScalar += inputQueryPtr[hc] * inputKeyPtr[hc];
+                    }
+                    scoreScalar *= scale;
+                    ML2_Scalar scoreNewMax = ML2_Fmax(scoreMax, scoreScalar);
+                    ML2_Scalar correction = ML2_Exp(scoreMax - scoreNewMax);
+                    ML2_Scalar softmaxScalar = ML2_Exp(scoreScalar - scoreNewMax);
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        outputPtr[hc] = outputPtr[hc] * correction + inputValuePtr[hc] * softmaxScalar;
+                    }
+                    softmaxSum = softmaxSum * correction + softmaxScalar;
+                    scoreMax = scoreNewMax;
+                }
+                for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                    outputPtr[hc] /= softmaxSum;
+                }
+            }
+        }
+    }
+}
+
+ML2_FN void ML2_CPU_AttentionForwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionForwardStateCompatibleMatrices(attention, state.info, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCPU &&
@@ -7639,9 +7075,97 @@ ML2_FN void ML2_CPU_AttentionForwardMatrices(ML2_LayerInfoAttention attention, M
     }
 }
 
-ML2_FN void ML2_CPU_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+ML2_FN void ML2_CPU_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionCacheBackwardCompatibleMatrices(attention, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
+        ML2_AttentionCacheBackwardCompatibleMatrices(attention, input.info, inputGradient.info, output.info, outputGradient.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == ML2_DeviceCPU &&
+        inputGradient.data.device == ML2_DeviceCPU &&
+        output.data.device == ML2_DeviceCPU &&
+        outputGradient.data.device == ML2_DeviceCPU
+    );
+
+    ML2_Int samples = output.info.samples;
+    ML2_Int vectors = output.info.vectors;
+    ML2_Int scalars = output.info.scalars;
+    ML2_Int heads = attention.heads;
+    ML2_Int headScalars = scalars / heads;
+
+    ML2_Scalar scaleScalar = ML2_One / ML2_Sqrt(headScalars);
+
+    ML2_Int queryVectors = vectors;
+    for (ML2_Int s = 0; s < samples; s++) {
+        for (ML2_Int qv = 0; qv < queryVectors; qv++) {
+            for (ML2_Int h = 0; h < heads; h++) {
+                ML2_Int headOffset = h * headScalars;
+                const ML2_Scalar *restrict inputQueryPtr = ML2_CPU_MatricesAt(input, s, qv, ML2_AttentionInputIndexQuery, headOffset);
+                ML2_Scalar *restrict inputGradientQueryPtr = ML2_CPU_MatricesAt(inputGradient, s, qv, ML2_AttentionInputIndexQuery, headOffset);
+                const ML2_Scalar *restrict outputPtr = ML2_CPU_VectorsAt(output, s, qv, headOffset);
+                const ML2_Scalar *restrict outputGradientPtr = ML2_CPU_VectorsAt(outputGradient, s, qv, headOffset);
+
+                ML2_Int keyVectorsEnd = qv + 1;
+
+                ML2_Scalar scoreMax = {};
+                /* kv = 0 */ {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, 0, ML2_AttentionInputIndexKey, headOffset);
+
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreMax += inputQueryPtr[hc] * inputKeyPtr[hc];
+                    }
+                    scoreMax *= scaleScalar;
+                }
+                ML2_Scalar softmaxSum = ML2_One;
+                for (ML2_Int kv = 1; kv < keyVectorsEnd; kv++) {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexKey, headOffset);
+
+                    ML2_Scalar scoreScalar = {};
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreScalar += inputQueryPtr[hc] * inputKeyPtr[hc];
+                    }
+                    scoreScalar *= scaleScalar;
+                    ML2_Scalar scoreNewMax = ML2_Fmax(scoreMax, scoreScalar);
+                    ML2_Scalar correction = ML2_Exp(scoreMax - scoreNewMax);
+                    ML2_Scalar softmaxScalar = ML2_Exp(scoreScalar - scoreNewMax);
+                    softmaxSum = softmaxSum * correction + softmaxScalar;
+                    scoreMax = scoreNewMax;
+                }
+
+                ML2_Scalar softmaxGradientSum = {};
+                for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                    softmaxGradientSum += outputPtr[hc] * outputGradientPtr[hc];
+                }
+
+                for (ML2_Int kv = 0; kv < keyVectorsEnd; kv++) {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexKey, headOffset);
+                    ML2_Scalar *restrict inputGradientKeyPtr = ML2_CPU_MatricesAt(inputGradient, s, kv, ML2_AttentionInputIndexKey, headOffset);
+                    const ML2_Scalar *restrict inputValuePtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexValue, headOffset);
+                    ML2_Scalar *restrict inputGradientValuePtr = ML2_CPU_MatricesAt(inputGradient, s, kv, ML2_AttentionInputIndexValue, headOffset);
+
+                    ML2_Scalar scoreScalar = {};
+                    ML2_Scalar softmaxGradientScalar = {};
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreScalar += inputQueryPtr[hc] * inputKeyPtr[hc];
+                        softmaxGradientScalar += inputValuePtr[hc] * outputGradientPtr[hc];
+                    }
+                    scoreScalar *= scaleScalar;
+                    ML2_Scalar softmaxScalar = ML2_Exp(scoreScalar - scoreMax) / softmaxSum;
+                    ML2_Scalar scoreGradientScalar = softmaxScalar * (softmaxGradientScalar - softmaxGradientSum) * scaleScalar;
+
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        inputGradientQueryPtr[hc] += inputKeyPtr[hc] * scoreGradientScalar;
+                        inputGradientKeyPtr[hc] += inputQueryPtr[hc] * scoreGradientScalar;
+                        inputGradientValuePtr[hc] += softmaxScalar * outputGradientPtr[hc];
+                    }
+                }
+            }
+        }
+    }
+}
+
+ML2_FN void ML2_CPU_AttentionCacheBackwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionCacheBackwardStateCompatibleMatrices(attention, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCPU &&
@@ -7704,9 +7228,9 @@ ML2_FN void ML2_CPU_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attent
     }
 }
 
-ML2_FN void ML2_CPU_AttentionPredictMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_CPU_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionPredictCompatibleMatrices(attention, input.info, output.info)
+        ML2_AttentionFullForwardCompatibleMatrices(attentionFull, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         input.data.device == ML2_DeviceCPU &&
@@ -7716,7 +7240,7 @@ ML2_FN void ML2_CPU_AttentionPredictMatrices(ML2_LayerInfoAttention attention, M
     ML2_Int samples = input.info.samples;
     ML2_Int matrices = input.info.matrices;
     ML2_Int scalars = input.info.scalars;
-    ML2_Int heads = attention.heads;
+    ML2_Int heads = attentionFull.heads;
     ML2_Int headScalars = scalars / heads;
     ML2_Int queryVectors = matrices;
 
@@ -7729,7 +7253,7 @@ ML2_FN void ML2_CPU_AttentionPredictMatrices(ML2_LayerInfoAttention attention, M
                 const ML2_Scalar *restrict inputQueryPtr = ML2_CPU_MatricesAt(input, s, qv, ML2_AttentionInputIndexQuery, headOffset);
                 ML2_Scalar *restrict outputPtr = ML2_CPU_VectorsAt(output, s, qv, headOffset);
 
-                ML2_Int keyVectorsEnd = qv + 1;
+                ML2_Int keyVectorsEnd = queryVectors;
 
                 ML2_Scalar scoreMax = {};
                 /* kv = 0 */ {
@@ -7769,9 +7293,9 @@ ML2_FN void ML2_CPU_AttentionPredictMatrices(ML2_LayerInfoAttention attention, M
     }
 }
 
-ML2_FN void ML2_CPU_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_CPU_AttentionFullForwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullForwardCompatibleMatrices(attentionFull, state.info, input.info, output.info)
+        ML2_AttentionFullForwardStateCompatibleMatrices(attentionFull, state.info, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCPU &&
@@ -7837,9 +7361,97 @@ ML2_FN void ML2_CPU_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull atte
     }
 }
 
-ML2_FN void ML2_CPU_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+ML2_FN void ML2_CPU_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullCacheBackwardCompatibleMatrices(attentionFull, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
+        ML2_AttentionFullCacheBackwardCompatibleMatrices(attentionFull, input.info, inputGradient.info, output.info, outputGradient.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == ML2_DeviceCPU &&
+        inputGradient.data.device == ML2_DeviceCPU &&
+        output.data.device == ML2_DeviceCPU &&
+        outputGradient.data.device == ML2_DeviceCPU
+    );
+
+    ML2_Int samples = output.info.samples;
+    ML2_Int vectors = output.info.vectors;
+    ML2_Int scalars = output.info.scalars;
+    ML2_Int heads = attentionFull.heads;
+    ML2_Int headScalars = scalars / heads;
+
+    ML2_Scalar scaleScalar = ML2_One / ML2_Sqrt(headScalars);
+
+    ML2_Int queryVectors = vectors;
+    for (ML2_Int s = 0; s < samples; s++) {
+        for (ML2_Int qv = 0; qv < queryVectors; qv++) {
+            for (ML2_Int h = 0; h < heads; h++) {
+                ML2_Int headOffset = h * headScalars;
+                const ML2_Scalar *restrict inputQueryPtr = ML2_CPU_MatricesAt(input, s, qv, ML2_AttentionInputIndexQuery, headOffset);
+                ML2_Scalar *restrict inputGradientQueryPtr = ML2_CPU_MatricesAt(inputGradient, s, qv, ML2_AttentionInputIndexQuery, headOffset);
+                const ML2_Scalar *restrict outputPtr = ML2_CPU_VectorsAt(output, s, qv, headOffset);
+                const ML2_Scalar *restrict outputGradientPtr = ML2_CPU_VectorsAt(outputGradient, s, qv, headOffset);
+
+                ML2_Int keyVectorsEnd = queryVectors;
+
+                ML2_Scalar scoreMax = {};
+                /* kv = 0 */ {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, 0, ML2_AttentionInputIndexKey, headOffset);
+
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreMax += inputQueryPtr[hc] * inputKeyPtr[hc];
+                    }
+                    scoreMax *= scaleScalar;
+                }
+                ML2_Scalar softmaxSum = ML2_One;
+                for (ML2_Int kv = 1; kv < keyVectorsEnd; kv++) {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexKey, headOffset);
+
+                    ML2_Scalar scoreScalar = {};
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreScalar += inputQueryPtr[hc] * inputKeyPtr[hc];
+                    }
+                    scoreScalar *= scaleScalar;
+                    ML2_Scalar scoreNewMax = ML2_Fmax(scoreMax, scoreScalar);
+                    ML2_Scalar correction = ML2_Exp(scoreMax - scoreNewMax);
+                    ML2_Scalar softmaxScalar = ML2_Exp(scoreScalar - scoreNewMax);
+                    softmaxSum = softmaxSum * correction + softmaxScalar;
+                    scoreMax = scoreNewMax;
+                }
+
+                ML2_Scalar softmaxGradientSum = {};
+                for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                    softmaxGradientSum += outputPtr[hc] * outputGradientPtr[hc];
+                }
+
+                for (ML2_Int kv = 0; kv < keyVectorsEnd; kv++) {
+                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexKey, headOffset);
+                    ML2_Scalar *restrict inputGradientKeyPtr = ML2_CPU_MatricesAt(inputGradient, s, kv, ML2_AttentionInputIndexKey, headOffset);
+                    const ML2_Scalar *restrict inputValuePtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexValue, headOffset);
+                    ML2_Scalar *restrict inputGradientValuePtr = ML2_CPU_MatricesAt(inputGradient, s, kv, ML2_AttentionInputIndexValue, headOffset);
+
+                    ML2_Scalar scoreScalar = {};
+                    ML2_Scalar softmaxGradientScalar = {};
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        scoreScalar += inputQueryPtr[hc] * inputKeyPtr[hc];
+                        softmaxGradientScalar += inputValuePtr[hc] * outputGradientPtr[hc];
+                    }
+                    scoreScalar *= scaleScalar;
+                    ML2_Scalar softmaxScalar = ML2_Exp(scoreScalar - scoreMax) / softmaxSum;
+                    ML2_Scalar scoreGradientScalar = softmaxScalar * (softmaxGradientScalar - softmaxGradientSum) * scaleScalar;
+
+                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
+                        inputGradientQueryPtr[hc] += inputKeyPtr[hc] * scoreGradientScalar;
+                        inputGradientKeyPtr[hc] += inputQueryPtr[hc] * scoreGradientScalar;
+                        inputGradientValuePtr[hc] += softmaxScalar * outputGradientPtr[hc];
+                    }
+                }
+            }
+        }
+    }
+}
+
+ML2_FN void ML2_CPU_AttentionFullCacheBackwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionFullCacheBackwardStateCompatibleMatrices(attentionFull, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCPU &&
@@ -7896,71 +7508,6 @@ ML2_FN void ML2_CPU_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFul
                         inputGradientKeyPtr[hc] += inputQueryPtr[hc] * scoreGradientScalar;
                         inputGradientValuePtr[hc] += softmaxScalar * outputGradientPtr[hc];
                     }
-                }
-            }
-        }
-    }
-}
-
-ML2_FN void ML2_CPU_AttentionFullPredictMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_AttentionFullPredictCompatibleMatrices(attentionFull, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCPU &&
-        output.data.device == ML2_DeviceCPU
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int matrices = input.info.matrices;
-    ML2_Int scalars = input.info.scalars;
-    ML2_Int heads = attentionFull.heads;
-    ML2_Int headScalars = scalars / heads;
-    ML2_Int queryVectors = matrices;
-
-    ML2_Scalar scale = ML2_One / ML2_Sqrt(headScalars);
-
-    for (ML2_Int s = 0; s < samples; s++) {
-        for (ML2_Int qv = 0; qv < queryVectors; qv++) {
-            for (ML2_Int h = 0; h < heads; h++) {
-                ML2_Int headOffset = h * headScalars;
-                const ML2_Scalar *restrict inputQueryPtr = ML2_CPU_MatricesAt(input, s, qv, ML2_AttentionInputIndexQuery, headOffset);
-                ML2_Scalar *restrict outputPtr = ML2_CPU_VectorsAt(output, s, qv, headOffset);
-
-                ML2_Int keyVectorsEnd = queryVectors;
-
-                ML2_Scalar scoreMax = {};
-                /* kv = 0 */ {
-                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, 0, ML2_AttentionInputIndexKey, headOffset);
-                    const ML2_Scalar *restrict inputValuePtr = ML2_CPU_MatricesAt(input, s, 0, ML2_AttentionInputIndexValue, headOffset);
-
-                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
-                        scoreMax += inputQueryPtr[hc] * inputKeyPtr[hc];
-                        outputPtr[hc] = inputValuePtr[hc];
-                    }
-                    scoreMax *= scale;
-                }
-                ML2_Scalar softmaxSum = ML2_One;
-                for (ML2_Int kv = 1; kv < keyVectorsEnd; kv++) {
-                    const ML2_Scalar *restrict inputKeyPtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexKey, headOffset);
-                    const ML2_Scalar *restrict inputValuePtr = ML2_CPU_MatricesAt(input, s, kv, ML2_AttentionInputIndexValue, headOffset);
-
-                    ML2_Scalar scoreScalar = {};
-                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
-                        scoreScalar += inputQueryPtr[hc] * inputKeyPtr[hc];
-                    }
-                    scoreScalar *= scale;
-                    ML2_Scalar scoreNewMax = ML2_Fmax(scoreMax, scoreScalar);
-                    ML2_Scalar correction = ML2_Exp(scoreMax - scoreNewMax);
-                    ML2_Scalar softmaxScalar = ML2_Exp(scoreScalar - scoreNewMax);
-                    for (ML2_Int hc = 0; hc < headScalars; hc++) {
-                        outputPtr[hc] = outputPtr[hc] * correction + inputValuePtr[hc] * softmaxScalar;
-                    }
-                    softmaxSum = softmaxSum * correction + softmaxScalar;
-                    scoreMax = scoreNewMax;
-                }
-                for (ML2_Int hc = 0; hc < headScalars; hc++) {
-                    outputPtr[hc] /= softmaxSum;
                 }
             }
         }
@@ -9395,73 +8942,6 @@ ML2_FN void ML2_CUDA_WeightsCacheBackwardVectors(ML2_LayerWeights weights, ML2_L
     );
 }
 
-ML2_FN void ML2_CUDA_WeightsPredictScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatibleScalars(weights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        weights.data.device == ML2_DeviceCUDA &&
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int outputs = weights.info.outputs;
-    ML2_Int inputs = weights.info.inputs;
-    ML2_Scalar alpha = ML2_One;
-    ML2_Scalar beta = ML2_Zero;
-    const ML2_Scalar *restrict weightsPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(weights.data).ptr;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    ML2_CUBLAS_CHECK_ERROR(
-        cublasSgemm(
-            ML2_CUDA_deviceState.cublasHandle,
-            CUBLAS_OP_T, CUBLAS_OP_N,
-            outputs, samples, inputs,
-            &alpha,
-            weightsPtr, inputs,
-            inputPtr, inputs,
-            &beta,
-            outputPtr, outputs
-        )
-    );
-}
-
-ML2_FN void ML2_CUDA_WeightsPredictVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatibleVectors(weights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        weights.data.device == ML2_DeviceCUDA &&
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int outputs = weights.info.outputs;
-    ML2_Int inputs = weights.info.inputs;
-    ML2_Scalar alpha = ML2_One;
-    ML2_Scalar beta = ML2_Zero;
-    const ML2_Scalar *restrict weightsPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(weights.data).ptr;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    ML2_CUBLAS_CHECK_ERROR(
-        cublasSgemm(
-            ML2_CUDA_deviceState.cublasHandle,
-            CUBLAS_OP_T, CUBLAS_OP_N,
-            outputs, (samples * vectors), inputs,
-            &alpha,
-            weightsPtr, inputs,
-            inputPtr, inputs,
-            &beta,
-            outputPtr, outputs
-        )
-    );
-}
-
 ML2_FN void ML2_CUDA_WeightsGradientDescentOptimize(ML2_LayerWeights weights, ML2_LayerWeights weightsGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_WeightsGradientDescentOptimize");
 }
@@ -9792,18 +9272,6 @@ ML2_FN void ML2_CUDA_BiasesCacheBackwardVectors(ML2_LayerCacheVectors inputGradi
 
 ML2_FN void ML2_CUDA_BiasesCacheBackwardMatrices(ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO();
-}
-
-ML2_FN void ML2_CUDA_BiasesPredictScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_TODO("ML2_CUDA_BiasesPredictScalars");
-}
-
-ML2_FN void ML2_CUDA_BiasesPredictVectors(ML2_LayerBiases biases, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_TODO("ML2_CUDA_BiasesPredictVectors");
-}
-
-ML2_FN void ML2_CUDA_BiasesPredictMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_TODO("ML2_CUDA_BiasesPredictMatrices");
 }
 
 ML2_FN void ML2_CUDA_BiasesGradientDescentOptimize(ML2_LayerBiases biases, ML2_LayerBiases biasesGradient, ML2_Scalar learningRate) {
@@ -10370,135 +9838,6 @@ ML2_FN void ML2_CUDA_ActivationCacheBackwardInputOutputMatrices(ML2_ActivationTy
     );
 }
 
-ML2_FN void ML2_CUDA_ActivationPredictScalars(ML2_ActivationType type, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleScalars(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_Int totalScalars = samples * scalars;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    constexpr ML2_Int blockDimX = 256;
-    constexpr ML2_Int blockDimY = 1;
-    constexpr ML2_Int blockDimZ = 1;
-    ML2_Int gridDimX = ML2_IntDivCeil(totalScalars, blockDimX);
-    constexpr ML2_Int gridDimY = 1;
-    constexpr ML2_Int gridDimZ = 1;
-    constexpr ML2_Int sharedMemBytes = 0;
-
-    void *kernelParams[] = {
-        (void *)&totalScalars, &type,
-        (void *)&inputPtr, (void *)&outputPtr
-    };
-
-    ML2_CUDA_CHECK_ERROR(
-        cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelActivationForward],
-            gridDimX, gridDimY, gridDimZ,
-            blockDimX, blockDimY, blockDimZ,
-            sharedMemBytes,
-            nullptr,
-            kernelParams,
-            nullptr
-        )
-    );
-}
-
-ML2_FN void ML2_CUDA_ActivationPredictVectors(ML2_ActivationType type, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleVectors(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_Int totalScalars = samples * vectors * scalars;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    constexpr ML2_Int blockDimX = 256;
-    constexpr ML2_Int blockDimY = 1;
-    constexpr ML2_Int blockDimZ = 1;
-    ML2_Int gridDimX = ML2_IntDivCeil(totalScalars, blockDimX);
-    constexpr ML2_Int gridDimY = 1;
-    constexpr ML2_Int gridDimZ = 1;
-    constexpr ML2_Int sharedMemBytes = 0;
-
-    void *kernelParams[] = {
-        (void *)&totalScalars, &type,
-        (void *)&inputPtr, (void *)&outputPtr
-    };
-
-    ML2_CUDA_CHECK_ERROR(
-        cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelActivationForward],
-            gridDimX, gridDimY, gridDimZ,
-            blockDimX, blockDimY, blockDimZ,
-            sharedMemBytes,
-            nullptr,
-            kernelParams,
-            nullptr
-        )
-    );
-}
-
-ML2_FN void ML2_CUDA_ActivationPredictMatrices(ML2_ActivationType type, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleMatrices(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int matrices = input.info.matrices;
-    ML2_Int vectors = input.info.vectors;
-    ML2_Int scalars = input.info.scalars;
-
-    ML2_Int totalScalars = samples * matrices * vectors * scalars;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    constexpr ML2_Int blockDimX = 256;
-    constexpr ML2_Int blockDimY = 1;
-    constexpr ML2_Int blockDimZ = 1;
-    ML2_Int gridDimX = ML2_IntDivCeil(totalScalars, blockDimX);
-    constexpr ML2_Int gridDimY = 1;
-    constexpr ML2_Int gridDimZ = 1;
-    constexpr ML2_Int sharedMemBytes = 0;
-
-    void *kernelParams[] = {
-        (void *)&totalScalars, &type,
-        (void *)&inputPtr, (void *)&outputPtr
-    };
-
-    ML2_CUDA_CHECK_ERROR(
-        cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelActivationForward],
-            gridDimX, gridDimY, gridDimZ,
-            blockDimX, blockDimY, blockDimZ,
-            sharedMemBytes,
-            nullptr,
-            kernelParams,
-            nullptr
-        )
-    );
-}
-
 ML2_FN void ML2_CUDA_SoftmaxForwardScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
     ML2_TODO("ML2_CUDA_SoftmaxForwardScalars");
 }
@@ -10513,14 +9852,6 @@ ML2_FN void ML2_CUDA_SoftmaxCacheBackwardScalars(ML2_LayerCacheScalars inputGrad
 
 ML2_FN void ML2_CUDA_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_TODO("ML2_CUDA_SoftmaxCacheBackwardVectors");
-}
-
-ML2_FN void ML2_CUDA_SoftmaxPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_TODO("ML2_CUDA_SoftmaxPredictScalars");
-}
-
-ML2_FN void ML2_CUDA_SoftmaxPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_TODO("ML2_CUDA_SoftmaxPredictVectors");
 }
 
 ML2_FN CUdeviceptr ML2_CUDA_LinearWeightsAt(ML2_LayerLinear linear, ML2_Int o, ML2_Int i) {
@@ -10833,14 +10164,6 @@ ML2_FN void ML2_CUDA_LinearCacheBackwardVectors(ML2_LayerLinear linear, ML2_Laye
     ML2_CUDA_WeightsCacheBackwardVectors(ML2_CUDA_LinearWeights(linear), inputGradient, outputGradient);
 }
 
-ML2_FN void ML2_CUDA_LinearPredictScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_CUDA_LinearForwardScalars(linear, input, output);
-}
-
-ML2_FN void ML2_CUDA_LinearPredictVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_CUDA_LinearForwardVectors(linear, input, output);
-}
-
 ML2_FN void ML2_CUDA_LinearGradientDescentOptimize(ML2_LayerLinear linear, ML2_LayerLinear linearGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_LinearGradientDescentOptimize");
 }
@@ -11076,10 +10399,6 @@ ML2_FN void ML2_CUDA_FiltersCacheBackwardMatrices(ML2_LayerFilters filters, ML2_
     ML2_TODO("ML2_CUDA_FiltersCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_FiltersPredictMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_TODO("ML2_CUDA_FiltersPredictMatrices");
-}
-
 ML2_FN void ML2_CUDA_FiltersGradientDescentOptimize(ML2_LayerFilters filters, ML2_LayerFilters filtersGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_FiltersGradientDescentOptimize");
 }
@@ -11244,10 +10563,6 @@ ML2_FN void ML2_CUDA_ConvCacheBackwardMatrices(ML2_LayerConv conv, ML2_LayerCach
     ML2_TODO("ML2_CUDA_ConvCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_ConvPredictMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_TODO("ML2_CUDA_ConvPredictMatrices");
-}
-
 ML2_FN void ML2_CUDA_ConvGradientDescentOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_ConvGradientDescentOptimize");
 }
@@ -11280,10 +10595,6 @@ ML2_FN void ML2_CUDA_PoolMaxCacheBackwardMatrices(ML2_LayerInfoPoolMax pool, ML2
     ML2_TODO("ML2_CUDA_PoolMaxCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolMaxPredictMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_TODO("ML2_CUDA_PoolMaxPredictMatrices");
-}
-
 ML2_FN void ML2_CUDA_PoolAverageForwardMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_PoolAverageForwardMatrices");
 }
@@ -11292,20 +10603,12 @@ ML2_FN void ML2_CUDA_PoolAverageCacheBackwardMatrices(ML2_LayerInfoPoolAverage p
     ML2_TODO("ML2_CUDA_PoolAverageCacheBackwardMatrices");
 }
 
-ML2_FN void ML2_CUDA_PoolAveragePredictMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_TODO("ML2_CUDA_PoolAveragePredictMatrices");
-}
-
 ML2_FN void ML2_CUDA_PoolSoftmaxForwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
     ML2_TODO("ML2_CUDA_PoolSoftmaxForwardMatrices");
 }
 
 ML2_FN void ML2_CUDA_PoolSoftmaxCacheBackwardMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheMatrices output, ML2_LayerCacheMatrices outputGradient) {
     ML2_TODO("ML2_CUDA_PoolSoftmaxCacheBackwardMatrices");
-}
-
-ML2_FN void ML2_CUDA_PoolSoftmaxPredictMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_TODO("ML2_CUDA_PoolSoftmaxPredictMatrices");
 }
 
 ML2_FN CUdeviceptr ML2_CUDA_FusedWeightsAt(ML2_LayerFusedWeights fusedWeights, ML2_Int w, ML2_Int o, ML2_Int i) {
@@ -11553,41 +10856,6 @@ ML2_FN void ML2_CUDA_FusedWeightsCacheBackwardVectors(ML2_LayerFusedWeights fuse
     );
 }
 
-ML2_FN void ML2_CUDA_FusedWeightsPredictVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_FusedWeightsPredictCompatibleVectors(fusedWeights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        fusedWeights.data.device == ML2_DeviceCUDA &&
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = output.info.samples;
-    ML2_Int matrices = output.info.matrices;
-    ML2_Int vectors = output.info.vectors;
-    ML2_Int outputs = fusedWeights.info.outputs;
-    ML2_Int inputs = fusedWeights.info.inputs;
-    ML2_Scalar alpha = ML2_One;
-    ML2_Scalar beta = ML2_Zero;
-    const ML2_Scalar *restrict fusedWeightsPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(fusedWeights.data).ptr;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    ML2_CUBLAS_CHECK_ERROR(
-        cublasSgemm(
-            ML2_CUDA_deviceState.cublasHandle,
-            CUBLAS_OP_T, CUBLAS_OP_N,
-            (vectors * outputs), (samples * matrices), inputs,
-            &alpha,
-            fusedWeightsPtr, inputs,
-            inputPtr, inputs,
-            &beta,
-            outputPtr, (vectors * outputs)
-        )
-    );
-}
-
 ML2_FN void ML2_CUDA_FusedWeightsGradientDescentOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_Scalar learningRate) {
     ML2_TODO("ML2_CUDA_FusedWeightsGradientDescentOptimize");
 }
@@ -11708,12 +10976,11 @@ ML2_FN void ML2_CUDA_FusedWeightsAdamWOptimize(ML2_LayerFusedWeights fusedWeight
     );
 }
 
-ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionForwardCompatibleMatrices(attention, state.info, input.info, output.info)
+        ML2_AttentionForwardCompatibleMatrices(attention, input.info, output.info)
     );
     ML2_HARD_ASSERT(
-        state.data.device == ML2_DeviceCUDA &&
         input.data.device == ML2_DeviceCUDA &&
         output.data.device == ML2_DeviceCUDA
     );
@@ -11723,7 +10990,6 @@ ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, 
     ML2_Int scalars = input.info.scalars;
     ML2_Int heads = attention.heads;
     ML2_Int queryVectors = matrices;
-    ML2_Scalar *restrict statePtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(state.data).ptr;
     const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
     ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
 
@@ -11737,7 +11003,7 @@ ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, 
 
     void *kernelParams[] = {
         &samples, &queryVectors, &scalars, &heads,
-        (void *)&statePtr, (void *)&inputPtr, (void *)&outputPtr
+        (void *)&inputPtr, (void *)&outputPtr
     };
 
     ML2_CUDA_CHECK_ERROR(
@@ -11753,9 +11019,101 @@ ML2_FN void ML2_CUDA_AttentionForwardMatrices(ML2_LayerInfoAttention attention, 
     );
 }
 
-ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+ML2_FN void ML2_CUDA_AttentionForwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionCacheBackwardCompatibleMatrices(attention, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
+        ML2_AttentionForwardStateCompatibleMatrices(attention, state.info, input.info, output.info)
+    );
+    ML2_HARD_ASSERT(
+        state.data.device == ML2_DeviceCUDA &&
+        input.data.device == ML2_DeviceCUDA &&
+        output.data.device == ML2_DeviceCUDA
+    );
+
+    ML2_Int samples = input.info.samples;
+    ML2_Int matrices = input.info.matrices;
+    ML2_Int scalars = input.info.scalars;
+    ML2_Int heads = attention.heads;
+    ML2_Int queryVectors = matrices;
+    ML2_Scalar *restrict statePtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(state.data).ptr;
+    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
+    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
+
+    constexpr ML2_Int blockDimX = 256;
+    constexpr ML2_Int blockDimY = 1;
+    constexpr ML2_Int blockDimZ = 1;
+    ML2_Int gridDimX = ML2_IntDivCeil(samples * queryVectors * heads, blockDimX);
+    constexpr ML2_Int gridDimY = 1;
+    constexpr ML2_Int gridDimZ = 1;
+    constexpr ML2_Int sharedMemBytes = 0;
+
+    void *kernelParams[] = {
+        &samples, &queryVectors, &scalars, &heads,
+        (void *)&statePtr, (void *)&inputPtr, (void *)&outputPtr
+    };
+
+    ML2_CUDA_CHECK_ERROR(
+        cuLaunchKernel(
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionForwardStateMatrices],
+            gridDimX, gridDimY, gridDimZ,
+            blockDimX, blockDimY, blockDimZ,
+            sharedMemBytes,
+            nullptr,
+            kernelParams,
+            nullptr
+        )
+    );
+}
+
+ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionCacheBackwardCompatibleMatrices(attention, input.info, inputGradient.info, output.info, outputGradient.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == ML2_DeviceCUDA &&
+        inputGradient.data.device == ML2_DeviceCUDA &&
+        output.data.device == ML2_DeviceCUDA &&
+        outputGradient.data.device == ML2_DeviceCUDA
+    );
+
+    ML2_Int samples = input.info.samples;
+    ML2_Int matrices = input.info.matrices;
+    ML2_Int scalars = input.info.scalars;
+    ML2_Int heads = attention.heads;
+    ML2_Int queryVectors = matrices;
+    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
+    ML2_Scalar *restrict inputGradientPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(inputGradient.data).ptr;
+    const ML2_Scalar *restrict outputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
+    const ML2_Scalar *restrict outputGradientPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(outputGradient.data).ptr;
+
+    constexpr ML2_Int blockDimX = 256;
+    constexpr ML2_Int blockDimY = 1;
+    constexpr ML2_Int blockDimZ = 1;
+    ML2_Int gridDimX = ML2_IntDivCeil(samples * queryVectors * heads, blockDimX);
+    constexpr ML2_Int gridDimY = 1;
+    constexpr ML2_Int gridDimZ = 1;
+    constexpr ML2_Int sharedMemBytes = 0;
+
+    void *kernelParams[] = {
+        &samples, &queryVectors, &scalars, &heads,
+        (void *)&inputPtr, (void *)&inputGradientPtr, (void *)&outputPtr, (void *)&outputGradientPtr
+    };
+
+    ML2_CUDA_CHECK_ERROR(
+        cuLaunchKernel(
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionCacheBackwardMatrices],
+            gridDimX, gridDimY, gridDimZ,
+            blockDimX, blockDimY, blockDimZ,
+            sharedMemBytes,
+            nullptr,
+            kernelParams,
+            nullptr
+        )
+    );
+}
+
+ML2_FN void ML2_CUDA_AttentionCacheBackwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionCacheBackwardStateCompatibleMatrices(attention, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCUDA &&
@@ -11791,7 +11149,7 @@ ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention atten
 
     ML2_CUDA_CHECK_ERROR(
         cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionCacheBackwardMatrices],
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionCacheBackwardStateMatrices],
             gridDimX, gridDimY, gridDimZ,
             blockDimX, blockDimY, blockDimZ,
             sharedMemBytes,
@@ -11802,9 +11160,9 @@ ML2_FN void ML2_CUDA_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention atten
     );
 }
 
-ML2_FN void ML2_CUDA_AttentionPredictMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_CUDA_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionPredictCompatibleMatrices(attention, input.info, output.info)
+        ML2_AttentionFullForwardCompatibleMatrices(attentionFull, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         input.data.device == ML2_DeviceCUDA &&
@@ -11814,7 +11172,7 @@ ML2_FN void ML2_CUDA_AttentionPredictMatrices(ML2_LayerInfoAttention attention, 
     ML2_Int samples = input.info.samples;
     ML2_Int matrices = input.info.matrices;
     ML2_Int scalars = input.info.scalars;
-    ML2_Int heads = attention.heads;
+    ML2_Int heads = attentionFull.heads;
     ML2_Int queryVectors = matrices;
     const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
     ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
@@ -11834,7 +11192,7 @@ ML2_FN void ML2_CUDA_AttentionPredictMatrices(ML2_LayerInfoAttention attention, 
 
     ML2_CUDA_CHECK_ERROR(
         cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionPredictMatrices],
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullForwardMatrices],
             gridDimX, gridDimY, gridDimZ,
             blockDimX, blockDimY, blockDimZ,
             sharedMemBytes,
@@ -11845,9 +11203,9 @@ ML2_FN void ML2_CUDA_AttentionPredictMatrices(ML2_LayerInfoAttention attention, 
     );
 }
 
-ML2_FN void ML2_CUDA_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_CUDA_AttentionFullForwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullForwardCompatibleMatrices(attentionFull, state.info, input.info, output.info)
+        ML2_AttentionFullForwardStateCompatibleMatrices(attentionFull, state.info, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCUDA &&
@@ -11879,7 +11237,7 @@ ML2_FN void ML2_CUDA_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull att
 
     ML2_CUDA_CHECK_ERROR(
         cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullForwardMatrices],
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullForwardStateMatrices],
             gridDimX, gridDimY, gridDimZ,
             blockDimX, blockDimY, blockDimZ,
             sharedMemBytes,
@@ -11890,9 +11248,56 @@ ML2_FN void ML2_CUDA_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull att
     );
 }
 
-ML2_FN void ML2_CUDA_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+ML2_FN void ML2_CUDA_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullCacheBackwardCompatibleMatrices(attentionFull, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
+        ML2_AttentionFullCacheBackwardCompatibleMatrices(attentionFull, input.info, inputGradient.info, output.info, outputGradient.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == ML2_DeviceCUDA &&
+        inputGradient.data.device == ML2_DeviceCUDA &&
+        output.data.device == ML2_DeviceCUDA &&
+        outputGradient.data.device == ML2_DeviceCUDA
+    );
+
+    ML2_Int samples = input.info.samples;
+    ML2_Int matrices = input.info.matrices;
+    ML2_Int scalars = input.info.scalars;
+    ML2_Int heads = attentionFull.heads;
+    ML2_Int queryVectors = matrices;
+    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
+    ML2_Scalar *restrict inputGradientPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(inputGradient.data).ptr;
+    const ML2_Scalar *restrict outputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
+    const ML2_Scalar *restrict outputGradientPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(outputGradient.data).ptr;
+
+    constexpr ML2_Int blockDimX = 256;
+    constexpr ML2_Int blockDimY = 1;
+    constexpr ML2_Int blockDimZ = 1;
+    ML2_Int gridDimX = ML2_IntDivCeil(samples * queryVectors * heads, blockDimX);
+    constexpr ML2_Int gridDimY = 1;
+    constexpr ML2_Int gridDimZ = 1;
+    constexpr ML2_Int sharedMemBytes = 0;
+
+    void *kernelParams[] = {
+        &samples, &queryVectors, &scalars, &heads,
+        (void *)&inputPtr, (void *)&inputGradientPtr, (void *)&outputPtr, (void *)&outputGradientPtr
+    };
+
+    ML2_CUDA_CHECK_ERROR(
+        cuLaunchKernel(
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullCacheBackwardMatrices],
+            gridDimX, gridDimY, gridDimZ,
+            blockDimX, blockDimY, blockDimZ,
+            sharedMemBytes,
+            nullptr,
+            kernelParams,
+            nullptr
+        )
+    );
+}
+
+ML2_FN void ML2_CUDA_AttentionFullCacheBackwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionFullCacheBackwardStateCompatibleMatrices(attentionFull, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
     );
     ML2_HARD_ASSERT(
         state.data.device == ML2_DeviceCUDA &&
@@ -11928,50 +11333,7 @@ ML2_FN void ML2_CUDA_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFu
 
     ML2_CUDA_CHECK_ERROR(
         cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullCacheBackwardMatrices],
-            gridDimX, gridDimY, gridDimZ,
-            blockDimX, blockDimY, blockDimZ,
-            sharedMemBytes,
-            nullptr,
-            kernelParams,
-            nullptr
-        )
-    );
-}
-
-ML2_FN void ML2_CUDA_AttentionFullPredictMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_AttentionFullPredictCompatibleMatrices(attentionFull, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == ML2_DeviceCUDA &&
-        output.data.device == ML2_DeviceCUDA
-    );
-
-    ML2_Int samples = input.info.samples;
-    ML2_Int matrices = input.info.matrices;
-    ML2_Int scalars = input.info.scalars;
-    ML2_Int heads = attentionFull.heads;
-    ML2_Int queryVectors = matrices;
-    const ML2_Scalar *restrict inputPtr = (const ML2_Scalar *)ML2_DeviceDataAsCUDA(input.data).ptr;
-    ML2_Scalar *restrict outputPtr = (ML2_Scalar *)ML2_DeviceDataAsCUDA(output.data).ptr;
-
-    constexpr ML2_Int blockDimX = 256;
-    constexpr ML2_Int blockDimY = 1;
-    constexpr ML2_Int blockDimZ = 1;
-    ML2_Int gridDimX = ML2_IntDivCeil(samples * queryVectors * heads, blockDimX);
-    constexpr ML2_Int gridDimY = 1;
-    constexpr ML2_Int gridDimZ = 1;
-    constexpr ML2_Int sharedMemBytes = 0;
-
-    void *kernelParams[] = {
-        &samples, &queryVectors, &scalars, &heads,
-        (void *)&inputPtr, (void *)&outputPtr
-    };
-
-    ML2_CUDA_CHECK_ERROR(
-        cuLaunchKernel(
-            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullPredictMatrices],
+            ML2_CUDA_deviceState.cudaKernels[ML2_CUDA_KernelAttentionFullCacheBackwardStateMatrices],
             gridDimX, gridDimY, gridDimZ,
             blockDimX, blockDimY, blockDimZ,
             sharedMemBytes,
@@ -12727,61 +12089,6 @@ ML2_FN void ML2_IdentityCacheBackward(ML2_LayerCache inputGradient, ML2_LayerCac
     }
 }
 
-ML2_FN bool ML2_IdentityPredictCompatibleScalars(ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output) {
-    return ML2_ScalarsInfoSame(input, output);
-}
-
-ML2_FN void ML2_IdentityPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_IdentityPredictCompatibleScalars(input.info, output.info)
-    );
-    ML2_ScalarsCopy(output, input);
-}
-
-ML2_FN bool ML2_IdentityPredictCompatibleVectors(ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output) {
-    return ML2_VectorsInfoSame(input, output);
-}
-
-ML2_FN void ML2_IdentityPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_IdentityPredictCompatibleVectors(input.info, output.info)
-    );
-    ML2_VectorsCopy(output, input);
-}
-
-ML2_FN bool ML2_IdentityPredictCompatibleMatrices(ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    return ML2_MatricesInfoSame(input, output);
-}
-
-ML2_FN void ML2_IdentityPredictMatrices(ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_IdentityPredictCompatibleMatrices(input.info, output.info)
-    );
-    ML2_MatricesCopy(output, input);
-}
-
-ML2_FN bool ML2_IdentityPredictCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: return ML2_IdentityPredictCompatibleScalars(ML2_LayerCacheInfoAsScalars(input), ML2_LayerCacheInfoAsScalars(output));
-        case ML2_LayerCacheTypeVectors: return ML2_IdentityPredictCompatibleVectors(ML2_LayerCacheInfoAsVectors(input), ML2_LayerCacheInfoAsVectors(output));
-        case ML2_LayerCacheTypeMatrices: return ML2_IdentityPredictCompatibleMatrices(ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsMatrices(output));
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_IdentityPredict(ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_IdentityPredictCompatible(ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_IdentityPredictScalars(ML2_LayerCacheAsScalars(input), ML2_LayerCacheAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: ML2_IdentityPredictVectors(ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsVectors(output)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_IdentityPredictMatrices(ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
 // ML2_LayerIdentity ⬆️
 
 // ML2_LayerWeights ⬇️
@@ -13229,77 +12536,6 @@ ML2_FN void ML2_WeightsCacheBackward(ML2_LayerWeights weights, ML2_LayerCache in
     switch (inputGradient.type) {
         case ML2_LayerCacheTypeScalars: ML2_WeightsCacheBackwardScalars(weights, ML2_LayerCacheAsScalars(inputGradient), ML2_LayerCacheAsScalars(outputGradient)); break;
         case ML2_LayerCacheTypeVectors: ML2_WeightsCacheBackwardVectors(weights, ML2_LayerCacheAsVectors(inputGradient), ML2_LayerCacheAsVectors(outputGradient)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> Weights may or may not be a feature in the future");
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_WeightsPredictCompatibleScalars(ML2_LayerInfoWeights weights, ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output) {
-    return input.scalars == weights.inputs &&
-           output.samples == input.samples &&
-           output.scalars == weights.outputs;
-}
-
-ML2_FN void ML2_WeightsPredictScalars(ML2_LayerWeights weights, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatibleScalars(weights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        weights.data.device == input.data.device &&
-        weights.data.device == output.data.device
-    );
-    ML2_Device device = weights.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_WeightsPredictScalars(weights, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_WeightsPredictScalars(weights, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_WeightsPredictCompatibleVectors(ML2_LayerInfoWeights weights, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output) {
-    return input.scalars == weights.inputs &&
-           output.samples == input.samples &&
-           output.vectors == input.vectors &&
-           output.scalars == weights.outputs;
-}
-
-ML2_FN void ML2_WeightsPredictVectors(ML2_LayerWeights weights, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatibleVectors(weights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        weights.data.device == input.data.device &&
-        weights.data.device == output.data.device
-    );
-    ML2_Device device = weights.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_WeightsPredictVectors(weights, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_WeightsPredictVectors(weights, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_WeightsPredictCompatible(ML2_LayerInfoWeights weights, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: return ML2_WeightsPredictCompatibleScalars(weights, ML2_LayerCacheInfoAsScalars(input), ML2_LayerCacheInfoAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: return ML2_WeightsPredictCompatibleVectors(weights, ML2_LayerCacheInfoAsVectors(input), ML2_LayerCacheInfoAsVectors(output)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> Weights may or may not be a feature in the future");
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_WeightsPredict(ML2_LayerWeights weights, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_WeightsPredictCompatible(weights.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_WeightsPredictScalars(weights, ML2_LayerCacheAsScalars(input), ML2_LayerCacheAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: ML2_WeightsPredictVectors(weights, ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsVectors(output)); break;
         case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> Weights may or may not be a feature in the future");
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
@@ -13941,97 +13177,6 @@ ML2_FN void ML2_BiasesCacheBackward(ML2_LayerCache inputGradient, ML2_LayerCache
         case ML2_LayerCacheTypeScalars: ML2_BiasesCacheBackwardScalars(ML2_LayerCacheAsScalars(inputGradient), ML2_LayerCacheAsScalars(outputGradient)); break;
         case ML2_LayerCacheTypeVectors: ML2_BiasesCacheBackwardVectors(ML2_LayerCacheAsVectors(inputGradient), ML2_LayerCacheAsVectors(outputGradient)); break;
         case ML2_LayerCacheTypeMatrices: ML2_BiasesCacheBackwardMatrices(ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsMatrices(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_BiasesPredictCompatibleScalars(ML2_LayerInfoBiases biases, ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output) {
-    return biases.inputs == output.scalars &&
-           ML2_ScalarsInfoSame(input, output);
-}
-
-ML2_FN void ML2_BiasesPredictScalars(ML2_LayerBiases biases, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatibleScalars(biases.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        biases.data.device == input.data.device &&
-        biases.data.device == output.data.device
-    );
-    ML2_Device device = biases.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_BiasesPredictScalars(biases, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_BiasesPredictScalars(biases, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_BiasesPredictCompatibleVectors(ML2_LayerInfoBiases biases, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output) {
-    return biases.inputs == output.scalars &&
-           ML2_VectorsInfoSame(input, output);
-}
-
-ML2_FN void ML2_BiasesPredictVectors(ML2_LayerBiases biases, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatibleVectors(biases.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        biases.data.device == input.data.device &&
-        biases.data.device == output.data.device
-    );
-    ML2_Device device = biases.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_BiasesPredictVectors(biases, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_BiasesPredictVectors(biases, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_BiasesPredictCompatibleMatrices(ML2_LayerInfoBiases biases, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    return biases.inputs == output.scalars &&
-           ML2_MatricesInfoSame(input, output);
-}
-
-ML2_FN void ML2_BiasesPredictMatrices(ML2_LayerBiases biases, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatibleMatrices(biases.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        biases.data.device == input.data.device &&
-        biases.data.device == output.data.device
-    );
-    ML2_Device device = biases.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_BiasesPredictMatrices(biases, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_BiasesPredictMatrices(biases, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_BiasesPredictCompatible(ML2_LayerInfoBiases biases, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: return ML2_BiasesPredictCompatibleScalars(biases, ML2_LayerCacheInfoAsScalars(input), ML2_LayerCacheInfoAsScalars(output));
-        case ML2_LayerCacheTypeVectors: return ML2_BiasesPredictCompatibleVectors(biases, ML2_LayerCacheInfoAsVectors(input), ML2_LayerCacheInfoAsVectors(output));
-        case ML2_LayerCacheTypeMatrices: return ML2_BiasesPredictCompatibleMatrices(biases, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsMatrices(output));
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_BiasesPredict(ML2_LayerBiases biases, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_BiasesPredictCompatible(biases.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_BiasesPredictScalars(biases, ML2_LayerCacheAsScalars(input), ML2_LayerCacheAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: ML2_BiasesPredictVectors(biases, ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsVectors(output)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_BiasesPredictMatrices(biases, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -14699,85 +13844,6 @@ ML2_FN void ML2_ActivationCacheBackward(ML2_LayerInfoActivation activation, ML2_
     }
 }
 
-ML2_FN bool ML2_ActivationPredictCompatibleScalars(ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output) {
-    return ML2_ScalarsInfoSame(input, output);
-}
-
-ML2_FN void ML2_ActivationPredictScalars(ML2_LayerInfoActivation activation, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleScalars(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_ActivationPredictScalars(activation.type, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_ActivationPredictScalars(activation.type, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_ActivationPredictCompatibleVectors(ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output) {
-    return ML2_VectorsInfoSame(input, output);
-}
-
-ML2_FN void ML2_ActivationPredictVectors(ML2_LayerInfoActivation activation, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleVectors(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_ActivationPredictVectors(activation.type, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_ActivationPredictVectors(activation.type, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_ActivationPredictCompatibleMatrices(ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    return ML2_MatricesInfoSame(input, output);
-}
-
-ML2_FN void ML2_ActivationPredictMatrices(ML2_LayerInfoActivation activation, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatibleMatrices(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_ActivationPredictMatrices(activation.type, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_ActivationPredictMatrices(activation.type, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_ActivationPredictCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    return ML2_LayerCacheInfoSame(input, output);
-}
-
-ML2_FN void ML2_ActivationPredict(ML2_LayerInfoActivation activation, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_ActivationPredictCompatible(ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_ActivationPredictScalars(activation, ML2_LayerCacheAsScalars(input), ML2_LayerCacheAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: ML2_ActivationPredictVectors(activation, ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsVectors(output)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_ActivationPredictMatrices(activation, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
 // ML2_LayerActivation ⬆️
 
 // ML2_LayerSoftmax ⬇️
@@ -14903,64 +13969,6 @@ ML2_FN void ML2_SoftmaxCacheBackwardVectors(ML2_LayerCacheVectors inputGradient,
         case ML2_DeviceCPU: ML2_CPU_SoftmaxCacheBackwardVectors(inputGradient, output, outputGradient); break;
 #ifdef ML2_CUDA_ENABLE
         case ML2_DeviceCUDA: ML2_CUDA_SoftmaxCacheBackwardVectors(inputGradient, output, outputGradient); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_SoftmaxPredictCompatible(ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    return ML2_LayerCacheInfoSame(input, output);
-}
-
-ML2_FN void ML2_SoftmaxPredict(ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_SoftmaxPredictCompatible(ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_SoftmaxPredictScalars(ML2_LayerCacheAsScalars(input), ML2_LayerCacheAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: ML2_SoftmaxPredictVectors(ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsVectors(output)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> Softmax may or may not be a feature in the future");
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_SoftmaxPredictCompatibleScalars(ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output) {
-    return ML2_ScalarsInfoSame(input, output);
-}
-
-ML2_FN void ML2_SoftmaxPredictScalars(ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_SoftmaxPredictCompatibleScalars(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_SoftmaxPredictScalars(input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_SoftmaxPredictScalars(input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_SoftmaxPredictCompatibleVectors(ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output) {
-    return ML2_VectorsInfoSame(input, output);
-}
-
-ML2_FN void ML2_SoftmaxPredictVectors(ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_SoftmaxPredictCompatibleVectors(input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_SoftmaxPredictVectors(input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_SoftmaxPredictVectors(input, output); break;
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
@@ -15441,66 +14449,6 @@ ML2_FN void ML2_LinearCacheBackward(ML2_LayerLinear linear, ML2_LayerCache input
     switch (inputGradient.type) {
         case ML2_LayerCacheTypeScalars: ML2_LinearCacheBackwardScalars(linear, ML2_LayerCacheAsScalars(inputGradient), ML2_LayerCacheAsScalars(outputGradient)); break;
         case ML2_LayerCacheTypeVectors: ML2_LinearCacheBackwardVectors(linear, ML2_LayerCacheAsVectors(inputGradient), ML2_LayerCacheAsVectors(outputGradient)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> Linear may or may not be a feature in the future");
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_LinearPredictCompatibleScalars(ML2_LayerInfoLinear linear, ML2_LayerCacheInfoScalars input, ML2_LayerCacheInfoScalars output) {
-    return ML2_WeightsPredictCompatibleScalars(ML2_LinearInfoWeights(linear), input, output);
-}
-
-ML2_FN void ML2_LinearPredictScalars(ML2_LayerLinear linear, ML2_LayerCacheScalars input, ML2_LayerCacheScalars output) {
-    ML2_HARD_ASSERT(
-        ML2_LinearPredictCompatibleScalars(linear.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        linear.data.device == input.data.device &&
-        linear.data.device == output.data.device
-    );
-    ML2_Device device = linear.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_LinearPredictScalars(linear, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_LinearPredictScalars(linear, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_LinearPredictCompatibleVectors(ML2_LayerInfoLinear linear, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoVectors output) {
-    return ML2_WeightsPredictCompatibleVectors(ML2_LinearInfoWeights(linear), input, output);
-}
-
-ML2_FN void ML2_LinearPredictVectors(ML2_LayerLinear linear, ML2_LayerCacheVectors input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_LinearPredictCompatibleVectors(linear.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        linear.data.device == input.data.device &&
-        linear.data.device == output.data.device
-    );
-    ML2_Device device = linear.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_LinearPredictVectors(linear, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_LinearPredictVectors(linear, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_LinearPredictCompatible(ML2_LayerInfoLinear linear, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    return ML2_WeightsPredictCompatible(ML2_LinearInfoWeights(linear), input, output);
-}
-
-ML2_FN void ML2_LinearPredict(ML2_LayerLinear linear, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_LinearPredictCompatible(linear.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_LinearPredictScalars(linear, ML2_LayerCacheAsScalars(input), ML2_LayerCacheAsScalars(output)); break;
-        case ML2_LayerCacheTypeVectors: ML2_LinearPredictVectors(linear, ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsVectors(output)); break;
         case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> Linear may or may not be a feature in the future");
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
@@ -16016,56 +14964,6 @@ ML2_FN void ML2_FiltersCacheBackward(ML2_LayerFilters filters, ML2_LayerCache in
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Filters may or may not be a feature in the future"); break;
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Filters may or may not be a feature in the future"); break;
         case ML2_LayerCacheTypeMatrices: ML2_FiltersCacheBackwardMatrices(filters, ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsMatrices(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_FiltersPredictCompatibleMatrices(ML2_LayerInfoFilters filters, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    ML2_Int outputHeight = ML2_FiltersInfoOutputHeight(filters, input.matrices);
-    ML2_Int outputWidth = ML2_FiltersInfoOutputWidth(filters, input.vectors);
-    return input.scalars == filters.inputs &&
-           output.samples == input.samples &&
-           output.matrices == outputHeight &&
-           output.vectors == outputWidth &&
-           output.scalars == filters.outputs;
-}
-
-ML2_FN void ML2_FiltersPredictMatrices(ML2_LayerFilters filters, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_FiltersPredictCompatibleMatrices(filters.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        filters.data.device == input.data.device &&
-        filters.data.device == output.data.device
-    );
-    ML2_Device device = filters.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_FiltersPredictMatrices(filters, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_FiltersPredictMatrices(filters, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_FiltersPredictCompatible(ML2_LayerInfoFilters filters, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Filters may or may not be a feature in the future"); break;
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Filters may or may not be a feature in the future"); break;
-        case ML2_LayerCacheTypeMatrices: return ML2_FiltersPredictCompatibleMatrices(filters, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsMatrices(output));
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_FiltersPredict(ML2_LayerFilters filters, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_FiltersPredictCompatible(filters.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Filters may or may not be a feature in the future"); break;
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Filters may or may not be a feature in the future"); break;
-        case ML2_LayerCacheTypeMatrices: ML2_FiltersPredictMatrices(filters, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -16595,44 +15493,6 @@ ML2_FN void ML2_ConvCacheBackward(ML2_LayerConv conv, ML2_LayerCache inputGradie
     }
 }
 
-ML2_FN bool ML2_ConvPredictCompatibleMatrices(ML2_LayerInfoConv conv, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    return ML2_FiltersPredictCompatibleMatrices(ML2_ConvInfoFilters(conv), input, output);
-}
-
-ML2_FN void ML2_ConvPredictMatrices(ML2_LayerConv conv, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_ConvPredictCompatibleMatrices(conv.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        conv.data.device == input.data.device &&
-        conv.data.device == output.data.device
-    );
-    ML2_Device device = conv.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_ConvPredictMatrices(conv, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_ConvPredictMatrices(conv, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_ConvPredictCompatible(ML2_LayerInfoConv conv, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    return ML2_FiltersPredictCompatible(ML2_ConvInfoFilters(conv), input, output);
-}
-
-ML2_FN void ML2_ConvPredict(ML2_LayerConv conv, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_ConvPredictCompatible(conv.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Conv may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Conv may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_ConvPredictMatrices(conv, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
 ML2_FN void ML2_ConvGradientDescentOptimize(ML2_LayerConv conv, ML2_LayerConv convGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_ConvInfoSame(conv.info, convGradient.info)
@@ -16857,27 +15717,6 @@ ML2_FN void ML2_PoolCacheBackward(ML2_LayerInfoPool pool, ML2_LayerCache input, 
     }
 }
 
-ML2_FN bool ML2_PoolPredictCompatible(ML2_LayerInfoPool pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    switch (pool.type) {
-        case ML2_PoolTypeMax: return ML2_PoolMaxPredictCompatible(ML2_PoolAsMax(pool), input, output);
-        case ML2_PoolTypeAverage: return ML2_PoolAveragePredictCompatible(ML2_PoolAsAverage(pool), input, output);
-        case ML2_PoolTypeSoftmax: return ML2_PoolSoftmaxPredictCompatible(ML2_PoolAsSoftmax(pool), input, output);
-        default: ML2_UNREACHABLE("Unknown ML2_PoolType");
-    }
-}
-
-ML2_FN void ML2_PoolPredict(ML2_LayerInfoPool pool, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolPredictCompatible(pool, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (pool.type) {
-        case ML2_PoolTypeMax: ML2_PoolMaxPredict(ML2_PoolAsMax(pool), input, output); break;
-        case ML2_PoolTypeAverage: ML2_PoolAveragePredict(ML2_PoolAsAverage(pool), input, output); break;
-        case ML2_PoolTypeSoftmax: ML2_PoolSoftmaxPredict(ML2_PoolAsSoftmax(pool), input, output); break;
-        default: ML2_UNREACHABLE("Unknown ML2_PoolType");
-    }
-}
-
 // ML2_LayerPoolMax ⬇️
 
 ML2_FN ML2_LayerInfo ML2_PoolMax(ML2_Int height, ML2_Int width, ML2_Int paddingHeight, ML2_Int paddingWidth, ML2_Int strideHeight, ML2_Int strideWidth) {
@@ -17030,54 +15869,6 @@ ML2_FN void ML2_PoolMaxCacheBackward(ML2_LayerInfoPoolMax pool, ML2_LayerCache i
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
         case ML2_LayerCacheTypeMatrices: ML2_PoolMaxCacheBackwardMatrices(pool, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsMatrices(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_PoolMaxPredictCompatibleMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    ML2_Int outputHeight = ML2_PoolMaxInfoOutputHeight(pool, input.matrices);
-    ML2_Int outputWidth = ML2_PoolMaxInfoOutputWidth(pool, input.vectors);
-    return output.samples == input.samples &&
-           output.matrices == outputHeight &&
-           output.vectors == outputWidth &&
-           output.scalars == input.scalars;
-}
-
-ML2_FN void ML2_PoolMaxPredictMatrices(ML2_LayerInfoPoolMax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolMaxPredictCompatibleMatrices(pool, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_PoolMaxPredictMatrices(pool, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_PoolMaxPredictMatrices(pool, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_PoolMaxPredictCompatible(ML2_LayerInfoPoolMax pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return ML2_PoolMaxPredictCompatibleMatrices(pool, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsMatrices(output));
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_PoolMaxPredict(ML2_LayerInfoPoolMax pool, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolMaxPredictCompatible(pool, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_PoolMaxPredictMatrices(pool, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -17236,54 +16027,6 @@ ML2_FN void ML2_PoolAverageCacheBackward(ML2_LayerInfoPoolAverage pool, ML2_Laye
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
         case ML2_LayerCacheTypeMatrices: ML2_PoolAverageCacheBackwardMatrices(pool, ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsMatrices(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_PoolAveragePredictCompatibleMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    ML2_Int outputHeight = ML2_PoolAverageInfoOutputHeight(pool, input.matrices);
-    ML2_Int outputWidth = ML2_PoolAverageInfoOutputWidth(pool, input.vectors);
-    return output.samples == input.samples &&
-           output.matrices == outputHeight &&
-           output.vectors == outputWidth &&
-           output.scalars == input.scalars;
-}
-
-ML2_FN void ML2_PoolAveragePredictMatrices(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolAveragePredictCompatibleMatrices(pool, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_PoolAveragePredictMatrices(pool, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_PoolAveragePredictMatrices(pool, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_PoolAveragePredictCompatible(ML2_LayerInfoPoolAverage pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return ML2_PoolAveragePredictCompatibleMatrices(pool, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsMatrices(output));
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_PoolAveragePredict(ML2_LayerInfoPoolAverage pool, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolAveragePredictCompatible(pool, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_PoolAveragePredictMatrices(pool, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -17448,54 +16191,6 @@ ML2_FN void ML2_PoolSoftmaxCacheBackward(ML2_LayerInfoPoolSoftmax pool, ML2_Laye
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
         case ML2_LayerCacheTypeMatrices: ML2_PoolSoftmaxCacheBackwardMatrices(pool, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsMatrices(output), ML2_LayerCacheAsMatrices(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_PoolSoftmaxPredictCompatibleMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices output) {
-    ML2_Int outputHeight = ML2_PoolSoftmaxInfoOutputHeight(pool, input.matrices);
-    ML2_Int outputWidth = ML2_PoolSoftmaxInfoOutputWidth(pool, input.vectors);
-    return output.samples == input.samples &&
-           output.matrices == outputHeight &&
-           output.vectors == outputWidth &&
-           output.scalars == input.scalars;
-}
-
-ML2_FN void ML2_PoolSoftmaxPredictMatrices(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolSoftmaxPredictCompatibleMatrices(pool, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_PoolSoftmaxPredictMatrices(pool, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_PoolSoftmaxPredictMatrices(pool, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_PoolSoftmaxPredictCompatible(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (input.type != output.type) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return ML2_PoolSoftmaxPredictCompatibleMatrices(pool, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsMatrices(output));
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_PoolSoftmaxPredict(ML2_LayerInfoPoolSoftmax pool, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_PoolSoftmaxPredictCompatible(pool, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Pool may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_PoolSoftmaxPredictMatrices(pool, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -17892,55 +16587,6 @@ ML2_FN void ML2_FusedWeightsCacheBackward(ML2_LayerFusedWeights fusedWeights, ML
     }
 }
 
-ML2_FN bool ML2_FusedWeightsPredictCompatibleVectors(ML2_LayerInfoFusedWeights fusedWeights, ML2_LayerCacheInfoVectors input, ML2_LayerCacheInfoMatrices output) {
-    return fusedWeights.inputs == input.scalars &&
-           output.samples == input.samples &&
-           output.matrices == input.vectors &&
-           output.vectors == fusedWeights.weights &&
-           output.scalars == fusedWeights.outputs;
-}
-
-ML2_FN void ML2_FusedWeightsPredictVectors(ML2_LayerFusedWeights fusedWeights, ML2_LayerCacheVectors input, ML2_LayerCacheMatrices output) {
-    ML2_HARD_ASSERT(
-        ML2_FusedWeightsPredictCompatibleVectors(fusedWeights.info, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        fusedWeights.data.device == input.data.device &&
-        fusedWeights.data.device == output.data.device
-    );
-    ML2_Device device = fusedWeights.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_FusedWeightsPredictVectors(fusedWeights, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_FusedWeightsPredictVectors(fusedWeights, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_FusedWeightsPredictCompatible(ML2_LayerInfoFusedWeights fusedWeights, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    // TODO(27/9/2026 3:18:16): this rule might change in the future
-    if (output.type != ML2_LayerCacheTypeMatrices) return false;
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> FusedWeights may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: return ML2_FusedWeightsPredictCompatibleVectors(fusedWeights, ML2_LayerCacheInfoAsVectors(input), ML2_LayerCacheInfoAsMatrices(output));
-        case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> FusedWeights may or may not be a feature in the future");
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_FusedWeightsPredict(ML2_LayerFusedWeights fusedWeights, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_FusedWeightsPredictCompatible(fusedWeights.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> FusedWeights may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_FusedWeightsPredictVectors(fusedWeights, ML2_LayerCacheAsVectors(input), ML2_LayerCacheAsMatrices(output)); break;
-        case ML2_LayerCacheTypeMatrices: ML2_TODO("Matrices -> FusedWeights may or may not be a feature in the future");
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
 ML2_FN void ML2_FusedWeightsGradientDescentOptimize(ML2_LayerFusedWeights fusedWeights, ML2_LayerFusedWeights fusedWeightsGradient, ML2_Scalar learningRate) {
     ML2_HARD_ASSERT(
         ML2_FusedWeightsInfoSame(fusedWeights.info, fusedWeightsGradient.info)
@@ -18097,18 +16743,18 @@ ML2_FN bool ML2_AttentionInfoSame(ML2_LayerInfoAttention a, ML2_LayerInfoAttenti
     return a.heads == b.heads;
 }
 
-ML2_FN bool ML2_AttentionInfoForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices matrices) {
-    return matrices.vectors == ML2_AttentionVectorsCount &&
+ML2_FN bool ML2_AttentionInfoForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input) {
+    return input.vectors == ML2_AttentionVectorsCount &&
            attention.heads > 0 &&
-           attention.heads <= matrices.scalars &&
-           matrices.scalars % attention.heads == 0;
+           attention.heads <= input.scalars &&
+           input.scalars % attention.heads == 0;
 }
 
-ML2_FN ML2_LayerCacheInfo ML2_AttentionInfoForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices matrices) {
+ML2_FN ML2_LayerCacheInfo ML2_AttentionInfoForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input) {
     ML2_HARD_ASSERT(
-        ML2_AttentionInfoForwardCompatibleMatrices(attention, matrices)
+        ML2_AttentionInfoForwardCompatibleMatrices(attention, input)
     );
-    return ML2_Vectors(matrices.samples, matrices.matrices, matrices.scalars);
+    return ML2_Vectors(input.samples, input.matrices, input.scalars);
 }
 
 ML2_FN bool ML2_AttentionInfoForwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input) {
@@ -18132,22 +16778,61 @@ ML2_FN ML2_LayerCacheInfo ML2_AttentionInfoForward(ML2_LayerInfoAttention attent
     }
 }
 
-ML2_FN bool ML2_AttentionForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
-    return input.vectors == ML2_AttentionVectorsCount &&
+ML2_FN bool ML2_AttentionForwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
+    return ML2_AttentionInfoForwardCompatibleMatrices(attention, input) &&
            output.samples == input.samples &&
            output.vectors == input.matrices &&
-           output.scalars == input.scalars &&
-           attention.heads > 0 &&
-           attention.heads <= input.scalars &&
-           input.scalars % attention.heads == 0 &&
+           output.scalars == input.scalars;
+}
+
+ML2_FN void ML2_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionForwardCompatibleMatrices(attention, input.info, output.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == output.data.device
+    );
+    ML2_Device device = input.data.device;
+    switch (device) {
+        case ML2_DeviceCPU: ML2_CPU_AttentionForwardMatrices(attention, input, output); break;
+#ifdef ML2_CUDA_ENABLE
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionForwardMatrices(attention, input, output); break;
+#endif // ML2_CUDA_ENABLE
+        default: ML2_UNREACHABLE("Unknown ML2_Device");
+    }
+}
+
+ML2_FN bool ML2_AttentionForwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+    switch (input.type) {
+        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
+        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
+        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionForwardCompatibleMatrices(attention, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
+    }
+}
+
+ML2_FN void ML2_AttentionForward(ML2_LayerInfoAttention attention, ML2_LayerCache input, ML2_LayerCache output) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionForwardCompatible(attention, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+    );
+    switch (input.type) {
+        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
+        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionForwardMatrices(attention, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
+    }
+}
+
+ML2_FN bool ML2_AttentionForwardStateCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
+    return ML2_AttentionForwardCompatibleMatrices(attention, input, output) &&
            state.samples == input.samples &&
            state.heads == attention.heads &&
            state.vectors == input.matrices;
 }
 
-ML2_FN void ML2_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_AttentionForwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionForwardCompatibleMatrices(attention, state.info, input.info, output.info)
+        ML2_AttentionForwardStateCompatibleMatrices(attention, state.info, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         input.data.device == state.data.device &&
@@ -18155,42 +16840,81 @@ ML2_FN void ML2_AttentionForwardMatrices(ML2_LayerInfoAttention attention, ML2_L
     );
     ML2_Device device = input.data.device;
     switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_AttentionForwardMatrices(attention, state, input, output); break;
+        case ML2_DeviceCPU: ML2_CPU_AttentionForwardStateMatrices(attention, state, input, output); break;
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_AttentionForwardMatrices(attention, state, input, output); break;
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionForwardStateMatrices(attention, state, input, output); break;
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
 }
 
-ML2_FN bool ML2_AttentionForwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_AttentionForwardStateCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     switch (input.type) {
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionForwardCompatibleMatrices(attention, state, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
+        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionForwardStateCompatibleMatrices(attention, state, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
 
-ML2_FN void ML2_AttentionForward(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache output) {
+ML2_FN void ML2_AttentionForwardState(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionForwardCompatible(attention, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_AttentionForwardStateCompatible(attention, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     switch (input.type) {
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_AttentionForwardMatrices(attention, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionForwardStateMatrices(attention, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
 
-ML2_FN bool ML2_AttentionCacheBackwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient) {
-    return ML2_MatricesInfoSame(input, inputGradient) && ML2_VectorsInfoSame(output, outputGradient) && ML2_AttentionForwardCompatibleMatrices(attention, state, input, output);
+ML2_FN bool ML2_AttentionCacheBackwardCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient) {
+    return ML2_MatricesInfoSame(input, inputGradient) && ML2_VectorsInfoSame(output, outputGradient) && ML2_AttentionForwardCompatibleMatrices(attention, input, output);
 }
 
-ML2_FN void ML2_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+ML2_FN void ML2_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionCacheBackwardCompatibleMatrices(attention, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
+        ML2_AttentionCacheBackwardCompatibleMatrices(attention, input.info, inputGradient.info, output.info, outputGradient.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == inputGradient.data.device &&
+        input.data.device == output.data.device &&
+        input.data.device == outputGradient.data.device
+    );
+    ML2_Device device = input.data.device;
+    switch (device) {
+        case ML2_DeviceCPU: ML2_CPU_AttentionCacheBackwardMatrices(attention, input, inputGradient, output, outputGradient); break;
+#ifdef ML2_CUDA_ENABLE
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionCacheBackwardMatrices(attention, input, inputGradient, output, outputGradient); break;
+#endif // ML2_CUDA_ENABLE
+        default: ML2_UNREACHABLE("Unknown ML2_Device");
+    }
+}
+
+ML2_FN bool ML2_AttentionCacheBackwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient) {
+    return ML2_LayerCacheInfoSame(input, inputGradient) && ML2_AttentionForwardCompatible(attention, inputGradient, outputGradient);
+}
+
+ML2_FN void ML2_AttentionCacheBackward(ML2_LayerInfoAttention attention, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionCacheBackwardCompatible(attention, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    switch (inputGradient.type) {
+        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
+        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionCacheBackwardMatrices(attention, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsVectors(output), ML2_LayerCacheAsVectors(outputGradient)); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
+    }
+}
+
+ML2_FN bool ML2_AttentionCacheBackwardStateCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient) {
+    return ML2_MatricesInfoSame(input, inputGradient) && ML2_VectorsInfoSame(output, outputGradient) && ML2_AttentionForwardStateCompatibleMatrices(attention, state, input, output);
+}
+
+ML2_FN void ML2_AttentionCacheBackwardStateMatrices(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionCacheBackwardStateCompatibleMatrices(attention, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
     );
     ML2_HARD_ASSERT(
         input.data.device == state.data.device &&
@@ -18200,74 +16924,26 @@ ML2_FN void ML2_AttentionCacheBackwardMatrices(ML2_LayerInfoAttention attention,
     );
     ML2_Device device = input.data.device;
     switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_AttentionCacheBackwardMatrices(attention, state, input, inputGradient, output, outputGradient); break;
+        case ML2_DeviceCPU: ML2_CPU_AttentionCacheBackwardStateMatrices(attention, state, input, inputGradient, output, outputGradient); break;
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_AttentionCacheBackwardMatrices(attention, state, input, inputGradient, output, outputGradient); break;
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionCacheBackwardStateMatrices(attention, state, input, inputGradient, output, outputGradient); break;
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
 }
 
-ML2_FN bool ML2_AttentionCacheBackwardCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient) {
-    return ML2_LayerCacheInfoSame(input, inputGradient) && ML2_AttentionForwardCompatible(attention, state, inputGradient, outputGradient);
+ML2_FN bool ML2_AttentionCacheBackwardStateCompatible(ML2_LayerInfoAttention attention, ML2_LayerStateInfoAttention state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient) {
+    return ML2_LayerCacheInfoSame(input, inputGradient) && ML2_AttentionForwardStateCompatible(attention, state, inputGradient, outputGradient);
 }
 
-ML2_FN void ML2_AttentionCacheBackward(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
+ML2_FN void ML2_AttentionCacheBackwardState(ML2_LayerInfoAttention attention, ML2_LayerStateAttention state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionCacheBackwardCompatible(attention, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_AttentionCacheBackwardStateCompatible(attention, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (inputGradient.type) {
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_AttentionCacheBackwardMatrices(attention, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsVectors(output), ML2_LayerCacheAsVectors(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_AttentionPredictCompatibleMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
-    return input.vectors == ML2_AttentionVectorsCount &&
-           output.samples == input.samples &&
-           output.vectors == input.matrices &&
-           output.scalars == input.scalars &&
-           attention.heads > 0 &&
-           attention.heads <= output.scalars &&
-           output.scalars % attention.heads == 0;
-}
-
-ML2_FN void ML2_AttentionPredictMatrices(ML2_LayerInfoAttention attention, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_AttentionPredictCompatibleMatrices(attention, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_AttentionPredictMatrices(attention, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_AttentionPredictMatrices(attention, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_AttentionPredictCompatible(ML2_LayerInfoAttention attention, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionPredictCompatibleMatrices(attention, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_AttentionPredict(ML2_LayerInfoAttention attention, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_AttentionPredictCompatible(attention, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> Attention may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_AttentionPredictMatrices(attention, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionCacheBackwardStateMatrices(attention, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsVectors(output), ML2_LayerCacheAsVectors(outputGradient)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -18312,18 +16988,18 @@ ML2_FN bool ML2_AttentionFullInfoSame(ML2_LayerInfoAttentionFull a, ML2_LayerInf
     return a.heads == b.heads;
 }
 
-ML2_FN bool ML2_AttentionFullInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices matrices) {
-    return matrices.vectors == ML2_AttentionVectorsCount &&
+ML2_FN bool ML2_AttentionFullInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input) {
+    return input.vectors == ML2_AttentionVectorsCount &&
            attentionFull.heads > 0 &&
-           attentionFull.heads <= matrices.scalars &&
-           matrices.scalars % attentionFull.heads == 0;
+           attentionFull.heads <= input.scalars &&
+           input.scalars % attentionFull.heads == 0;
 }
 
-ML2_FN ML2_LayerCacheInfo ML2_AttentionFullInfoForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices matrices) {
+ML2_FN ML2_LayerCacheInfo ML2_AttentionFullInfoForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullInfoForwardCompatibleMatrices(attentionFull, matrices)
+        ML2_AttentionFullInfoForwardCompatibleMatrices(attentionFull, input)
     );
-    return ML2_Vectors(matrices.samples, matrices.matrices, matrices.scalars);
+    return ML2_Vectors(input.samples, input.matrices, input.scalars);
 }
 
 ML2_FN bool ML2_AttentionFullInfoForwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input) {
@@ -18347,22 +17023,61 @@ ML2_FN ML2_LayerCacheInfo ML2_AttentionFullInfoForward(ML2_LayerInfoAttentionFul
     }
 }
 
-ML2_FN bool ML2_AttentionFullForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
-    return input.vectors == ML2_AttentionVectorsCount &&
+ML2_FN bool ML2_AttentionFullForwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
+    return ML2_AttentionFullInfoForwardCompatibleMatrices(attentionFull, input) &&
            output.samples == input.samples &&
            output.vectors == input.matrices &&
-           output.scalars == input.scalars &&
-           attentionFull.heads > 0 &&
-           attentionFull.heads <= input.scalars &&
-           input.scalars % attentionFull.heads == 0 &&
+           output.scalars == input.scalars;
+}
+
+ML2_FN void ML2_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionFullForwardCompatibleMatrices(attentionFull, input.info, output.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == output.data.device
+    );
+    ML2_Device device = input.data.device;
+    switch (device) {
+        case ML2_DeviceCPU: ML2_CPU_AttentionFullForwardMatrices(attentionFull, input, output); break;
+#ifdef ML2_CUDA_ENABLE
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullForwardMatrices(attentionFull, input, output); break;
+#endif // ML2_CUDA_ENABLE
+        default: ML2_UNREACHABLE("Unknown ML2_Device");
+    }
+}
+
+ML2_FN bool ML2_AttentionFullForwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+    switch (input.type) {
+        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
+        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
+        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionFullForwardCompatibleMatrices(attentionFull, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
+    }
+}
+
+ML2_FN void ML2_AttentionFullForward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCache input, ML2_LayerCache output) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionFullForwardCompatible(attentionFull, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+    );
+    switch (input.type) {
+        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
+        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullForwardMatrices(attentionFull, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
+    }
+}
+
+ML2_FN bool ML2_AttentionFullForwardStateCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
+    return ML2_AttentionFullForwardCompatibleMatrices(attentionFull, input, output) &&
            state.samples == input.samples &&
            state.heads == attentionFull.heads &&
            state.vectors == input.matrices;
 }
 
-ML2_FN void ML2_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
+ML2_FN void ML2_AttentionFullForwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullForwardCompatibleMatrices(attentionFull, state.info, input.info, output.info)
+        ML2_AttentionFullForwardStateCompatibleMatrices(attentionFull, state.info, input.info, output.info)
     );
     ML2_HARD_ASSERT(
         input.data.device == state.data.device &&
@@ -18370,42 +17085,81 @@ ML2_FN void ML2_AttentionFullForwardMatrices(ML2_LayerInfoAttentionFull attentio
     );
     ML2_Device device = input.data.device;
     switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_AttentionFullForwardMatrices(attentionFull, state, input, output); break;
+        case ML2_DeviceCPU: ML2_CPU_AttentionFullForwardStateMatrices(attentionFull, state, input, output); break;
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullForwardMatrices(attentionFull, state, input, output); break;
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullForwardStateMatrices(attentionFull, state, input, output); break;
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
 }
 
-ML2_FN bool ML2_AttentionFullForwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_AttentionFullForwardStateCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     switch (input.type) {
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionFullForwardCompatibleMatrices(attentionFull, state, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
+        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionFullForwardStateCompatibleMatrices(attentionFull, state, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
 
-ML2_FN void ML2_AttentionFullForward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache output) {
+ML2_FN void ML2_AttentionFullForwardState(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache output) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullForwardCompatible(attentionFull, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_AttentionFullForwardStateCompatible(attentionFull, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     switch (input.type) {
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullForwardMatrices(attentionFull, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullForwardStateMatrices(attentionFull, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
 
-ML2_FN bool ML2_AttentionFullCacheBackwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient) {
-    return ML2_MatricesInfoSame(input, inputGradient) && ML2_VectorsInfoSame(output, outputGradient) && ML2_AttentionFullForwardCompatibleMatrices(attentionFull, state, input, output);
+ML2_FN bool ML2_AttentionFullCacheBackwardCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient) {
+    return ML2_MatricesInfoSame(input, inputGradient) && ML2_VectorsInfoSame(output, outputGradient) && ML2_AttentionFullForwardCompatibleMatrices(attentionFull, input, output);
 }
 
-ML2_FN void ML2_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+ML2_FN void ML2_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullCacheBackwardCompatibleMatrices(attentionFull, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
+        ML2_AttentionFullCacheBackwardCompatibleMatrices(attentionFull, input.info, inputGradient.info, output.info, outputGradient.info)
+    );
+    ML2_HARD_ASSERT(
+        input.data.device == inputGradient.data.device &&
+        input.data.device == output.data.device &&
+        input.data.device == outputGradient.data.device
+    );
+    ML2_Device device = input.data.device;
+    switch (device) {
+        case ML2_DeviceCPU: ML2_CPU_AttentionFullCacheBackwardMatrices(attentionFull, input, inputGradient, output, outputGradient); break;
+#ifdef ML2_CUDA_ENABLE
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullCacheBackwardMatrices(attentionFull, input, inputGradient, output, outputGradient); break;
+#endif // ML2_CUDA_ENABLE
+        default: ML2_UNREACHABLE("Unknown ML2_Device");
+    }
+}
+
+ML2_FN bool ML2_AttentionFullCacheBackwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient) {
+    return ML2_LayerCacheInfoSame(input, inputGradient) && ML2_AttentionFullForwardCompatible(attentionFull, inputGradient, outputGradient);
+}
+
+ML2_FN void ML2_AttentionFullCacheBackward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionFullCacheBackwardCompatible(attentionFull, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    switch (inputGradient.type) {
+        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
+        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullCacheBackwardMatrices(attentionFull, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsVectors(output), ML2_LayerCacheAsVectors(outputGradient)); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
+    }
+}
+
+ML2_FN bool ML2_AttentionFullCacheBackwardStateCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoMatrices inputGradient, ML2_LayerCacheInfoVectors output, ML2_LayerCacheInfoVectors outputGradient) {
+    return ML2_MatricesInfoSame(input, inputGradient) && ML2_VectorsInfoSame(output, outputGradient) && ML2_AttentionFullForwardStateCompatibleMatrices(attentionFull, state, input, output);
+}
+
+ML2_FN void ML2_AttentionFullCacheBackwardStateMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCacheMatrices input, ML2_LayerCacheMatrices inputGradient, ML2_LayerCacheVectors output, ML2_LayerCacheVectors outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_AttentionFullCacheBackwardStateCompatibleMatrices(attentionFull, state.info, input.info, inputGradient.info, output.info, outputGradient.info)
     );
     ML2_HARD_ASSERT(
         input.data.device == state.data.device &&
@@ -18415,74 +17169,26 @@ ML2_FN void ML2_AttentionFullCacheBackwardMatrices(ML2_LayerInfoAttentionFull at
     );
     ML2_Device device = input.data.device;
     switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_AttentionFullCacheBackwardMatrices(attentionFull, state, input, inputGradient, output, outputGradient); break;
+        case ML2_DeviceCPU: ML2_CPU_AttentionFullCacheBackwardStateMatrices(attentionFull, state, input, inputGradient, output, outputGradient); break;
 #ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullCacheBackwardMatrices(attentionFull, state, input, inputGradient, output, outputGradient); break;
+        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullCacheBackwardStateMatrices(attentionFull, state, input, inputGradient, output, outputGradient); break;
 #endif // ML2_CUDA_ENABLE
         default: ML2_UNREACHABLE("Unknown ML2_Device");
     }
 }
 
-ML2_FN bool ML2_AttentionFullCacheBackwardCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient) {
-    return ML2_LayerCacheInfoSame(input, inputGradient) && ML2_AttentionFullForwardCompatible(attentionFull, state, inputGradient, outputGradient);
+ML2_FN bool ML2_AttentionFullCacheBackwardStateCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateInfoAttentionFull state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo outputGradient) {
+    return ML2_LayerCacheInfoSame(input, inputGradient) && ML2_AttentionFullForwardStateCompatible(attentionFull, state, inputGradient, outputGradient);
 }
 
-ML2_FN void ML2_AttentionFullCacheBackward(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
+ML2_FN void ML2_AttentionFullCacheBackwardState(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerStateAttentionFull state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullCacheBackwardCompatible(attentionFull, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_AttentionFullCacheBackwardStateCompatible(attentionFull, state.info, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (inputGradient.type) {
         case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
         case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullCacheBackwardMatrices(attentionFull, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsVectors(output), ML2_LayerCacheAsVectors(outputGradient)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN bool ML2_AttentionFullPredictCompatibleMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfoMatrices input, ML2_LayerCacheInfoVectors output) {
-    return input.vectors == ML2_AttentionVectorsCount &&
-           output.samples == input.samples &&
-           output.vectors == input.matrices &&
-           output.scalars == input.scalars &&
-           attentionFull.heads > 0 &&
-           attentionFull.heads <= output.scalars &&
-           output.scalars % attentionFull.heads == 0;
-}
-
-ML2_FN void ML2_AttentionFullPredictMatrices(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheMatrices input, ML2_LayerCacheVectors output) {
-    ML2_HARD_ASSERT(
-        ML2_AttentionFullPredictCompatibleMatrices(attentionFull, input.info, output.info)
-    );
-    ML2_HARD_ASSERT(
-        input.data.device == output.data.device
-    );
-    ML2_Device device = input.data.device;
-    switch (device) {
-        case ML2_DeviceCPU: ML2_CPU_AttentionFullPredictMatrices(attentionFull, input, output); break;
-#ifdef ML2_CUDA_ENABLE
-        case ML2_DeviceCUDA: ML2_CUDA_AttentionFullPredictMatrices(attentionFull, input, output); break;
-#endif // ML2_CUDA_ENABLE
-        default: ML2_UNREACHABLE("Unknown ML2_Device");
-    }
-}
-
-ML2_FN bool ML2_AttentionFullPredictCompatible(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: return output.type == ML2_LayerCacheTypeVectors && ML2_AttentionFullPredictCompatibleMatrices(attentionFull, ML2_LayerCacheInfoAsMatrices(input), ML2_LayerCacheInfoAsVectors(output)); break;
-        default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
-    }
-}
-
-ML2_FN void ML2_AttentionFullPredict(ML2_LayerInfoAttentionFull attentionFull, ML2_LayerCache input, ML2_LayerCache output) {
-    ML2_HARD_ASSERT(
-        ML2_AttentionFullPredictCompatible(attentionFull, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    switch (input.type) {
-        case ML2_LayerCacheTypeScalars: ML2_TODO("Scalars -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeVectors: ML2_TODO("Vectors -> AttentionFull may or may not be a feature in the future");
-        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullPredictMatrices(attentionFull, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsVectors(output)); break;
+        case ML2_LayerCacheTypeMatrices: ML2_AttentionFullCacheBackwardStateMatrices(attentionFull, state, ML2_LayerCacheAsMatrices(input), ML2_LayerCacheAsMatrices(inputGradient), ML2_LayerCacheAsVectors(output), ML2_LayerCacheAsVectors(outputGradient)); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerCacheType");
     }
 }
@@ -18887,7 +17593,7 @@ ML2_FN void ML2_LayerCopyDeviceToHost(ML2_Layer dstHost, ML2_Layer srcDevice) {
     }
 }
 
-ML2_FN bool ML2_LayerForwardCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_LayerForwardCompatible(ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     switch (layer.type) {
         case ML2_LayerTypeIdentity: return ML2_IdentityForwardCompatible(input, output);
         case ML2_LayerTypeWeights: return ML2_WeightsForwardCompatible(ML2_LayerInfoAsWeights(layer), input, output);
@@ -18899,15 +17605,15 @@ ML2_FN bool ML2_LayerForwardCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo s
         case ML2_LayerTypeConv: return ML2_ConvForwardCompatible(ML2_LayerInfoAsConv(layer), input, output);
         case ML2_LayerTypePool: return ML2_PoolForwardCompatible(ML2_LayerInfoAsPool(layer), input, output);
         case ML2_LayerTypeFusedWeights: return ML2_FusedWeightsForwardCompatible(ML2_LayerInfoAsFusedWeights(layer), input, output);
-        case ML2_LayerTypeAttention: return ML2_AttentionForwardCompatible(ML2_LayerInfoAsAttention(layer), ML2_LayerStateInfoAsAttention(state), input, output);
-        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullForwardCompatible(ML2_LayerInfoAsAttentionFull(layer), ML2_LayerStateInfoAsAttentionFull(state), input, output);
+        case ML2_LayerTypeAttention: return ML2_AttentionForwardCompatible(ML2_LayerInfoAsAttention(layer), input, output);
+        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullForwardCompatible(ML2_LayerInfoAsAttentionFull(layer), input, output);
         default: ML2_UNREACHABLE("Unknown ML2_LayerType");
     }
 }
 
-ML2_FN void ML2_LayerForward(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output) {
+ML2_FN void ML2_LayerForward(ML2_Layer layer, ML2_LayerCache input, ML2_LayerCache output) {
     ML2_HARD_ASSERT(
-        ML2_LayerForwardCompatible(ML2_LayerAsInfo(layer), ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_LayerForwardCompatible(ML2_LayerAsInfo(layer), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     switch (layer.type) {
         case ML2_LayerTypeIdentity: ML2_IdentityForward(input, output); break;
@@ -18920,13 +17626,52 @@ ML2_FN void ML2_LayerForward(ML2_Layer layer, ML2_LayerState state, ML2_LayerCac
         case ML2_LayerTypeConv: ML2_ConvForward(ML2_LayerAsConv(layer), input, output); break;
         case ML2_LayerTypePool: ML2_PoolForward(ML2_LayerAsPool(layer), input, output); break;
         case ML2_LayerTypeFusedWeights: ML2_FusedWeightsForward(ML2_LayerAsFusedWeights(layer), input, output); break;
-        case ML2_LayerTypeAttention: ML2_AttentionForward(ML2_LayerAsAttention(layer), ML2_LayerStateAsAttention(state), input, output); break;
-        case ML2_LayerTypeAttentionFull: ML2_AttentionFullForward(ML2_LayerAsAttentionFull(layer), ML2_LayerStateAsAttentionFull(state), input, output); break;
+        case ML2_LayerTypeAttention: ML2_AttentionForward(ML2_LayerAsAttention(layer), input, output); break;
+        case ML2_LayerTypeAttentionFull: ML2_AttentionFullForward(ML2_LayerAsAttentionFull(layer), input, output); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerType");
     }
 }
 
-ML2_FN bool ML2_LayerBackwardCompatible(ML2_LayerInfo gradient, ML2_LayerStateInfo state [[maybe_unused]], ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_LayerForwardStateCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+    switch (layer.type) {
+        case ML2_LayerTypeIdentity: return ML2_IdentityForwardCompatible(input, output);
+        case ML2_LayerTypeWeights: return ML2_WeightsForwardCompatible(ML2_LayerInfoAsWeights(layer), input, output);
+        case ML2_LayerTypeBiases: return ML2_BiasesForwardCompatible(ML2_LayerInfoAsBiases(layer), input, output);
+        case ML2_LayerTypeActivation: return ML2_ActivationForwardCompatible(input, output);
+        case ML2_LayerTypeSoftmax: return ML2_SoftmaxForwardCompatible(input, output);
+        case ML2_LayerTypeLinear: return ML2_LinearForwardCompatible(ML2_LayerInfoAsLinear(layer), input, output);
+        case ML2_LayerTypeFilters: return ML2_FiltersForwardCompatible(ML2_LayerInfoAsFilters(layer), input, output);
+        case ML2_LayerTypeConv: return ML2_ConvForwardCompatible(ML2_LayerInfoAsConv(layer), input, output);
+        case ML2_LayerTypePool: return ML2_PoolForwardCompatible(ML2_LayerInfoAsPool(layer), input, output);
+        case ML2_LayerTypeFusedWeights: return ML2_FusedWeightsForwardCompatible(ML2_LayerInfoAsFusedWeights(layer), input, output);
+        case ML2_LayerTypeAttention: return ML2_AttentionForwardStateCompatible(ML2_LayerInfoAsAttention(layer), ML2_LayerStateInfoAsAttention(state), input, output);
+        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullForwardStateCompatible(ML2_LayerInfoAsAttentionFull(layer), ML2_LayerStateInfoAsAttentionFull(state), input, output);
+        default: ML2_UNREACHABLE("Unknown ML2_LayerType");
+    }
+}
+
+ML2_FN void ML2_LayerForwardState(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output) {
+    ML2_HARD_ASSERT(
+        ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(layer), ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+    );
+    switch (layer.type) {
+        case ML2_LayerTypeIdentity: ML2_IdentityForward(input, output); break;
+        case ML2_LayerTypeWeights: ML2_WeightsForward(ML2_LayerAsWeights(layer), input, output); break;
+        case ML2_LayerTypeBiases: ML2_BiasesForward(ML2_LayerAsBiases(layer), input, output); break;
+        case ML2_LayerTypeActivation: ML2_ActivationForward(ML2_LayerAsActivation(layer), input, output); break;
+        case ML2_LayerTypeSoftmax: ML2_SoftmaxForward(input, output); break;
+        case ML2_LayerTypeLinear: ML2_LinearForward(ML2_LayerAsLinear(layer), input, output); break;
+        case ML2_LayerTypeFilters: ML2_FiltersForward(ML2_LayerAsFilters(layer), input, output); break;
+        case ML2_LayerTypeConv: ML2_ConvForward(ML2_LayerAsConv(layer), input, output); break;
+        case ML2_LayerTypePool: ML2_PoolForward(ML2_LayerAsPool(layer), input, output); break;
+        case ML2_LayerTypeFusedWeights: ML2_FusedWeightsForward(ML2_LayerAsFusedWeights(layer), input, output); break;
+        case ML2_LayerTypeAttention: ML2_AttentionForwardState(ML2_LayerAsAttention(layer), ML2_LayerStateAsAttention(state), input, output); break;
+        case ML2_LayerTypeAttentionFull: ML2_AttentionFullForwardState(ML2_LayerAsAttentionFull(layer), ML2_LayerStateAsAttentionFull(state), input, output); break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerType");
+    }
+}
+
+ML2_FN bool ML2_LayerBackwardCompatible(ML2_LayerInfo gradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
     switch (gradient.type) {
         case ML2_LayerTypeIdentity: return true;
         case ML2_LayerTypeWeights: return ML2_WeightsBackwardCompatible(ML2_LayerInfoAsWeights(gradient), input, outputGradient);
@@ -18944,9 +17689,9 @@ ML2_FN bool ML2_LayerBackwardCompatible(ML2_LayerInfo gradient, ML2_LayerStateIn
     }
 }
 
-ML2_FN void ML2_LayerBackward(ML2_Layer gradient, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient) {
+ML2_FN void ML2_LayerBackward(ML2_Layer gradient, ML2_LayerCache input, ML2_LayerCache outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_LayerBackwardCompatible(ML2_LayerAsInfo(gradient), ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_LayerBackwardCompatible(ML2_LayerAsInfo(gradient), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (gradient.type) {
         case ML2_LayerTypeIdentity: /* No action needed */ break;
@@ -18965,7 +17710,46 @@ ML2_FN void ML2_LayerBackward(ML2_Layer gradient, ML2_LayerState state, ML2_Laye
     }
 }
 
-ML2_FN bool ML2_LayerCacheBackwardCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_LayerBackwardStateCompatible(ML2_LayerInfo gradient, ML2_LayerStateInfo state [[maybe_unused]], ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+    switch (gradient.type) {
+        case ML2_LayerTypeIdentity: return true;
+        case ML2_LayerTypeWeights: return ML2_WeightsBackwardCompatible(ML2_LayerInfoAsWeights(gradient), input, outputGradient);
+        case ML2_LayerTypeBiases: return ML2_BiasesBackwardCompatible(ML2_LayerInfoAsBiases(gradient), outputGradient);
+        case ML2_LayerTypeActivation: return true;
+        case ML2_LayerTypeSoftmax: return true;
+        case ML2_LayerTypeLinear: return ML2_LinearBackwardCompatible(ML2_LayerInfoAsLinear(gradient), input, outputGradient);
+        case ML2_LayerTypeFilters: return ML2_FiltersBackwardCompatible(ML2_LayerInfoAsFilters(gradient), input, outputGradient);
+        case ML2_LayerTypeConv: return ML2_ConvBackwardCompatible(ML2_LayerInfoAsConv(gradient), input, outputGradient);
+        case ML2_LayerTypePool: return true;
+        case ML2_LayerTypeFusedWeights: return ML2_FusedWeightsBackwardCompatible(ML2_LayerInfoAsFusedWeights(gradient), input, outputGradient);
+        case ML2_LayerTypeAttention: return true;
+        case ML2_LayerTypeAttentionFull: return true;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerType");
+    }
+}
+
+ML2_FN void ML2_LayerBackwardState(ML2_Layer gradient, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(gradient), ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    switch (gradient.type) {
+        case ML2_LayerTypeIdentity: /* No action needed */ break;
+        case ML2_LayerTypeWeights: ML2_WeightsBackward(ML2_LayerAsWeights(gradient), input, outputGradient); break;
+        case ML2_LayerTypeBiases: ML2_BiasesBackward(ML2_LayerAsBiases(gradient), outputGradient); break;
+        case ML2_LayerTypeActivation: /* No action needed */ break;
+        case ML2_LayerTypeSoftmax: /* No action needed */ break;
+        case ML2_LayerTypeLinear: ML2_LinearBackward(ML2_LayerAsLinear(gradient), input, outputGradient); break;
+        case ML2_LayerTypeFilters: ML2_FiltersBackward(ML2_LayerAsFilters(gradient), input, outputGradient); break;
+        case ML2_LayerTypeConv: ML2_ConvBackward(ML2_LayerAsConv(gradient), input, outputGradient); break;
+        case ML2_LayerTypePool: /* No action needed */ break;
+        case ML2_LayerTypeFusedWeights: ML2_FusedWeightsBackward(ML2_LayerAsFusedWeights(gradient), input, outputGradient); break;
+        case ML2_LayerTypeAttention: /* No action needed */ break;
+        case ML2_LayerTypeAttentionFull: /* No action needed */ break;
+        default: ML2_UNREACHABLE("Unknown ML2_LayerType");
+    }
+}
+
+ML2_FN bool ML2_LayerCacheBackwardCompatible(ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
     switch (layer.type) {
         case ML2_LayerTypeIdentity: return ML2_IdentityCacheBackwardCompatible(inputGradient, outputGradient);
         case ML2_LayerTypeWeights: return ML2_WeightsCacheBackwardCompatible(ML2_LayerInfoAsWeights(layer), inputGradient, outputGradient);
@@ -18977,15 +17761,15 @@ ML2_FN bool ML2_LayerCacheBackwardCompatible(ML2_LayerInfo layer, ML2_LayerState
         case ML2_LayerTypeConv: return ML2_ConvCacheBackwardCompatible(ML2_LayerInfoAsConv(layer), inputGradient, outputGradient);
         case ML2_LayerTypePool: return ML2_PoolCacheBackwardCompatible(ML2_LayerInfoAsPool(layer), input, inputGradient, output, outputGradient);
         case ML2_LayerTypeFusedWeights: return ML2_FusedWeightsCacheBackwardCompatible(ML2_LayerInfoAsFusedWeights(layer), inputGradient, outputGradient);
-        case ML2_LayerTypeAttention: return ML2_AttentionCacheBackwardCompatible(ML2_LayerInfoAsAttention(layer), ML2_LayerStateInfoAsAttention(state), input, inputGradient, outputGradient);
-        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullCacheBackwardCompatible(ML2_LayerInfoAsAttentionFull(layer), ML2_LayerStateInfoAsAttentionFull(state), input, inputGradient, outputGradient);
+        case ML2_LayerTypeAttention: return ML2_AttentionCacheBackwardCompatible(ML2_LayerInfoAsAttention(layer), input, inputGradient, outputGradient);
+        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullCacheBackwardCompatible(ML2_LayerInfoAsAttentionFull(layer), input, inputGradient, outputGradient);
         default: ML2_UNREACHABLE("Unknown ML2_LayerType");
     }
 }
 
-ML2_FN void ML2_LayerCacheBackward(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
+ML2_FN void ML2_LayerCacheBackward(ML2_Layer layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(layer), ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(layer), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (layer.type) {
         case ML2_LayerTypeIdentity: ML2_IdentityCacheBackward(inputGradient, outputGradient); break;
@@ -18998,47 +17782,47 @@ ML2_FN void ML2_LayerCacheBackward(ML2_Layer layer, ML2_LayerState state, ML2_La
         case ML2_LayerTypeConv: ML2_ConvCacheBackward(ML2_LayerAsConv(layer), inputGradient, outputGradient); break;
         case ML2_LayerTypePool: ML2_PoolCacheBackward(ML2_LayerAsPool(layer), input, inputGradient, output, outputGradient); break;
         case ML2_LayerTypeFusedWeights: ML2_FusedWeightsCacheBackward(ML2_LayerAsFusedWeights(layer), inputGradient, outputGradient); break;
-        case ML2_LayerTypeAttention: ML2_AttentionCacheBackward(ML2_LayerAsAttention(layer), ML2_LayerStateAsAttention(state), input, inputGradient, output, outputGradient); break;
-        case ML2_LayerTypeAttentionFull: ML2_AttentionFullCacheBackward(ML2_LayerAsAttentionFull(layer), ML2_LayerStateAsAttentionFull(state), input, inputGradient, output, outputGradient); break;
+        case ML2_LayerTypeAttention: ML2_AttentionCacheBackward(ML2_LayerAsAttention(layer), input, inputGradient, output, outputGradient); break;
+        case ML2_LayerTypeAttentionFull: ML2_AttentionFullCacheBackward(ML2_LayerAsAttentionFull(layer), input, inputGradient, output, outputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerType");
     }
 }
 
-ML2_FN bool ML2_LayerPredictCompatible(ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_LayerCacheBackwardStateCompatible(ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
     switch (layer.type) {
-        case ML2_LayerTypeIdentity: return ML2_IdentityPredictCompatible(input, output);
-        case ML2_LayerTypeWeights: return ML2_WeightsPredictCompatible(ML2_LayerInfoAsWeights(layer), input, output);
-        case ML2_LayerTypeBiases: return ML2_BiasesPredictCompatible(ML2_LayerInfoAsBiases(layer), input, output);
-        case ML2_LayerTypeActivation: return ML2_ActivationPredictCompatible(input, output);
-        case ML2_LayerTypeSoftmax: return ML2_SoftmaxPredictCompatible(input, output);
-        case ML2_LayerTypeLinear: return ML2_LinearPredictCompatible(ML2_LayerInfoAsLinear(layer), input, output);
-        case ML2_LayerTypeFilters: return ML2_FiltersPredictCompatible(ML2_LayerInfoAsFilters(layer), input, output);
-        case ML2_LayerTypeConv: return ML2_ConvPredictCompatible(ML2_LayerInfoAsConv(layer), input, output);
-        case ML2_LayerTypePool: return ML2_PoolPredictCompatible(ML2_LayerInfoAsPool(layer), input, output);
-        case ML2_LayerTypeFusedWeights: return ML2_FusedWeightsPredictCompatible(ML2_LayerInfoAsFusedWeights(layer), input, output);
-        case ML2_LayerTypeAttention: return ML2_AttentionPredictCompatible(ML2_LayerInfoAsAttention(layer), input, output);
-        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullPredictCompatible(ML2_LayerInfoAsAttentionFull(layer), input, output);
+        case ML2_LayerTypeIdentity: return ML2_IdentityCacheBackwardCompatible(inputGradient, outputGradient);
+        case ML2_LayerTypeWeights: return ML2_WeightsCacheBackwardCompatible(ML2_LayerInfoAsWeights(layer), inputGradient, outputGradient);
+        case ML2_LayerTypeBiases: return ML2_BiasesCacheBackwardCompatible(inputGradient, outputGradient);
+        case ML2_LayerTypeActivation: return ML2_ActivationCacheBackwardCompatible(input, inputGradient, output, outputGradient);
+        case ML2_LayerTypeSoftmax: return ML2_SoftmaxCacheBackwardCompatible(inputGradient, output, outputGradient);
+        case ML2_LayerTypeLinear: return ML2_LinearCacheBackwardCompatible(ML2_LayerInfoAsLinear(layer), inputGradient, outputGradient);
+        case ML2_LayerTypeFilters: return ML2_FiltersCacheBackwardCompatible(ML2_LayerInfoAsFilters(layer), inputGradient, outputGradient);
+        case ML2_LayerTypeConv: return ML2_ConvCacheBackwardCompatible(ML2_LayerInfoAsConv(layer), inputGradient, outputGradient);
+        case ML2_LayerTypePool: return ML2_PoolCacheBackwardCompatible(ML2_LayerInfoAsPool(layer), input, inputGradient, output, outputGradient);
+        case ML2_LayerTypeFusedWeights: return ML2_FusedWeightsCacheBackwardCompatible(ML2_LayerInfoAsFusedWeights(layer), inputGradient, outputGradient);
+        case ML2_LayerTypeAttention: return ML2_AttentionCacheBackwardStateCompatible(ML2_LayerInfoAsAttention(layer), ML2_LayerStateInfoAsAttention(state), input, inputGradient, outputGradient);
+        case ML2_LayerTypeAttentionFull: return ML2_AttentionFullCacheBackwardStateCompatible(ML2_LayerInfoAsAttentionFull(layer), ML2_LayerStateInfoAsAttentionFull(state), input, inputGradient, outputGradient);
         default: ML2_UNREACHABLE("Unknown ML2_LayerType");
     }
 }
 
-ML2_FN void ML2_LayerPredict(ML2_Layer layer, ML2_LayerCache input, ML2_LayerCache output) {
+ML2_FN void ML2_LayerCacheBackwardState(ML2_Layer layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient) {
     ML2_HARD_ASSERT(
-        ML2_LayerPredictCompatible(ML2_LayerAsInfo(layer), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(layer), ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (layer.type) {
-        case ML2_LayerTypeIdentity: ML2_IdentityPredict(input, output); break;
-        case ML2_LayerTypeWeights: ML2_WeightsPredict(ML2_LayerAsWeights(layer), input, output); break;
-        case ML2_LayerTypeBiases: ML2_BiasesPredict(ML2_LayerAsBiases(layer), input, output); break;
-        case ML2_LayerTypeActivation: ML2_ActivationPredict(ML2_LayerAsActivation(layer), input, output); break;
-        case ML2_LayerTypeSoftmax: ML2_SoftmaxPredict(input, output); break;
-        case ML2_LayerTypeLinear: ML2_LinearPredict(ML2_LayerAsLinear(layer), input, output); break;
-        case ML2_LayerTypeFilters: ML2_FiltersPredict(ML2_LayerAsFilters(layer), input, output); break;
-        case ML2_LayerTypeConv: ML2_ConvPredict(ML2_LayerAsConv(layer), input, output); break;
-        case ML2_LayerTypePool: ML2_PoolPredict(ML2_LayerAsPool(layer), input, output); break;
-        case ML2_LayerTypeFusedWeights: ML2_FusedWeightsPredict(ML2_LayerAsFusedWeights(layer), input, output); break;
-        case ML2_LayerTypeAttention: ML2_AttentionPredict(ML2_LayerAsAttention(layer), input, output); break;
-        case ML2_LayerTypeAttentionFull: ML2_AttentionFullPredict(ML2_LayerAsAttentionFull(layer), input, output); break;
+        case ML2_LayerTypeIdentity: ML2_IdentityCacheBackward(inputGradient, outputGradient); break;
+        case ML2_LayerTypeWeights: ML2_WeightsCacheBackward(ML2_LayerAsWeights(layer), inputGradient, outputGradient); break;
+        case ML2_LayerTypeBiases: ML2_BiasesCacheBackward(inputGradient, outputGradient); break;
+        case ML2_LayerTypeActivation: ML2_ActivationCacheBackward(ML2_LayerAsActivation(layer), input, inputGradient, output, outputGradient); break;
+        case ML2_LayerTypeSoftmax: ML2_SoftmaxCacheBackward(inputGradient, output, outputGradient); break;
+        case ML2_LayerTypeLinear: ML2_LinearCacheBackward(ML2_LayerAsLinear(layer), inputGradient, outputGradient); break;
+        case ML2_LayerTypeFilters: ML2_FiltersCacheBackward(ML2_LayerAsFilters(layer), inputGradient, outputGradient); break;
+        case ML2_LayerTypeConv: ML2_ConvCacheBackward(ML2_LayerAsConv(layer), inputGradient, outputGradient); break;
+        case ML2_LayerTypePool: ML2_PoolCacheBackward(ML2_LayerAsPool(layer), input, inputGradient, output, outputGradient); break;
+        case ML2_LayerTypeFusedWeights: ML2_FusedWeightsCacheBackward(ML2_LayerAsFusedWeights(layer), inputGradient, outputGradient); break;
+        case ML2_LayerTypeAttention: ML2_AttentionCacheBackwardState(ML2_LayerAsAttention(layer), ML2_LayerStateAsAttention(state), input, inputGradient, output, outputGradient); break;
+        case ML2_LayerTypeAttentionFull: ML2_AttentionFullCacheBackwardState(ML2_LayerAsAttentionFull(layer), ML2_LayerStateAsAttentionFull(state), input, inputGradient, output, outputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_LayerType");
     }
 }
@@ -19250,15 +18034,15 @@ ML2_FN ML2_Size ML2_AttentionStateInfoSizeof(ML2_LayerStateInfoAttention attenti
     return attention.samples * attention.heads * attention.vectors;
 }
 
-ML2_FN bool ML2_AttentionStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices matrices) {
-    return ML2_AttentionInfoForwardCompatibleMatrices(info, matrices);
+ML2_FN bool ML2_AttentionStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices input) {
+    return ML2_AttentionInfoForwardCompatibleMatrices(info, input);
 }
 
-ML2_FN ML2_LayerStateInfo ML2_AttentionStateInfoForwardMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices matrices) {
+ML2_FN ML2_LayerStateInfo ML2_AttentionStateInfoForwardMatrices(ML2_LayerInfoAttention info, ML2_LayerCacheInfoMatrices input) {
     ML2_HARD_ASSERT(
-        ML2_AttentionStateInfoForwardCompatibleMatrices(info, matrices)
+        ML2_AttentionStateInfoForwardCompatibleMatrices(info, input)
     );
-    return ML2_AttentionState(matrices.samples, info.heads, matrices.matrices);
+    return ML2_AttentionState(input.samples, info.heads, input.matrices);
 }
 
 ML2_FN bool ML2_AttentionStateInfoForwardCompatible(ML2_LayerInfoAttention info, ML2_LayerCacheInfo input) {
@@ -19286,15 +18070,15 @@ ML2_FN ML2_DeviceData ML2_AttentionStateData(ML2_LayerStateAttention attention) 
     return attention.data;
 }
 
-ML2_FN ML2_DeviceData ML2_AttentionStateDataAt(ML2_LayerStateAttention attention, ML2_Int s, ML2_Int v, ML2_Int h) {
+ML2_FN ML2_DeviceData ML2_AttentionStateDataAt(ML2_LayerStateAttention attention [[maybe_unused]], ML2_Int s [[maybe_unused]], ML2_Int v [[maybe_unused]], ML2_Int h [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN void ML2_AttentionStatePrint(ML2_LayerStateAttention attention, ML2_Int indent) {
+ML2_FN void ML2_AttentionStatePrint(ML2_LayerStateAttention attention [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN void ML2_AttentionStateClear(ML2_LayerStateAttention attention) {
+ML2_FN void ML2_AttentionStateClear(ML2_LayerStateAttention attention [[maybe_unused]]) {
     ML2_TODO();
 }
 
@@ -19312,7 +18096,7 @@ ML2_FN void ML2_AttentionStateSum(ML2_LayerStateAttention dst, ML2_LayerStateAtt
     ML2_TODO();
 }
 
-ML2_FN bool ML2_AttentionStateCompare(ML2_LayerStateAttention a, ML2_LayerStateAttention b, ML2_Scalar threshold) {
+ML2_FN bool ML2_AttentionStateCompare(ML2_LayerStateAttention a, ML2_LayerStateAttention b, ML2_Scalar threshold [[maybe_unused]]) {
     ML2_HARD_ASSERT(
         ML2_AttentionStateInfoSame(a.info, b.info)
     );
@@ -19395,15 +18179,15 @@ ML2_FN ML2_Size ML2_AttentionFullStateInfoSizeof(ML2_LayerStateInfoAttentionFull
     return attentionFull.samples * attentionFull.heads * attentionFull.vectors;
 }
 
-ML2_FN bool ML2_AttentionFullStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices matrices) {
-    return ML2_AttentionFullInfoForwardCompatibleMatrices(info, matrices);
+ML2_FN bool ML2_AttentionFullStateInfoForwardCompatibleMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices input) {
+    return ML2_AttentionFullInfoForwardCompatibleMatrices(info, input);
 }
 
-ML2_FN ML2_LayerStateInfo ML2_AttentionFullStateInfoForwardMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices matrices) {
+ML2_FN ML2_LayerStateInfo ML2_AttentionFullStateInfoForwardMatrices(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfoMatrices input) {
     ML2_HARD_ASSERT(
-        ML2_AttentionFullStateInfoForwardCompatibleMatrices(info, matrices)
+        ML2_AttentionFullStateInfoForwardCompatibleMatrices(info, input)
     );
-    return ML2_AttentionFullState(matrices.samples, info.heads, matrices.matrices);
+    return ML2_AttentionFullState(input.samples, info.heads, input.matrices);
 }
 
 ML2_FN bool ML2_AttentionFullStateInfoForwardCompatible(ML2_LayerInfoAttentionFull info, ML2_LayerCacheInfo input) {
@@ -19431,15 +18215,15 @@ ML2_FN ML2_DeviceData ML2_AttentionFullStateData(ML2_LayerStateAttentionFull att
     return attentionFull.data;
 }
 
-ML2_FN ML2_DeviceData ML2_AttentionFullStateDataAt(ML2_LayerStateAttentionFull attentionFull, ML2_Int s, ML2_Int v, ML2_Int h) {
+ML2_FN ML2_DeviceData ML2_AttentionFullStateDataAt(ML2_LayerStateAttentionFull attentionFull [[maybe_unused]], ML2_Int s [[maybe_unused]], ML2_Int v [[maybe_unused]], ML2_Int h [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN void ML2_AttentionFullStatePrint(ML2_LayerStateAttentionFull attentionFull, ML2_Int indent) {
+ML2_FN void ML2_AttentionFullStatePrint(ML2_LayerStateAttentionFull attentionFull [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN void ML2_AttentionFullStateClear(ML2_LayerStateAttentionFull attentionFull) {
+ML2_FN void ML2_AttentionFullStateClear(ML2_LayerStateAttentionFull attentionFull [[maybe_unused]]) {
     ML2_TODO();
 }
 
@@ -19457,7 +18241,7 @@ ML2_FN void ML2_AttentionFullStateSum(ML2_LayerStateAttentionFull dst, ML2_Layer
     ML2_TODO();
 }
 
-ML2_FN bool ML2_AttentionFullStateCompare(ML2_LayerStateAttentionFull a, ML2_LayerStateAttentionFull b, ML2_Scalar threshold) {
+ML2_FN bool ML2_AttentionFullStateCompare(ML2_LayerStateAttentionFull a, ML2_LayerStateAttentionFull b, ML2_Scalar threshold [[maybe_unused]]) {
     ML2_HARD_ASSERT(
         ML2_AttentionFullStateInfoSame(a.info, b.info)
     );
@@ -20493,8 +19277,8 @@ ML2_FN void ML2_VectorsLossBackwardBinaryCrossEntropy(ML2_LayerCacheVectors pred
 
 // ML2_LayerCacheMatrices ⬇️
 
-ML2_FN ML2_LayerCacheInfo ML2_Matrices(ML2_Int samples, ML2_Int height, ML2_Int width, ML2_Int channels) {
-    return (ML2_LayerCacheInfo){ML2_LayerCacheTypeMatrices, .as.matrices = {samples, height, width, channels}};
+ML2_FN ML2_LayerCacheInfo ML2_Matrices(ML2_Int samples, ML2_Int matrices, ML2_Int vectors, ML2_Int scalars) {
+    return (ML2_LayerCacheInfo){ML2_LayerCacheTypeMatrices, .as.matrices = {samples, matrices, vectors, scalars}};
 }
 
 ML2_FN ML2_LayerCache ML2_MatricesMake(ML2_LayerCacheInfoMatrices info, ML2_DeviceData data) {
@@ -21114,9 +19898,23 @@ ML2_FN bool ML2_ReinterpretInfoForwardCompatible(ML2_TransformReinterpret reinte
            ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
 }
 
-ML2_FN void ML2_ReinterpretInfoForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput) {
+ML2_FN void ML2_ReinterpretInfoForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput) {
     ML2_HARD_ASSERT(
         ML2_ReinterpretInfoForwardCompatible(reinterpret, layer, input)
+    );
+    *reinterpretedInput = reinterpret.info;
+    *reinterpretedOutput = ML2_LayerInfoForward(layer, reinterpret.info);
+}
+
+ML2_FN bool ML2_ReinterpretInfoForwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+    return ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
+}
+
+ML2_FN void ML2_ReinterpretInfoForwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput) {
+    ML2_HARD_ASSERT(
+        ML2_ReinterpretInfoForwardStateCompatible(reinterpret, layer, input)
     );
     *reinterpretedState = ML2_LayerStateInfoForward(layer, reinterpret.info);
     *reinterpretedInput = reinterpret.info;
@@ -21129,9 +19927,23 @@ ML2_FN bool ML2_ReinterpretInfoBackwardCompatible(ML2_TransformReinterpret reint
            ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
 }
 
-ML2_FN void ML2_ReinterpretInfoBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutputGradient) {
+ML2_FN void ML2_ReinterpretInfoBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutputGradient) {
     ML2_HARD_ASSERT(
         ML2_ReinterpretInfoBackwardCompatible(reinterpret, layer, input)
+    );
+    *reinterpretedInput = reinterpret.info;
+    *reinterpretedOutputGradient = ML2_LayerInfoForward(layer, reinterpret.info);
+}
+
+ML2_FN bool ML2_ReinterpretInfoBackwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+    return ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
+}
+
+ML2_FN void ML2_ReinterpretInfoBackwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_ReinterpretInfoBackwardStateCompatible(reinterpret, layer, input)
     );
     *reinterpretedState = ML2_LayerStateInfoForward(layer, reinterpret.info);
     *reinterpretedInput = reinterpret.info;
@@ -21145,9 +19957,26 @@ ML2_FN bool ML2_ReinterpretInfoBackwardFullCompatible(ML2_TransformReinterpret r
            ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
 }
 
-ML2_FN void ML2_ReinterpretInfoBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedInputGradient, ML2_LayerCacheInfo *reinterpretedOutput, ML2_LayerCacheInfo *reinterpretedOutputGradient) {
+ML2_FN void ML2_ReinterpretInfoBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedInputGradient, ML2_LayerCacheInfo *reinterpretedOutput, ML2_LayerCacheInfo *reinterpretedOutputGradient) {
     ML2_HARD_ASSERT(
         ML2_ReinterpretInfoBackwardFullCompatible(reinterpret, layer, input, inputGradient)
+    );
+    *reinterpretedInput = reinterpret.info;
+    *reinterpretedInputGradient = reinterpret.info;
+    *reinterpretedOutput = ML2_LayerInfoForward(layer, reinterpret.info);
+    *reinterpretedOutputGradient = ML2_LayerInfoForward(layer, reinterpret.info);
+}
+
+ML2_FN bool ML2_ReinterpretInfoBackwardFullStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
+    return ML2_LayerCacheInfoSame(input, inputGradient) &&
+           ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
+}
+
+ML2_FN void ML2_ReinterpretInfoBackwardFullState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *reinterpretedState, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedInputGradient, ML2_LayerCacheInfo *reinterpretedOutput, ML2_LayerCacheInfo *reinterpretedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_ReinterpretInfoBackwardFullStateCompatible(reinterpret, layer, input, inputGradient)
     );
     *reinterpretedState = ML2_LayerStateInfoForward(layer, reinterpret.info);
     *reinterpretedInput = reinterpret.info;
@@ -21156,21 +19985,21 @@ ML2_FN void ML2_ReinterpretInfoBackwardFull(ML2_TransformReinterpret reinterpret
     *reinterpretedOutputGradient = ML2_LayerInfoForward(layer, reinterpret.info);
 }
 
-ML2_FN bool ML2_ReinterpretInfoPredictCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
-    return ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
-           ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
-           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input);
+ML2_FN bool ML2_ReinterpretForwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+    return ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input) &&
+           ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(output);
 }
 
-ML2_FN void ML2_ReinterpretInfoPredict(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *reinterpretedInput, ML2_LayerCacheInfo *reinterpretedOutput) {
+ML2_FN void ML2_ReinterpretForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput) {
     ML2_HARD_ASSERT(
-        ML2_ReinterpretInfoPredictCompatible(reinterpret, layer, input)
+        ML2_ReinterpretForwardCompatible(reinterpret, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
-    *reinterpretedInput = reinterpret.info;
-    *reinterpretedOutput = ML2_LayerInfoForward(layer, reinterpret.info);
+    *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
+    *reinterpretedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(output));
 }
 
-ML2_FN bool ML2_ReinterpretForwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_ReinterpretForwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     return ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
            ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
            ML2_LayerStateInfoSizeof(ML2_LayerStateInfoForward(layer, reinterpret.info)) == ML2_LayerStateInfoSizeof(state) &&
@@ -21178,16 +20007,30 @@ ML2_FN bool ML2_ReinterpretForwardCompatible(ML2_TransformReinterpret reinterpre
            ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(output);
 }
 
-ML2_FN void ML2_ReinterpretForward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput) {
+ML2_FN void ML2_ReinterpretForwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput) {
     ML2_HARD_ASSERT(
-        ML2_ReinterpretForwardCompatible(reinterpret, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_ReinterpretForwardStateCompatible(reinterpret, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     *reinterpretedState = ML2_LayerStateMake(ML2_LayerStateInfoForward(layer, reinterpret.info), ML2_LayerStateData(state));
     *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
     *reinterpretedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(output));
 }
 
-ML2_FN bool ML2_ReinterpretBackwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_ReinterpretBackwardCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+    return ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input) &&
+           ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(outputGradient);
+}
+
+ML2_FN void ML2_ReinterpretBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_ReinterpretBackwardCompatible(reinterpret, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
+    *reinterpretedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(outputGradient));
+}
+
+ML2_FN bool ML2_ReinterpretBackwardStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
     return ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
            ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
            ML2_LayerStateInfoSizeof(ML2_LayerStateInfoForward(layer, reinterpret.info)) == ML2_LayerStateInfoSizeof(state) &&
@@ -21195,16 +20038,34 @@ ML2_FN bool ML2_ReinterpretBackwardCompatible(ML2_TransformReinterpret reinterpr
            ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(outputGradient);
 }
 
-ML2_FN void ML2_ReinterpretBackward(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutputGradient) {
+ML2_FN void ML2_ReinterpretBackwardState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutputGradient) {
     ML2_HARD_ASSERT(
-        ML2_ReinterpretBackwardCompatible(reinterpret, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_ReinterpretBackwardStateCompatible(reinterpret, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
     );
     *reinterpretedState = ML2_LayerStateMake(ML2_LayerStateInfoForward(layer, reinterpret.info), ML2_LayerStateData(state));
     *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
     *reinterpretedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(outputGradient));
 }
 
-ML2_FN bool ML2_ReinterpretBackwardFullCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_ReinterpretBackwardFullCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+    return ML2_LayerCacheInfoSame(input, inputGradient) &&
+           ML2_LayerCacheInfoSame(output, outputGradient) &&
+           ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
+           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input) &&
+           ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(output);
+}
+
+ML2_FN void ML2_ReinterpretBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedInputGradient, ML2_LayerCache *reinterpretedOutput, ML2_LayerCache *reinterpretedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_ReinterpretBackwardFullCompatible(reinterpret, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
+    *reinterpretedInputGradient = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(inputGradient));
+    *reinterpretedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(output));
+    *reinterpretedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(outputGradient));
+}
+
+ML2_FN bool ML2_ReinterpretBackwardFullStateCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
     return ML2_LayerCacheInfoSame(input, inputGradient) &&
            ML2_LayerCacheInfoSame(output, outputGradient) &&
            ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
@@ -21214,30 +20075,15 @@ ML2_FN bool ML2_ReinterpretBackwardFullCompatible(ML2_TransformReinterpret reint
            ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(output);
 }
 
-ML2_FN void ML2_ReinterpretBackwardFull(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedInputGradient, ML2_LayerCache *reinterpretedOutput, ML2_LayerCache *reinterpretedOutputGradient) {
+ML2_FN void ML2_ReinterpretBackwardFullState(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *reinterpretedState, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedInputGradient, ML2_LayerCache *reinterpretedOutput, ML2_LayerCache *reinterpretedOutputGradient) {
     ML2_HARD_ASSERT(
-        ML2_ReinterpretBackwardFullCompatible(reinterpret, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_ReinterpretBackwardFullStateCompatible(reinterpret, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
     );
     *reinterpretedState = ML2_LayerStateMake(ML2_LayerStateInfoForward(layer, reinterpret.info), ML2_LayerStateData(state));
     *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
     *reinterpretedInputGradient = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(inputGradient));
     *reinterpretedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(output));
     *reinterpretedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(outputGradient));
-}
-
-ML2_FN bool ML2_ReinterpretPredictCompatible(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    return ML2_LayerStateInfoForwardCompatible(layer, reinterpret.info) &&
-           ML2_LayerInfoForwardCompatible(layer, reinterpret.info) &&
-           ML2_LayerCacheInfoSizeof(reinterpret.info) == ML2_LayerCacheInfoSizeof(input) &&
-           ML2_LayerCacheInfoSizeof(ML2_LayerInfoForward(layer, reinterpret.info)) == ML2_LayerCacheInfoSizeof(output);
-}
-
-ML2_FN void ML2_ReinterpretPredict(ML2_TransformReinterpret reinterpret, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *reinterpretedInput, ML2_LayerCache *reinterpretedOutput) {
-    ML2_HARD_ASSERT(
-        ML2_ReinterpretPredictCompatible(reinterpret, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    *reinterpretedInput = ML2_LayerCacheMake(reinterpret.info, ML2_LayerCacheData(input));
-    *reinterpretedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, reinterpret.info), ML2_LayerCacheData(output));
 }
 
 // ML2_TransformReinterpret ⬆️
@@ -21273,12 +20119,29 @@ ML2_FN bool ML2_TransformInfoForwardCompatible(ML2_Transform transform, ML2_Laye
     }
 }
 
-ML2_FN void ML2_TransformInfoForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
+ML2_FN void ML2_TransformInfoForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
     ML2_HARD_ASSERT(
         ML2_TransformInfoForwardCompatible(transform, layer, input)
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoForward(ML2_TransformAsReinterpret(transform), layer, input, transformedState, transformedInput, transformedOutput); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoForward(ML2_TransformAsReinterpret(transform), layer, input, transformedInput, transformedOutput); break;
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN bool ML2_TransformInfoForwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretInfoForwardStateCompatible(ML2_TransformAsReinterpret(transform), layer, input);
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN void ML2_TransformInfoForwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
+    ML2_HARD_ASSERT(
+        ML2_TransformInfoForwardStateCompatible(transform, layer, input)
+    );
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoForwardState(ML2_TransformAsReinterpret(transform), layer, input, transformedState, transformedInput, transformedOutput); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
@@ -21290,12 +20153,29 @@ ML2_FN bool ML2_TransformInfoBackwardCompatible(ML2_Transform transform, ML2_Lay
     }
 }
 
-ML2_FN void ML2_TransformInfoBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient) {
+ML2_FN void ML2_TransformInfoBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient) {
     ML2_HARD_ASSERT(
         ML2_TransformInfoBackwardCompatible(transform, layer, input)
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoBackward(ML2_TransformAsReinterpret(transform), layer, input, transformedState, transformedInput, transformedOutputGradient); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoBackward(ML2_TransformAsReinterpret(transform), layer, input, transformedInput, transformedOutputGradient); break;
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN bool ML2_TransformInfoBackwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretInfoBackwardStateCompatible(ML2_TransformAsReinterpret(transform), layer, input);
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN void ML2_TransformInfoBackwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_TransformInfoBackwardStateCompatible(transform, layer, input)
+    );
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoBackwardState(ML2_TransformAsReinterpret(transform), layer, input, transformedState, transformedInput, transformedOutputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
@@ -21307,97 +20187,131 @@ ML2_FN bool ML2_TransformInfoBackwardFullCompatible(ML2_Transform transform, ML2
     }
 }
 
-ML2_FN void ML2_TransformInfoBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient) {
+ML2_FN void ML2_TransformInfoBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient) {
     ML2_HARD_ASSERT(
         ML2_TransformInfoBackwardFullCompatible(transform, layer, input, inputGradient)
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoBackwardFull(ML2_TransformAsReinterpret(transform), layer, input, inputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoBackwardFull(ML2_TransformAsReinterpret(transform), layer, input, inputGradient, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN bool ML2_TransformInfoPredictCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_TransformInfoBackwardFullStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: return ML2_ReinterpretInfoPredictCompatible(ML2_TransformAsReinterpret(transform), layer, input);
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretInfoBackwardFullStateCompatible(ML2_TransformAsReinterpret(transform), layer, input, inputGradient);
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN void ML2_TransformInfoPredict(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
+ML2_FN void ML2_TransformInfoBackwardFullState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient) {
     ML2_HARD_ASSERT(
-        ML2_TransformInfoPredictCompatible(transform, layer, input)
+        ML2_TransformInfoBackwardFullStateCompatible(transform, layer, input, inputGradient)
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoPredict(ML2_TransformAsReinterpret(transform), layer, input, transformedInput, transformedOutput); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretInfoBackwardFullState(ML2_TransformAsReinterpret(transform), layer, input, inputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN bool ML2_TransformForwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_TransformForwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: return ML2_ReinterpretForwardCompatible(ML2_TransformAsReinterpret(transform), layer, state, input, output);
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretForwardCompatible(ML2_TransformAsReinterpret(transform), layer, input, output);
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN void ML2_TransformForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
+ML2_FN void ML2_TransformForward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
     ML2_HARD_ASSERT(
-        ML2_TransformForwardCompatible(transform, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_TransformForwardCompatible(transform, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretForward(ML2_TransformAsReinterpret(transform), layer, state, input, output, transformedState, transformedInput, transformedOutput); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretForward(ML2_TransformAsReinterpret(transform), layer, input, output, transformedInput, transformedOutput); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN bool ML2_TransformBackwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_TransformForwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: return ML2_ReinterpretBackwardCompatible(ML2_TransformAsReinterpret(transform), layer, state, input, outputGradient);
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretForwardStateCompatible(ML2_TransformAsReinterpret(transform), layer, state, input, output);
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN void ML2_TransformBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient) {
+ML2_FN void ML2_TransformForwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
     ML2_HARD_ASSERT(
-        ML2_TransformBackwardCompatible(transform, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_TransformForwardStateCompatible(transform, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretBackward(ML2_TransformAsReinterpret(transform), layer, state, input, outputGradient, transformedState, transformedInput, transformedOutputGradient); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretForwardState(ML2_TransformAsReinterpret(transform), layer, state, input, output, transformedState, transformedInput, transformedOutput); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN bool ML2_TransformBackwardFullCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_TransformBackwardCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: return ML2_ReinterpretBackwardFullCompatible(ML2_TransformAsReinterpret(transform), layer, state, input, inputGradient, output, outputGradient);
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretBackwardCompatible(ML2_TransformAsReinterpret(transform), layer, input, outputGradient);
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN void ML2_TransformBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient) {
+ML2_FN void ML2_TransformBackward(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient) {
     ML2_HARD_ASSERT(
-        ML2_TransformBackwardFullCompatible(transform, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_TransformBackwardCompatible(transform, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretBackwardFull(ML2_TransformAsReinterpret(transform), layer, state, input, inputGradient, output, outputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretBackward(ML2_TransformAsReinterpret(transform), layer, input, outputGradient, transformedInput, transformedOutputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN bool ML2_TransformPredictCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_TransformBackwardStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: return ML2_ReinterpretPredictCompatible(ML2_TransformAsReinterpret(transform), layer, input, output);
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretBackwardStateCompatible(ML2_TransformAsReinterpret(transform), layer, state, input, outputGradient);
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
 
-ML2_FN void ML2_TransformPredict(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
+ML2_FN void ML2_TransformBackwardState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient) {
     ML2_HARD_ASSERT(
-        ML2_TransformPredictCompatible(transform, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_TransformBackwardStateCompatible(transform, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
     );
     switch (transform.type) {
-        case ML2_TransformTypeReinterpret: ML2_ReinterpretPredict(ML2_TransformAsReinterpret(transform), layer, input, output, transformedInput, transformedOutput); break;
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretBackwardState(ML2_TransformAsReinterpret(transform), layer, state, input, outputGradient, transformedState, transformedInput, transformedOutputGradient); break;
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN bool ML2_TransformBackwardFullCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretBackwardFullCompatible(ML2_TransformAsReinterpret(transform), layer, input, inputGradient, output, outputGradient);
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN void ML2_TransformBackwardFull(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_TransformBackwardFullCompatible(transform, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretBackwardFull(ML2_TransformAsReinterpret(transform), layer, input, inputGradient, output, outputGradient, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient); break;
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN bool ML2_TransformBackwardFullStateCompatible(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: return ML2_ReinterpretBackwardFullStateCompatible(ML2_TransformAsReinterpret(transform), layer, state, input, inputGradient, output, outputGradient);
+        default: ML2_UNREACHABLE("Unknown ML2_TransformType");
+    }
+}
+
+ML2_FN void ML2_TransformBackwardFullState(ML2_Transform transform, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_TransformBackwardFullStateCompatible(transform, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    switch (transform.type) {
+        case ML2_TransformTypeReinterpret: ML2_ReinterpretBackwardFullState(ML2_TransformAsReinterpret(transform), layer, state, input, inputGradient, output, outputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient); break;
         default: ML2_UNREACHABLE("Unknown ML2_TransformType");
     }
 }
@@ -21409,6 +20323,9 @@ ML2_FN ML2_Transforms ML2_TransformsNew(ML2_Int count, ML2_Transform *transforms
 #else
 ML2_FN ML2_Transforms ML2_TransformsNew(ML2_Int count, ML2_Transform transforms[static count]) {
 #endif
+    ML2_HARD_ASSERT(
+        count > 0
+    );
     ML2_Transforms trensforms = {
         count,
         ML2_Allocate(count * sizeof(*trensforms.transforms)),
@@ -21439,12 +20356,10 @@ ML2_FN void ML2_TransformsSort(ML2_Transforms transforms) {
         for (ML2_Int j = 0; j < count - i - 1; j++) {
             ML2_Transform *a = ML2_TransformsAt(transforms, j);
             ML2_Transform *b = ML2_TransformsAt(transforms, j + 1);
-            ML2_Int aExecuteIndex = ML2_TransformExecuteIndex(*a);
-            ML2_Int bExecuteIndex = ML2_TransformExecuteIndex(*b);
             ML2_HARD_ASSERT(
-                aExecuteIndex != bExecuteIndex
+                ML2_TransformExecuteIndex(*a) != ML2_TransformExecuteIndex(*b)
             );
-            if (aExecuteIndex > bExecuteIndex) {
+            if (ML2_TransformExecuteIndex(*a) > ML2_TransformExecuteIndex(*b)) {
                 swap = true;
                 ML2_Transform temp = *a;
                 *a = *b;
@@ -21459,95 +20374,12 @@ ML2_FN bool ML2_TransformsIsSorted(ML2_Transforms transforms) {
     for (ML2_Int i = 0; i < transforms.count - 1; i++) {
         ML2_Transform *a = ML2_TransformsAt(transforms, i);
         ML2_Transform *b = ML2_TransformsAt(transforms, i + 1);
-        ML2_Int aExecuteIndex = ML2_TransformExecuteIndex(*a);
-        ML2_Int bExecuteIndex = ML2_TransformExecuteIndex(*b);
-        ML2_HARD_ASSERT(
-            aExecuteIndex != bExecuteIndex
-        );
-        if (aExecuteIndex > bExecuteIndex) return false;
+        if (ML2_TransformExecuteIndex(*a) >= ML2_TransformExecuteIndex(*b)) return false;
     }
     return true;
 }
 
-ML2_FN bool ML2_TransformsInfoForwardInputAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input) {
-    if (
-        transforms.count <= 0 ||
-        transformIndex < 0 ||
-        transformIndex >= transforms.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        !ML2_TransformsIsSorted(transforms) ||
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, 0)) < ML2_TransformInputIndex
-    ) return false;
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        if (!ML2_TransformInfoForwardInputCompatible(transform, input)) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsInfoForwardInputAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput) {
-    ML2_HARD_ASSERT(
-        ML2_TransformsInfoForwardInputAtCompatible(transforms, transformIndex, executeIndex, input)
-    );
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        ML2_TransformInfoForwardInput(transform, input, transformedInput);
-    }
-}
-
-ML2_FN bool ML2_TransformsInfoForwardAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
-    if (
-        transforms.count <= 0 ||
-        transformIndex < 0 ||
-        transformIndex >= transforms.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        !ML2_TransformsIsSorted(transforms) ||
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, 0)) < ML2_TransformInputIndex
-    ) return false;
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        if (!ML2_TransformInfoForwardCompatible(transform, layer, input)) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsInfoForwardAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
-    ML2_HARD_ASSERT(
-        ML2_TransformsInfoForwardAtCompatible(transforms, transformIndex, executeIndex, layer, input)
-    );
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        ML2_TransformInfoForward(transform, layer, input, transformedState, transformedInput, transformedOutput);
-    }
-}
-
-ML2_FN bool ML2_TransformsInfoPredictAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
-    if (
-        transforms.count <= 0 ||
-        transformIndex < 0 ||
-        transformIndex >= transforms.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        !ML2_TransformsIsSorted(transforms) ||
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, 0)) < ML2_TransformInputIndex
-    ) return false;
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        if (!ML2_TransformInfoPredictCompatible(transform, layer, input)) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsInfoPredictAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
-    ML2_HARD_ASSERT(
-        ML2_TransformsInfoPredictAtCompatible(transforms, transformIndex, executeIndex, layer, input)
-    );
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        ML2_TransformInfoPredict(transform, layer, input, transformedInput, transformedOutput);
-    }
-}
-
-ML2_FN bool ML2_TransformsInfoForwardInputAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_TransformsInfoForwardInputAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input) {
     if (*transformIndex < transforms.count) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
@@ -21560,10 +20392,10 @@ ML2_FN bool ML2_TransformsInfoForwardInputAtCompatibleIterate(ML2_Transforms tra
     return true;
 }
 
-ML2_FN void ML2_TransformsInfoForwardInputAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput) {
+ML2_FN void ML2_TransformsInfoForwardInputAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput) {
     ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
     ML2_HARD_ASSERT(
-        ML2_TransformsInfoForwardInputAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, input)
+        ML2_TransformsInfoForwardInputAtCompatible(transforms, &compatibleTransformIndex, executeIndex, input)
     );
     if (*transformIndex < transforms.count) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
@@ -21576,7 +20408,7 @@ ML2_FN void ML2_TransformsInfoForwardInputAtIterate(ML2_Transforms transforms, M
     *transformedInput = input;
 }
 
-ML2_FN bool ML2_TransformsInfoForwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_TransformsInfoForwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
     if (*transformIndex < transforms.count) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
@@ -21589,25 +20421,55 @@ ML2_FN bool ML2_TransformsInfoForwardAtCompatibleIterate(ML2_Transforms transfor
     return true;
 }
 
-ML2_FN void ML2_TransformsInfoForwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
+ML2_FN void ML2_TransformsInfoForwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
     ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
     ML2_HARD_ASSERT(
-        ML2_TransformsInfoForwardAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, input)
+        ML2_TransformsInfoForwardAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, input)
     );
     if (*transformIndex < transforms.count) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformInfoForward(transform, layer, input, transformedState, transformedInput, transformedOutput);
+            ML2_TransformInfoForward(transform, layer, input, transformedInput, transformedOutput);
             *transformIndex += 1;
             return;
         }
     }
-    *transformedState = state;
     *transformedInput = input;
-    *transformedOutput = output;
+    *transformedOutput = ML2_LayerInfoForward(layer, input);
 }
 
-ML2_FN bool ML2_TransformsInfoBackwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_TransformsInfoForwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+    if (*transformIndex < transforms.count) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformInfoForwardStateCompatible(transform, layer, input)
+            ) return false;
+            *transformIndex += 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsInfoForwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsInfoForwardStateAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, input)
+    );
+    if (*transformIndex < transforms.count) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformInfoForwardState(transform, layer, input, transformedState, transformedInput, transformedOutput);
+            *transformIndex += 1;
+            return;
+        }
+    }
+    *transformedState = ML2_LayerStateInfoForward(layer, input);
+    *transformedInput = input;
+    *transformedOutput = ML2_LayerInfoForward(layer, input);
+}
+
+ML2_FN bool ML2_TransformsInfoBackwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
     if (*transformIndex >= 0) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
@@ -21620,25 +20482,55 @@ ML2_FN bool ML2_TransformsInfoBackwardAtCompatibleIterate(ML2_Transforms transfo
     return true;
 }
 
-ML2_FN void ML2_TransformsInfoBackwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient) {
+ML2_FN void ML2_TransformsInfoBackwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient) {
     ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
     ML2_HARD_ASSERT(
-        ML2_TransformsInfoBackwardAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, input)
+        ML2_TransformsInfoBackwardAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, input)
     );
     if (*transformIndex >= 0) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformInfoBackward(transform, layer, input, transformedState, transformedInput, transformedOutputGradient);
+            ML2_TransformInfoBackward(transform, layer, input, transformedInput, transformedOutputGradient);
             *transformIndex -= 1;
             return;
         }
     }
-    *transformedState = state;
     *transformedInput = input;
-    *transformedOutputGradient = outputGradient;
+    *transformedOutputGradient = ML2_LayerInfoForward(layer, input);
 }
 
-ML2_FN bool ML2_TransformsInfoBackwardFullAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
+ML2_FN bool ML2_TransformsInfoBackwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformInfoBackwardStateCompatible(transform, layer, input)
+            ) return false;
+            *transformIndex -= 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsInfoBackwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutputGradient) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsInfoBackwardStateAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, input)
+    );
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformInfoBackwardState(transform, layer, input, transformedState, transformedInput, transformedOutputGradient);
+            *transformIndex -= 1;
+            return;
+        }
+    }
+    *transformedState = ML2_LayerStateInfoForward(layer, input);
+    *transformedInput = input;
+    *transformedOutputGradient = ML2_LayerInfoForward(layer, input);
+}
+
+ML2_FN bool ML2_TransformsInfoBackwardFullAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
     if (*transformIndex >= 0) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
@@ -21651,145 +20543,31 @@ ML2_FN bool ML2_TransformsInfoBackwardFullAtCompatibleIterate(ML2_Transforms tra
     return true;
 }
 
-ML2_FN void ML2_TransformsInfoBackwardFullAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient) {
+ML2_FN void ML2_TransformsInfoBackwardFullAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient) {
     ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
     ML2_HARD_ASSERT(
-        ML2_TransformsInfoBackwardFullAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, input, inputGradient)
+        ML2_TransformsInfoBackwardFullAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, input, inputGradient)
     );
     if (*transformIndex >= 0) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformInfoBackwardFull(transform, layer, input, inputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+            ML2_TransformInfoBackwardFull(transform, layer, input, inputGradient, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
             *transformIndex -= 1;
             return;
         }
     }
-    *transformedState = state;
     *transformedInput = input;
     *transformedInputGradient = inputGradient;
-    *transformedOutput = output;
-    *transformedOutputGradient = outputGradient;
+    *transformedOutput = ML2_LayerInfoForward(layer, input);
+    *transformedOutputGradient = ML2_LayerInfoForward(layer, input);
 }
 
-ML2_FN bool ML2_TransformsInfoPredictAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input) {
-    if (*transformIndex < transforms.count) {
-        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
-        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            if (
-                !ML2_TransformInfoPredictCompatible(transform, layer, input)
-            ) return false;
-            *transformIndex += 1;
-        }
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsInfoPredictAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedOutput) {
-    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
-    ML2_HARD_ASSERT(
-        ML2_TransformsInfoPredictAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, input)
-    );
-    if (*transformIndex < transforms.count) {
-        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
-        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformInfoPredict(transform, layer, input, transformedInput, transformedOutput);
-            *transformIndex += 1;
-            return;
-        }
-    }
-    *transformedInput = input;
-    *transformedOutput = output;
-}
-
-ML2_FN bool ML2_TransformsForwardAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (
-        transforms.count <= 0 ||
-        transformIndex < 0 ||
-        transformIndex >= transforms.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        !ML2_TransformsIsSorted(transforms) ||
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, 0)) < ML2_TransformInputIndex
-    ) return false;
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        if (!ML2_TransformForwardCompatible(transform, layer, state, input, output)) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsForwardAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
-    ML2_HARD_ASSERT(
-        ML2_TransformsForwardAtCompatible(transforms, transformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        ML2_TransformForward(transform, layer, state, input, output, transformedState, transformedInput, transformedOutput);
-    }
-}
-
-ML2_FN bool ML2_TransformsPredictAtCompatible(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (
-        transforms.count <= 0 ||
-        transformIndex < 0 ||
-        transformIndex >= transforms.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        !ML2_TransformsIsSorted(transforms) ||
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, 0)) < ML2_TransformInputIndex
-    ) return false;
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        if (!ML2_TransformPredictCompatible(transform, layer, input, output)) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsPredictAt(ML2_Transforms transforms, ML2_Int transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
-    ML2_HARD_ASSERT(
-        ML2_TransformsPredictAtCompatible(transforms, transformIndex, executeIndex, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    ML2_Transform transform = *ML2_TransformsAt(transforms, transformIndex);
-    if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-        ML2_TransformPredict(transform, layer, input, output, transformedInput, transformedOutput);
-    }
-}
-
-ML2_FN bool ML2_TransformsForwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
-    if (*transformIndex < transforms.count) {
-        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
-        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            if (
-                !ML2_TransformForwardCompatible(transform, layer, state, input, output)
-            ) return false;
-            *transformIndex += 1;
-        }
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsForwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
-    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
-    ML2_HARD_ASSERT(
-        ML2_TransformsForwardAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
-    );
-    if (*transformIndex < transforms.count) {
-        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
-        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformForward(transform, layer, state, input, output, transformedState, transformedInput, transformedOutput);
-            *transformIndex += 1;
-            return;
-        }
-    }
-    *transformedState = state;
-    *transformedInput = input;
-    *transformedOutput = output;
-}
-
-ML2_FN bool ML2_TransformsBackwardAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+ML2_FN bool ML2_TransformsInfoBackwardFullStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
     if (*transformIndex >= 0) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
             if (
-                !ML2_TransformBackwardCompatible(transform, layer, state, input, outputGradient)
+                !ML2_TransformInfoBackwardFullStateCompatible(transform, layer, input, inputGradient)
             ) return false;
             *transformIndex -= 1;
         }
@@ -21797,63 +20575,32 @@ ML2_FN bool ML2_TransformsBackwardAtCompatibleIterate(ML2_Transforms transforms,
     return true;
 }
 
-ML2_FN void ML2_TransformsBackwardAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient) {
+ML2_FN void ML2_TransformsInfoBackwardFullStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerStateInfo *transformedState, ML2_LayerCacheInfo *transformedInput, ML2_LayerCacheInfo *transformedInputGradient, ML2_LayerCacheInfo *transformedOutput, ML2_LayerCacheInfo *transformedOutputGradient) {
     ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
     ML2_HARD_ASSERT(
-        ML2_TransformsBackwardAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+        ML2_TransformsInfoBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, input, inputGradient)
     );
     if (*transformIndex >= 0) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformBackward(transform, layer, state, input, outputGradient, transformedState, transformedInput, transformedOutputGradient);
+            ML2_TransformInfoBackwardFullState(transform, layer, input, inputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
             *transformIndex -= 1;
             return;
         }
     }
-    *transformedState = state;
-    *transformedInput = input;
-    *transformedOutputGradient = outputGradient;
-}
-
-ML2_FN bool ML2_TransformsBackwardFullAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
-    if (*transformIndex >= 0) {
-        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
-        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            if (
-                !ML2_TransformBackwardFullCompatible(transform, layer, state, input, inputGradient, output, outputGradient)
-            ) return false;
-            *transformIndex -= 1;
-        }
-    }
-    return true;
-}
-
-ML2_FN void ML2_TransformsBackwardFullAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient) {
-    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
-    ML2_HARD_ASSERT(
-        ML2_TransformsBackwardFullAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
-    );
-    if (*transformIndex >= 0) {
-        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
-        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformBackwardFull(transform, layer, state, input, inputGradient, output, outputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
-            *transformIndex -= 1;
-            return;
-        }
-    }
-    *transformedState = state;
+    *transformedState = ML2_LayerStateInfoForward(layer, input);
     *transformedInput = input;
     *transformedInputGradient = inputGradient;
-    *transformedOutput = output;
-    *transformedOutputGradient = outputGradient;
+    *transformedOutput = ML2_LayerInfoForward(layer, input);
+    *transformedOutputGradient = ML2_LayerInfoForward(layer, input);
 }
 
-ML2_FN bool ML2_TransformsPredictAtCompatibleIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+ML2_FN bool ML2_TransformsForwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
     if (*transformIndex < transforms.count) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
             if (
-                !ML2_TransformPredictCompatible(transform, layer, input, output)
+                !ML2_TransformForwardCompatible(transform, layer, input, output)
             ) return false;
             *transformIndex += 1;
         }
@@ -21861,21 +20608,178 @@ ML2_FN bool ML2_TransformsPredictAtCompatibleIterate(ML2_Transforms transforms, 
     return true;
 }
 
-ML2_FN void ML2_TransformsPredictAtIterate(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
+ML2_FN void ML2_TransformsForwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
     ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
     ML2_HARD_ASSERT(
-        ML2_TransformsPredictAtCompatibleIterate(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+        ML2_TransformsForwardAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
     );
     if (*transformIndex < transforms.count) {
         ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
         if (ML2_TransformExecuteIndex(transform) == executeIndex) {
-            ML2_TransformPredict(transform, layer, input, output, transformedInput, transformedOutput);
+            ML2_TransformForward(transform, layer, input, output, transformedInput, transformedOutput);
             *transformIndex += 1;
             return;
         }
     }
     *transformedInput = input;
-    *transformedOutput = output;
+    *transformedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(output));
+}
+
+ML2_FN bool ML2_TransformsForwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo output) {
+    if (*transformIndex < transforms.count) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformForwardStateCompatible(transform, layer, state, input, output)
+            ) return false;
+            *transformIndex += 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsForwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache output, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutput) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsForwardStateAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(output))
+    );
+    if (*transformIndex < transforms.count) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformForwardState(transform, layer, state, input, output, transformedState, transformedInput, transformedOutput);
+            *transformIndex += 1;
+            return;
+        }
+    }
+    *transformedState = ML2_LayerStateMake(ML2_LayerStateInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerStateData(state));
+    *transformedInput = input;
+    *transformedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(output));
+}
+
+ML2_FN bool ML2_TransformsBackwardAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformBackwardCompatible(transform, layer, input, outputGradient)
+            ) return false;
+            *transformIndex -= 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsBackwardAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsBackwardAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformBackward(transform, layer, input, outputGradient, transformedInput, transformedOutputGradient);
+            *transformIndex -= 1;
+            return;
+        }
+    }
+    *transformedInput = input;
+    *transformedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(outputGradient));
+}
+
+ML2_FN bool ML2_TransformsBackwardStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo outputGradient) {
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformBackwardStateCompatible(transform, layer, state, input, outputGradient)
+            ) return false;
+            *transformIndex -= 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsBackwardStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedOutputGradient) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsBackwardStateAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformBackwardState(transform, layer, state, input, outputGradient, transformedState, transformedInput, transformedOutputGradient);
+            *transformIndex -= 1;
+            return;
+        }
+    }
+    *transformedState = ML2_LayerStateMake(ML2_LayerStateInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerStateData(state));
+    *transformedInput = input;
+    *transformedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(outputGradient));
+}
+
+ML2_FN bool ML2_TransformsBackwardFullAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformBackwardFullCompatible(transform, layer, input, inputGradient, output, outputGradient)
+            ) return false;
+            *transformIndex -= 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsBackwardFullAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformBackwardFull(transform, layer, input, inputGradient, output, outputGradient, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+            *transformIndex -= 1;
+            return;
+        }
+    }
+    *transformedInput = input;
+    *transformedInputGradient = inputGradient;
+    *transformedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(output));
+    *transformedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(outputGradient));
+}
+
+ML2_FN bool ML2_TransformsBackwardFullStateAtCompatible(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerStateInfo state, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_LayerCacheInfo output, ML2_LayerCacheInfo outputGradient) {
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            if (
+                !ML2_TransformBackwardFullStateCompatible(transform, layer, state, input, inputGradient, output, outputGradient)
+            ) return false;
+            *transformIndex -= 1;
+        }
+    }
+    return true;
+}
+
+ML2_FN void ML2_TransformsBackwardFullStateAt(ML2_Transforms transforms, ML2_Int *transformIndex, ML2_Int executeIndex, ML2_LayerInfo layer, ML2_LayerState state, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_LayerCache output, ML2_LayerCache outputGradient, ML2_LayerState *transformedState, ML2_LayerCache *transformedInput, ML2_LayerCache *transformedInputGradient, ML2_LayerCache *transformedOutput, ML2_LayerCache *transformedOutputGradient) {
+    ML2_Int compatibleTransformIndex [[maybe_unused]] = *transformIndex;
+    ML2_HARD_ASSERT(
+        ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, executeIndex, layer, ML2_LayerStateAsInfo(state), ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), ML2_LayerCacheAsInfo(output), ML2_LayerCacheAsInfo(outputGradient))
+    );
+    if (*transformIndex >= 0) {
+        ML2_Transform transform = *ML2_TransformsAt(transforms, *transformIndex);
+        if (ML2_TransformExecuteIndex(transform) == executeIndex) {
+            ML2_TransformBackwardFullState(transform, layer, state, input, inputGradient, output, outputGradient, transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+            *transformIndex -= 1;
+            return;
+        }
+    }
+    *transformedState = ML2_LayerStateMake(ML2_LayerStateInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerStateData(state));
+    *transformedInput = input;
+    *transformedInputGradient = inputGradient;
+    *transformedOutput = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(output));
+    *transformedOutputGradient = ML2_LayerCacheMake(ML2_LayerInfoForward(layer, ML2_LayerCacheAsInfo(input)), ML2_LayerCacheData(outputGradient));
 }
 
 // ML2_Transforms ⬆️
@@ -21915,8 +20819,11 @@ ML2_FN ML2_Int ML2_SumExecuteIndex(ML2_OperationSum operation) {
 
 ML2_FN bool ML2_SumForwardCompatible(ML2_OperationSum sum, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
     if (
-        sum.dstIndex < 0 || sum.dstIndex >= modelCache.count ||
-        sum.srcIndex < ML2_OperationInputIndex || sum.srcIndex >= modelCache.count
+        sum.dstIndex < 0 ||
+        sum.dstIndex >= modelCache.count ||
+        sum.srcIndex < ML2_OperationInputIndex ||
+        sum.srcIndex >= modelCache.count ||
+        sum.dstIndex <= sum.srcIndex
     ) return false;
     ML2_LayerCacheInfo dst = ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, sum.dstIndex));
     ML2_LayerCacheInfo src = sum.srcIndex == ML2_OperationInputIndex ? input : ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, sum.srcIndex));
@@ -21934,8 +20841,11 @@ ML2_FN void ML2_SumForward(ML2_OperationSum sum, ML2_ModelCache modelCache, ML2_
 
 ML2_FN bool ML2_SumCacheBackwardCompatible(ML2_OperationSum sum, ML2_ModelCache modelCacheGradient) {
     if (
-        sum.dstIndex < 0 || sum.dstIndex >= modelCacheGradient.count ||
-        sum.srcIndex < 0 || sum.srcIndex >= modelCacheGradient.count
+        sum.dstIndex < 0 ||
+        sum.dstIndex >= modelCacheGradient.count ||
+        sum.srcIndex < 0 ||
+        sum.srcIndex >= modelCacheGradient.count ||
+        sum.dstIndex <= sum.srcIndex
     ) return false;
     ML2_LayerCacheInfo dst = ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, sum.dstIndex));
     ML2_LayerCacheInfo src = ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, sum.srcIndex));
@@ -21953,8 +20863,11 @@ ML2_FN void ML2_SumCacheBackward(ML2_OperationSum sum, ML2_ModelCache modelCache
 
 ML2_FN bool ML2_SumCacheBackwardFullCompatible(ML2_OperationSum sum, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient) {
     if (
-        sum.dstIndex < 0 || sum.dstIndex >= modelCacheGradient.count ||
-        sum.srcIndex < ML2_OperationInputIndex || sum.srcIndex >= modelCacheGradient.count
+        sum.dstIndex < 0 ||
+        sum.dstIndex >= modelCacheGradient.count ||
+        sum.srcIndex < ML2_OperationInputIndex ||
+        sum.srcIndex >= modelCacheGradient.count ||
+        sum.dstIndex <= sum.srcIndex
     ) return false;
     ML2_LayerCacheInfo dst = ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, sum.dstIndex));
     ML2_LayerCacheInfo src = sum.srcIndex == ML2_OperationInputIndex ? inputGradient : ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, sum.srcIndex));
@@ -21968,25 +20881,6 @@ ML2_FN void ML2_SumCacheBackwardFull(ML2_OperationSum sum, ML2_ModelCache modelC
     ML2_LayerCache dstGradient = *ML2_ModelCacheAt(modelCacheGradient, sum.dstIndex);
     ML2_LayerCache srcGradient = sum.srcIndex == ML2_OperationInputIndex ? inputGradient : *ML2_ModelCacheAt(modelCacheGradient, sum.srcIndex);
     ML2_LayerCacheSum(srcGradient, dstGradient);
-}
-
-ML2_FN bool ML2_SumPredictCompatible(ML2_OperationSum sum, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
-    if (
-        sum.dstIndex < 0 || sum.dstIndex >= modelCache.count ||
-        sum.srcIndex < ML2_OperationInputIndex || sum.srcIndex >= modelCache.count
-    ) return false;
-    ML2_LayerCacheInfo dst = ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, sum.dstIndex));
-    ML2_LayerCacheInfo src = sum.srcIndex == ML2_OperationInputIndex ? input : ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, sum.srcIndex));
-    return ML2_LayerCacheInfoSame(dst, src);
-}
-
-ML2_FN void ML2_SumPredict(ML2_OperationSum sum, ML2_ModelCache modelCache, ML2_LayerCache input) {
-    ML2_HARD_ASSERT(
-        ML2_SumPredictCompatible(sum, modelCache, ML2_LayerCacheAsInfo(input))
-    );
-    ML2_LayerCache dst = *ML2_ModelCacheAt(modelCache, sum.dstIndex);
-    ML2_LayerCache src = sum.srcIndex == ML2_OperationInputIndex ? input : *ML2_ModelCacheAt(modelCache, sum.srcIndex);
-    ML2_LayerCacheSum(dst, src);
 }
 
 // ML2_OperationSum ⬆️
@@ -22049,23 +20943,6 @@ ML2_FN void ML2_OperationCacheBackwardFull(ML2_Operation operation, ML2_ModelCac
     }
 }
 
-ML2_FN bool ML2_OperationPredictCompatible(ML2_Operation operation, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
-    switch (operation.type) {
-        case ML2_OperationTypeSum: return ML2_SumPredictCompatible(ML2_OperationAsSum(operation), modelCache, input);
-        default: ML2_UNREACHABLE("Unknown ML2_OperationType");
-    }
-}
-
-ML2_FN void ML2_OperationPredict(ML2_Operation operation, ML2_ModelCache modelCache, ML2_LayerCache input) {
-    ML2_HARD_ASSERT(
-        ML2_OperationPredictCompatible(operation, modelCache, ML2_LayerCacheAsInfo(input))
-    );
-    switch (operation.type) {
-        case ML2_OperationTypeSum: ML2_SumPredict(ML2_OperationAsSum(operation), modelCache, input); break;
-        default: ML2_UNREACHABLE("Unknown ML2_OperationType");
-    }
-}
-
 // ML2_Operations ⬇️
 
 #ifdef __cplusplus
@@ -22073,6 +20950,9 @@ ML2_FN ML2_Operations ML2_OperationsNew(ML2_Int count, ML2_Operation *operations
 #else
 ML2_FN ML2_Operations ML2_OperationsNew(ML2_Int count, ML2_Operation operations[static count]) {
 #endif
+    ML2_HARD_ASSERT(
+        count > 0
+    );
     ML2_Operations operetions = {
         count,
         ML2_Allocate(count * sizeof(*operetions.operations)),
@@ -22123,123 +21003,7 @@ ML2_FN bool ML2_OperationsIsSorted(ML2_Operations operations) {
     return true;
 }
 
-ML2_FN bool ML2_OperationsForwardAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
-    if (
-        operations.count <= 0 ||
-        operationIndex < 0 ||
-        operationIndex >= operations.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        executeIndex >= modelCache.count ||
-        !ML2_OperationsIsSorted(operations) ||
-        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
-    ) return false;
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        if (
-            !ML2_OperationForwardCompatible(operation, modelCache, input)
-        ) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_OperationsForwardAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input) {
-    ML2_HARD_ASSERT(
-        ML2_OperationsForwardAtCompatible(operations, operationIndex, executeIndex, modelCache, ML2_LayerCacheAsInfo(input))
-    );
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        ML2_OperationForward(operation, modelCache, input);
-    }
-}
-
-ML2_FN bool ML2_OperationsCacheBackwardAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient) {
-    if (
-        operations.count <= 0 ||
-        operationIndex < 0 ||
-        operationIndex >= operations.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        executeIndex >= modelCacheGradient.count ||
-        !ML2_OperationsIsSorted(operations) ||
-        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCacheGradient.count
-    ) return false;
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        if (
-            !ML2_OperationCacheBackwardCompatible(operation, modelCacheGradient)
-        ) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_OperationsCacheBackwardAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient) {
-    ML2_HARD_ASSERT(
-        ML2_OperationsCacheBackwardAtCompatible(operations, operationIndex, executeIndex, modelCacheGradient)
-    );
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        ML2_OperationCacheBackward(operation, modelCacheGradient);
-    }
-}
-
-ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient) {
-    if (
-        operations.count <= 0 ||
-        operationIndex < 0 ||
-        operationIndex >= operations.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        executeIndex >= modelCacheGradient.count ||
-        !ML2_OperationsIsSorted(operations) ||
-        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCacheGradient.count
-    ) return false;
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        if (
-            !ML2_OperationCacheBackwardFullCompatible(operation, modelCacheGradient, inputGradient)
-        ) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_OperationsCacheBackwardFullAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient) {
-    ML2_HARD_ASSERT(
-        ML2_OperationsCacheBackwardFullAtCompatible(operations, operationIndex, executeIndex, modelCacheGradient, ML2_LayerCacheAsInfo(inputGradient))
-    );
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        ML2_OperationCacheBackwardFull(operation, modelCacheGradient, inputGradient);
-    }
-}
-
-ML2_FN bool ML2_OperationsPredictAtCompatible(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
-    if (
-        operations.count <= 0 ||
-        operationIndex < 0 ||
-        operationIndex >= operations.count ||
-        executeIndex < ML2_TransformInputIndex ||
-        executeIndex >= modelCache.count ||
-        !ML2_OperationsIsSorted(operations) ||
-        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
-    ) return false;
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        if (
-            !ML2_OperationPredictCompatible(operation, modelCache, input)
-        ) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_OperationsPredictAt(ML2_Operations operations, ML2_Int operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input) {
-    ML2_HARD_ASSERT(
-        ML2_OperationsPredictAtCompatible(operations, operationIndex, executeIndex, modelCache, ML2_LayerCacheAsInfo(input))
-    );
-    ML2_Operation operation = *ML2_OperationsAt(operations, operationIndex);
-    if (ML2_OperationExecuteIndex(operation) == executeIndex) {
-        ML2_OperationPredict(operation, modelCache, input);
-    }
-}
-
-ML2_FN bool ML2_OperationsForwardAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_OperationsForwardAtCompatible(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
     while (*operationIndex < operations.count) {
         ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
         if (ML2_OperationExecuteIndex(operation) != executeIndex) break;
@@ -22251,10 +21015,10 @@ ML2_FN bool ML2_OperationsForwardAtCompatibleIterate(ML2_Operations operations, 
     return true;
 }
 
-ML2_FN void ML2_OperationsForwardAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input) {
+ML2_FN void ML2_OperationsForwardAt(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input) {
     ML2_Int compatibleOperationIndex [[maybe_unused]] = *operationIndex;
     ML2_HARD_ASSERT(
-        ML2_OperationsForwardAtCompatibleIterate(operations, &compatibleOperationIndex, executeIndex, modelCache, ML2_LayerCacheAsInfo(input))
+        ML2_OperationsForwardAtCompatible(operations, &compatibleOperationIndex, executeIndex, modelCache, ML2_LayerCacheAsInfo(input))
     );
     while (*operationIndex < operations.count) {
         ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
@@ -22264,7 +21028,7 @@ ML2_FN void ML2_OperationsForwardAtIterate(ML2_Operations operations, ML2_Int *o
     }
 }
 
-ML2_FN bool ML2_OperationsCacheBackwardAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient) {
+ML2_FN bool ML2_OperationsCacheBackwardAtCompatible(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient) {
     while (*operationIndex >= 0) {
         ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
         if (ML2_OperationExecuteIndex(operation) != executeIndex) break;
@@ -22276,10 +21040,10 @@ ML2_FN bool ML2_OperationsCacheBackwardAtCompatibleIterate(ML2_Operations operat
     return true;
 }
 
-ML2_FN void ML2_OperationsCacheBackwardAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient) {
+ML2_FN void ML2_OperationsCacheBackwardAt(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient) {
     ML2_Int compatibleOperationIndex [[maybe_unused]] = *operationIndex;
     ML2_HARD_ASSERT(
-        ML2_OperationsCacheBackwardAtCompatibleIterate(operations, &compatibleOperationIndex, executeIndex, modelCacheGradient)
+        ML2_OperationsCacheBackwardAtCompatible(operations, &compatibleOperationIndex, executeIndex, modelCacheGradient)
     );
     while (*operationIndex >= 0) {
         ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
@@ -22289,7 +21053,7 @@ ML2_FN void ML2_OperationsCacheBackwardAtIterate(ML2_Operations operations, ML2_
     }
 }
 
-ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient) {
+ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatible(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo inputGradient) {
     while (*operationIndex >= 0) {
         ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
         if (ML2_OperationExecuteIndex(operation) != executeIndex) break;
@@ -22301,41 +21065,16 @@ ML2_FN bool ML2_OperationsCacheBackwardFullAtCompatibleIterate(ML2_Operations op
     return true;
 }
 
-ML2_FN void ML2_OperationsCacheBackwardFullAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient) {
+ML2_FN void ML2_OperationsCacheBackwardFullAt(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCacheGradient, ML2_LayerCache inputGradient) {
     ML2_Int compatibleOperationIndex [[maybe_unused]] = *operationIndex;
     ML2_HARD_ASSERT(
-        ML2_OperationsCacheBackwardFullAtCompatibleIterate(operations, &compatibleOperationIndex, executeIndex, modelCacheGradient, ML2_LayerCacheAsInfo(inputGradient))
+        ML2_OperationsCacheBackwardFullAtCompatible(operations, &compatibleOperationIndex, executeIndex, modelCacheGradient, ML2_LayerCacheAsInfo(inputGradient))
     );
     while (*operationIndex >= 0) {
         ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
         if (ML2_OperationExecuteIndex(operation) != executeIndex) break;
         ML2_OperationCacheBackwardFull(operation, modelCacheGradient, inputGradient);
         *operationIndex -= 1;
-    }
-}
-
-ML2_FN bool ML2_OperationsPredictAtCompatibleIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
-    while (*operationIndex < operations.count) {
-        ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
-        if (ML2_OperationExecuteIndex(operation) != executeIndex) break;
-        if (
-            !ML2_OperationPredictCompatible(operation, modelCache, input)
-        ) return false;
-        *operationIndex += 1;
-    }
-    return true;
-}
-
-ML2_FN void ML2_OperationsPredictAtIterate(ML2_Operations operations, ML2_Int *operationIndex, ML2_Int executeIndex, ML2_ModelCache modelCache, ML2_LayerCache input) {
-    ML2_Int compatibleOperationIndex [[maybe_unused]] = *operationIndex;
-    ML2_HARD_ASSERT(
-        ML2_OperationsPredictAtCompatibleIterate(operations, &compatibleOperationIndex, executeIndex, modelCache, ML2_LayerCacheAsInfo(input))
-    );
-    while (*operationIndex < operations.count) {
-        ML2_Operation operation = *ML2_OperationsAt(operations, *operationIndex);
-        if (ML2_OperationExecuteIndex(operation) != executeIndex) break;
-        ML2_OperationPredict(operation, modelCache, input);
-        *operationIndex += 1;
     }
 }
 
@@ -22473,34 +21212,110 @@ ML2_FN void ML2_ModelCopyDeviceToHost(ML2_Model dstHost, ML2_Model srcDevice) {
     }
 }
 
-ML2_FN bool ML2_ModelForwardCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_ModelForwardCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count
+    ) return false;
+    if (
+        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
+    ) return false;
+    for (ML2_Int i = 1; i < model.count; i++) {
+        if (
+            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
+        ) return false;
+    }
+    return true;
+}
+
+ML2_FN void ML2_ModelForward(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input) {
+    ML2_HARD_ASSERT(
+        ML2_ModelForwardCompatible(model, modelCache, ML2_LayerCacheAsInfo(input))
+    );
+    ML2_LayerForward(*ML2_ModelAt(model, 0), input, *ML2_ModelCacheAt(modelCache, 0));
+    for (ML2_Int i = 1; i < model.count; i++) {
+        ML2_LayerForward(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
+    }
+}
+
+ML2_FN bool ML2_ModelForwardStateCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
         model.count != modelCache.count
     ) return false;
     if (
-        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
+        !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
     ) return false;
     for (ML2_Int i = 1; i < model.count; i++) {
         if (
-            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
+            !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
         ) return false;
     }
     return true;
 }
 
-ML2_FN void ML2_ModelForward(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input) {
+ML2_FN void ML2_ModelForwardState(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input) {
     ML2_HARD_ASSERT(
-        ML2_ModelForwardCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input))
+        ML2_ModelForwardStateCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input))
     );
-    ML2_LayerForward(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0));
+    ML2_LayerForwardState(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0));
     for (ML2_Int i = 1; i < model.count; i++) {
-        ML2_LayerForward(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
+        ML2_LayerForwardState(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
     }
 }
 
-ML2_FN bool ML2_ModelForwardTransformsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
+ML2_FN bool ML2_ModelForwardTransformsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1
+    ) return false;
+    ML2_Int transformIndex = 0;
+    ML2_Int compatibleTransformIndex = 0;
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    if (
+        !ML2_TransformsForwardAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
+    ) return false;
+    ML2_TransformsInfoForwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedInput, &transformedOutput);
+    if (
+        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedInput, transformedOutput)
+    ) return false;
+    for (ML2_Int i = 1; i < model.count; i++) {
+        if (
+            !ML2_TransformsForwardAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
+        ) return false;
+        ML2_TransformsInfoForwardAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), &transformedInput, &transformedOutput);
+        if (
+            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedOutput)
+        ) return false;
+    }
+    if (
+        transformIndex != transforms.count ||
+        compatibleTransformIndex != transforms.count
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelForwardTransforms(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms) {
+    ML2_HARD_ASSERT(
+        ML2_ModelForwardTransformsCompatible(model, modelCache, ML2_LayerCacheAsInfo(input), transforms)
+    );
+    ML2_Int transformIndex = 0;
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_TransformsForwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, *ML2_ModelCacheAt(modelCache, 0), &transformedInput, &transformedOutput);
+    ML2_LayerForward(*ML2_ModelAt(model, 0), transformedInput, transformedOutput);
+    for (ML2_Int i = 1; i < model.count; i++) {
+        ML2_TransformsForwardAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i), &transformedInput, &transformedOutput);
+        ML2_LayerForward(*ML2_ModelAt(model, i), transformedInput, transformedOutput);
+    }
+}
+
+ML2_FN bool ML2_ModelForwardStateTransformsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
@@ -22515,19 +21330,19 @@ ML2_FN bool ML2_ModelForwardTransformsCompatible(ML2_Model model, ML2_ModelState
     ML2_LayerCacheInfo transformedInput = {};
     ML2_LayerCacheInfo transformedOutput = {};
     if (
-        !ML2_TransformsForwardAtCompatibleIterate(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
+        !ML2_TransformsForwardStateAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
     ) return false;
-    ML2_TransformsInfoForwardAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), &transformedState, &transformedInput, &transformedOutput);
+    ML2_TransformsInfoForwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedState, &transformedInput, &transformedOutput);
     if (
-        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedState, transformedInput, transformedOutput)
+        !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedState, transformedInput, transformedOutput)
     ) return false;
     for (ML2_Int i = 1; i < model.count; i++) {
         if (
-            !ML2_TransformsForwardAtCompatibleIterate(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
+            !ML2_TransformsForwardStateAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
         ) return false;
-        ML2_TransformsInfoForwardAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), &transformedState, &transformedInput, &transformedOutput);
+        ML2_TransformsInfoForwardStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), &transformedState, &transformedInput, &transformedOutput);
         if (
-            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedOutput)
+            !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedOutput)
         ) return false;
     }
     if (
@@ -22537,23 +21352,61 @@ ML2_FN bool ML2_ModelForwardTransformsCompatible(ML2_Model model, ML2_ModelState
     return true;
 }
 
-ML2_FN void ML2_ModelForwardTransforms(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms) {
+ML2_FN void ML2_ModelForwardStateTransforms(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms) {
     ML2_HARD_ASSERT(
-        ML2_ModelForwardTransformsCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input), transforms)
+        ML2_ModelForwardStateTransformsCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input), transforms)
     );
     ML2_Int transformIndex = 0;
     ML2_LayerState transformedState = {};
     ML2_LayerCache transformedInput = {};
     ML2_LayerCache transformedOutput = {};
-    ML2_TransformsForwardAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0), &transformedState, &transformedInput, &transformedOutput);
-    ML2_LayerForward(*ML2_ModelAt(model, 0), transformedState, transformedInput, transformedOutput);
+    ML2_TransformsForwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0), &transformedState, &transformedInput, &transformedOutput);
+    ML2_LayerForwardState(*ML2_ModelAt(model, 0), transformedState, transformedInput, transformedOutput);
     for (ML2_Int i = 1; i < model.count; i++) {
-        ML2_TransformsForwardAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i), &transformedState, &transformedInput, &transformedOutput);
-        ML2_LayerForward(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedOutput);
+        ML2_TransformsForwardStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i), &transformedState, &transformedInput, &transformedOutput);
+        ML2_LayerForwardState(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedOutput);
     }
 }
 
-ML2_FN bool ML2_ModelForwardOperationsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations) {
+ML2_FN bool ML2_ModelForwardOperationsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int operationIndex = 0;
+    if (
+        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0))) ||
+        !ML2_OperationsForwardAtCompatible(operations, &operationIndex, 0, modelCache, input)
+    ) return false;
+    for (ML2_Int i = 1; i < model.count; i++) {
+        if (
+            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i))) ||
+            !ML2_OperationsForwardAtCompatible(operations, &operationIndex, i, modelCache, input)
+        ) return false;
+    }
+    if (
+        operationIndex != operations.count
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelForwardOperations(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelForwardOperationsCompatible(model, modelCache, ML2_LayerCacheAsInfo(input), operations)
+    );
+    ML2_Int operationIndex = 0;
+    ML2_LayerForward(*ML2_ModelAt(model, 0), input, *ML2_ModelCacheAt(modelCache, 0));
+    ML2_OperationsForwardAt(operations, &operationIndex, 0, modelCache, input);
+    for (ML2_Int i = 1; i < model.count; i++) {
+        ML2_LayerForward(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
+        ML2_OperationsForwardAt(operations, &operationIndex, i, modelCache, input);
+    }
+}
+
+ML2_FN bool ML2_ModelForwardStateOperationsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
@@ -22564,13 +21417,13 @@ ML2_FN bool ML2_ModelForwardOperationsCompatible(ML2_Model model, ML2_ModelState
     ) return false;
     ML2_Int operationIndex = 0;
     if (
-        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0))) ||
-        !ML2_OperationsForwardAtCompatibleIterate(operations, &operationIndex, 0, modelCache, input)
+        !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0))) ||
+        !ML2_OperationsForwardAtCompatible(operations, &operationIndex, 0, modelCache, input)
     ) return false;
     for (ML2_Int i = 1; i < model.count; i++) {
         if (
-            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i))) ||
-            !ML2_OperationsForwardAtCompatibleIterate(operations, &operationIndex, i, modelCache, input)
+            !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i))) ||
+            !ML2_OperationsForwardAtCompatible(operations, &operationIndex, i, modelCache, input)
         ) return false;
     }
     if (
@@ -22579,20 +21432,173 @@ ML2_FN bool ML2_ModelForwardOperationsCompatible(ML2_Model model, ML2_ModelState
     return true;
 }
 
-ML2_FN void ML2_ModelForwardOperations(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations) {
+ML2_FN void ML2_ModelForwardStateOperations(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations) {
     ML2_HARD_ASSERT(
-        ML2_ModelForwardOperationsCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input), operations)
+        ML2_ModelForwardStateOperationsCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input), operations)
     );
     ML2_Int operationIndex = 0;
-    ML2_LayerForward(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0));
-    ML2_OperationsForwardAtIterate(operations, &operationIndex, 0, modelCache, input);
+    ML2_LayerForwardState(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0));
+    ML2_OperationsForwardAt(operations, &operationIndex, 0, modelCache, input);
     for (ML2_Int i = 1; i < model.count; i++) {
-        ML2_LayerForward(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
-        ML2_OperationsForwardAtIterate(operations, &operationIndex, i, modelCache, input);
+        ML2_LayerForwardState(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
+        ML2_OperationsForwardAt(operations, &operationIndex, i, modelCache, input);
     }
 }
 
-ML2_FN bool ML2_ModelBackwardCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input) {
+ML2_FN bool ML2_ModelForwardTransformsOperationsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1 ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int transformIndex = 0;
+    ML2_Int compatibleTransformIndex = 0;
+    ML2_Int operationIndex = 0;
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    if (
+        !ML2_TransformsForwardAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
+    ) return false;
+    ML2_TransformsInfoForwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedInput, &transformedOutput);
+    if (
+        !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedInput, transformedOutput) ||
+        !ML2_OperationsForwardAtCompatible(operations, &operationIndex, 0, modelCache, input)
+    ) return false;
+    for (ML2_Int i = 1; i < model.count; i++) {
+        if (
+            !ML2_TransformsForwardAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
+        ) return false;
+        ML2_TransformsInfoForwardAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), &transformedInput, &transformedOutput);
+        if (
+            !ML2_LayerForwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedOutput) ||
+            !ML2_OperationsForwardAtCompatible(operations, &operationIndex, i, modelCache, input)
+        ) return false;
+    }
+    if (
+        transformIndex != transforms.count ||
+        compatibleTransformIndex != transforms.count ||
+        operationIndex != operations.count
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelForwardTransformsOperations(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelForwardTransformsOperationsCompatible(model, modelCache, ML2_LayerCacheAsInfo(input), transforms, operations)
+    );
+    ML2_Int transformIndex = 0;
+    ML2_Int operationIndex = 0;
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_TransformsForwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, *ML2_ModelCacheAt(modelCache, 0), &transformedInput, &transformedOutput);
+    ML2_LayerForward(*ML2_ModelAt(model, 0), transformedInput, transformedOutput);
+    ML2_OperationsForwardAt(operations, &operationIndex, 0, modelCache, input);
+    for (ML2_Int i = 1; i < model.count; i++) {
+        ML2_TransformsForwardAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i), &transformedInput, &transformedOutput);
+        ML2_LayerForward(*ML2_ModelAt(model, i), transformedInput, transformedOutput);
+        ML2_OperationsForwardAt(operations, &operationIndex, i, modelCache, input);
+    }
+}
+
+ML2_FN bool ML2_ModelForwardStateTransformsOperationsCompatible(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelState.count ||
+        model.count != modelCache.count ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1 ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int transformIndex = 0;
+    ML2_Int compatibleTransformIndex = 0;
+    ML2_Int operationIndex = 0;
+    ML2_LayerStateInfo transformedState = {};
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    if (
+        !ML2_TransformsForwardStateAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
+    ) return false;
+    ML2_TransformsInfoForwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedState, &transformedInput, &transformedOutput);
+    if (
+        !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedState, transformedInput, transformedOutput) ||
+        !ML2_OperationsForwardAtCompatible(operations, &operationIndex, 0, modelCache, input)
+    ) return false;
+    for (ML2_Int i = 1; i < model.count; i++) {
+        if (
+            !ML2_TransformsForwardStateAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
+        ) return false;
+        ML2_TransformsInfoForwardStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), &transformedState, &transformedInput, &transformedOutput);
+        if (
+            !ML2_LayerForwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedOutput) ||
+            !ML2_OperationsForwardAtCompatible(operations, &operationIndex, i, modelCache, input)
+        ) return false;
+    }
+    if (
+        transformIndex != transforms.count ||
+        compatibleTransformIndex != transforms.count ||
+        operationIndex != operations.count
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelForwardStateTransformsOperations(ML2_Model model, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelForwardStateTransformsOperationsCompatible(model, modelState, modelCache, ML2_LayerCacheAsInfo(input), transforms, operations)
+    );
+    ML2_Int transformIndex = 0;
+    ML2_Int operationIndex = 0;
+    ML2_LayerState transformedState = {};
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_TransformsForwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCache, 0), &transformedState, &transformedInput, &transformedOutput);
+    ML2_LayerForwardState(*ML2_ModelAt(model, 0), transformedState, transformedInput, transformedOutput);
+    ML2_OperationsForwardAt(operations, &operationIndex, 0, modelCache, input);
+    for (ML2_Int i = 1; i < model.count; i++) {
+        ML2_TransformsForwardStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i), &transformedState, &transformedInput, &transformedOutput);
+        ML2_LayerForwardState(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedOutput);
+        ML2_OperationsForwardAt(operations, &operationIndex, i, modelCache, input);
+    }
+}
+
+ML2_FN bool ML2_ModelBackwardCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient)
+    ) return false;
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+    }
+    if (
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackward(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input))
+    );
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+    }
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+}
+
+ML2_FN bool ML2_ModelBackwardStateCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
@@ -22602,32 +21608,92 @@ ML2_FN bool ML2_ModelBackwardCompatible(ML2_Model model, ML2_Model modelGradient
     ) return false;
     for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
-            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
         ) return false;
     }
     if (
-        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
     ) return false;
     return true;
 }
 
-ML2_FN void ML2_ModelBackward(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input) {
+ML2_FN void ML2_ModelBackwardState(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input) {
     ML2_HARD_ASSERT(
-        ML2_ModelBackwardCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input))
+        ML2_ModelBackwardStateCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input))
     );
     for (ML2_Int i = model.count - 1; i > 0; i--) {
-        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
-        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
     }
-    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
 }
 
-ML2_FN bool ML2_ModelBackwardTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
+ML2_FN bool ML2_ModelBackwardTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1
+    ) return false;
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int compatibleTransformIndex = transforms.count - 1;
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedInputGradient = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    ML2_LayerCacheInfo transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+        ML2_TransformsInfoBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        if (
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+        ) return false;
+    }
+    if (
+        !ML2_TransformsBackwardAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    ML2_TransformsInfoBackwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedInput, &transformedOutputGradient);
+    if (
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedInput, transformedOutputGradient)
+    ) return false;
+    if (
+        transformIndex != -1 ||
+        compatibleTransformIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardTransformsCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), transforms)
+    );
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedInputGradient = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_LayerCache transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_TransformsBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+    }
+    ML2_TransformsBackwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedInput, &transformedOutputGradient);
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), transformedInput, transformedOutputGradient);
+}
+
+ML2_FN bool ML2_ModelBackwardStateTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
         model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
         transforms.count <= 0 ||
         !ML2_TransformsIsSorted(transforms) ||
         ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1
@@ -22641,20 +21707,20 @@ ML2_FN bool ML2_ModelBackwardTransformsCompatible(ML2_Model model, ML2_Model mod
     ML2_LayerCacheInfo transformedOutputGradient = {};
     for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_TransformsBackwardFullAtCompatibleIterate(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+            !ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
         ) return false;
-        ML2_TransformsInfoBackwardFullAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_TransformsInfoBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
         if (
-            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedState, transformedInput, transformedOutputGradient) ||
-            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedState, transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
         ) return false;
     }
     if (
-        !ML2_TransformsBackwardAtCompatibleIterate(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+        !ML2_TransformsBackwardStateAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
     ) return false;
-    ML2_TransformsInfoBackwardAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)), &transformedState, &transformedInput, &transformedOutputGradient);
+    ML2_TransformsInfoBackwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedState, &transformedInput, &transformedOutputGradient);
     if (
-        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedState, transformedInput, transformedOutputGradient)
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedState, transformedInput, transformedOutputGradient)
     ) return false;
     if (
         transformIndex != -1 ||
@@ -22663,9 +21729,9 @@ ML2_FN bool ML2_ModelBackwardTransformsCompatible(ML2_Model model, ML2_Model mod
     return true;
 }
 
-ML2_FN void ML2_ModelBackwardTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms) {
+ML2_FN void ML2_ModelBackwardStateTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms) {
     ML2_HARD_ASSERT(
-        ML2_ModelBackwardTransformsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), transforms)
+        ML2_ModelBackwardStateTransformsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), transforms)
     );
     ML2_Int transformIndex = transforms.count - 1;
     ML2_LayerState transformedState = {};
@@ -22674,15 +21740,57 @@ ML2_FN void ML2_ModelBackwardTransforms(ML2_Model model, ML2_Model modelGradient
     ML2_LayerCache transformedOutput = {};
     ML2_LayerCache transformedOutputGradient = {};
     for (ML2_Int i = model.count - 1; i > 0; i--) {
-        ML2_TransformsBackwardFullAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
-        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), transformedState, transformedInput, transformedOutputGradient);
-        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+        ML2_TransformsBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), transformedState, transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
     }
-    ML2_TransformsBackwardAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedState, &transformedInput, &transformedOutputGradient);
-    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), transformedState, transformedInput, transformedOutputGradient);
+    ML2_TransformsBackwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedState, &transformedInput, &transformedOutputGradient);
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), transformedState, transformedInput, transformedOutputGradient);
 }
 
-ML2_FN bool ML2_ModelBackwardOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Operations operations) {
+ML2_FN bool ML2_ModelBackwardOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int operationIndex = operations.count - 1;
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, i, modelCacheGradient) ||
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+    }
+    if (
+        !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, 0, modelCacheGradient) ||
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    if (
+        operationIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardOperationsCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), operations)
+    );
+    ML2_Int operationIndex = operations.count - 1;
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_OperationsCacheBackwardAt(operations, &operationIndex, i, modelCacheGradient);
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+    }
+    ML2_OperationsCacheBackwardAt(operations, &operationIndex, 0, modelCacheGradient);
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+}
+
+ML2_FN bool ML2_ModelBackwardStateOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Operations operations) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
@@ -22696,14 +21804,14 @@ ML2_FN bool ML2_ModelBackwardOperationsCompatible(ML2_Model model, ML2_Model mod
     ML2_Int operationIndex = operations.count - 1;
     for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_OperationsCacheBackwardAtCompatibleIterate(operations, &operationIndex, i, modelCacheGradient) ||
-            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
-            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+            !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, i, modelCacheGradient) ||
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
         ) return false;
     }
     if (
-        !ML2_OperationsCacheBackwardAtCompatibleIterate(operations, &operationIndex, 0, modelCacheGradient) ||
-        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+        !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, 0, modelCacheGradient) ||
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
     ) return false;
     if (
         operationIndex != -1
@@ -22711,21 +21819,193 @@ ML2_FN bool ML2_ModelBackwardOperationsCompatible(ML2_Model model, ML2_Model mod
     return true;
 }
 
-ML2_FN void ML2_ModelBackwardOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Operations operations) {
+ML2_FN void ML2_ModelBackwardStateOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Operations operations) {
     ML2_HARD_ASSERT(
-        ML2_ModelBackwardOperationsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), operations)
+        ML2_ModelBackwardStateOperationsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), operations)
     );
     ML2_Int operationIndex = operations.count - 1;
     for (ML2_Int i = model.count - 1; i > 0; i--) {
-        ML2_OperationsCacheBackwardAtIterate(operations, &operationIndex, i, modelCacheGradient);
-        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
-        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_OperationsCacheBackwardAt(operations, &operationIndex, i, modelCacheGradient);
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
     }
-    ML2_OperationsCacheBackwardAtIterate(operations, &operationIndex, 0, modelCacheGradient);
-    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_OperationsCacheBackwardAt(operations, &operationIndex, 0, modelCacheGradient);
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
 }
 
-ML2_FN bool ML2_ModelBackwardFullCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
+ML2_FN bool ML2_ModelBackwardTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1 ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int compatibleTransformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedInputGradient = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    ML2_LayerCacheInfo transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+        ML2_TransformsInfoBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        if (
+            !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, i, modelCacheGradient) ||
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+        ) return false;
+    }
+    if (
+        !ML2_TransformsBackwardAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    ML2_TransformsInfoBackwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedInput, &transformedOutputGradient);
+    if (
+        !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, 0, modelCacheGradient) ||
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedInput, transformedOutputGradient)
+    ) return false;
+    if (
+        transformIndex != -1 ||
+        compatibleTransformIndex != -1 ||
+        operationIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardTransformsOperationsCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), transforms, operations)
+    );
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedInputGradient = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_LayerCache transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_TransformsBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_OperationsCacheBackwardAt(operations, &operationIndex, i, modelCacheGradient);
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+    }
+    ML2_TransformsBackwardAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedInput, &transformedOutputGradient);
+    ML2_OperationsCacheBackwardAt(operations, &operationIndex, 0, modelCacheGradient);
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), transformedInput, transformedOutputGradient);
+}
+
+ML2_FN bool ML2_ModelBackwardStateTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_Transforms transforms, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelState.count ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1 ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int compatibleTransformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerStateInfo transformedState = {};
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedInputGradient = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    ML2_LayerCacheInfo transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+        ML2_TransformsInfoBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        if (
+            !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, i, modelCacheGradient) ||
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedState, transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+        ) return false;
+    }
+    if (
+        !ML2_TransformsBackwardStateAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    ML2_TransformsInfoBackwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, &transformedState, &transformedInput, &transformedOutputGradient);
+    if (
+        !ML2_OperationsCacheBackwardAtCompatible(operations, &operationIndex, 0, modelCacheGradient) ||
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedState, transformedInput, transformedOutputGradient)
+    ) return false;
+    if (
+        transformIndex != -1 ||
+        compatibleTransformIndex != -1 ||
+        operationIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardStateTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_Transforms transforms, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardStateTransformsOperationsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), transforms, operations)
+    );
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerState transformedState = {};
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedInputGradient = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_LayerCache transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_TransformsBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_OperationsCacheBackwardAt(operations, &operationIndex, i, modelCacheGradient);
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), transformedState, transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+    }
+    ML2_TransformsBackwardStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedState, &transformedInput, &transformedOutputGradient);
+    ML2_OperationsCacheBackwardAt(operations, &operationIndex, 0, modelCacheGradient);
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), transformedState, transformedInput, transformedOutputGradient);
+}
+
+ML2_FN bool ML2_ModelBackwardFullCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        !ML2_LayerCacheInfoSame(input, inputGradient)
+    ) return false;
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+    }
+    if (
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0))) ||
+        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardFull(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardFullCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient))
+    );
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+    }
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0));
+}
+
+ML2_FN bool ML2_ModelBackwardFullStateCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
@@ -22736,34 +22016,96 @@ ML2_FN bool ML2_ModelBackwardFullCompatible(ML2_Model model, ML2_Model modelGrad
     ) return false;
     for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
-            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
         ) return false;
     }
     if (
-        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0))) ||
-        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0))) ||
+        !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
     ) return false;
     return true;
 }
 
-ML2_FN void ML2_ModelBackwardFull(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient) {
+ML2_FN void ML2_ModelBackwardFullState(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient) {
     ML2_HARD_ASSERT(
-        ML2_ModelBackwardFullCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient))
+        ML2_ModelBackwardFullStateCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient))
     );
     for (ML2_Int i = model.count - 1; i > 0; i--) {
-        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
-        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
     }
-    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
-    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_LayerCacheBackwardState(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0));
 }
 
-ML2_FN bool ML2_ModelBackwardFullTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms) {
+ML2_FN bool ML2_ModelBackwardFullTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1
+    ) return false;
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int compatibleTransformIndex = transforms.count - 1;
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedInputGradient = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    ML2_LayerCacheInfo transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+        ML2_TransformsInfoBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        if (
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+        ) return false;
+    }
+    if (
+        !ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    ML2_TransformsInfoBackwardFullAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    if (
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedInput, transformedOutputGradient) ||
+        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+    ) return false;
+    if (
+        transformIndex != -1 ||
+        compatibleTransformIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardFullTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardFullTransformsCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), transforms)
+    );
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedInputGradient = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_LayerCache transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_TransformsBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+    }
+    ML2_TransformsBackwardFullAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), transformedInput, transformedOutputGradient);
+    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+}
+
+ML2_FN bool ML2_ModelBackwardFullStateTransformsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
         model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
         transforms.count <= 0 ||
         !ML2_TransformsIsSorted(transforms) ||
         ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1
@@ -22777,21 +22119,21 @@ ML2_FN bool ML2_ModelBackwardFullTransformsCompatible(ML2_Model model, ML2_Model
     ML2_LayerCacheInfo transformedOutputGradient = {};
     for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_TransformsBackwardFullAtCompatibleIterate(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+            !ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
         ) return false;
-        ML2_TransformsInfoBackwardFullAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_TransformsInfoBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
         if (
-            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedState, transformedInput, transformedOutputGradient) ||
-            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedState, transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
         ) return false;
     }
     if (
-        !ML2_TransformsBackwardFullAtCompatibleIterate(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+        !ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
     ) return false;
-    ML2_TransformsInfoBackwardFullAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    ML2_TransformsInfoBackwardFullStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
     if (
-        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedState, transformedInput, transformedOutputGradient) ||
-        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedState, transformedInput, transformedOutputGradient) ||
+        !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
     ) return false;
     if (
         transformIndex != -1 ||
@@ -22800,9 +22142,9 @@ ML2_FN bool ML2_ModelBackwardFullTransformsCompatible(ML2_Model model, ML2_Model
     return true;
 }
 
-ML2_FN void ML2_ModelBackwardFullTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms) {
+ML2_FN void ML2_ModelBackwardFullStateTransforms(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms) {
     ML2_HARD_ASSERT(
-        ML2_ModelBackwardFullTransformsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), transforms)
+        ML2_ModelBackwardFullStateTransformsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), transforms)
     );
     ML2_Int transformIndex = transforms.count - 1;
     ML2_LayerState transformedState = {};
@@ -22811,16 +22153,61 @@ ML2_FN void ML2_ModelBackwardFullTransforms(ML2_Model model, ML2_Model modelGrad
     ML2_LayerCache transformedOutput = {};
     ML2_LayerCache transformedOutputGradient = {};
     for (ML2_Int i = model.count - 1; i > 0; i--) {
-        ML2_TransformsBackwardFullAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
-        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), transformedState, transformedInput, transformedOutputGradient);
-        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+        ML2_TransformsBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), transformedState, transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
     }
-    ML2_TransformsBackwardFullAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
-    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), transformedState, transformedInput, transformedOutputGradient);
-    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+    ML2_TransformsBackwardFullStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), transformedState, transformedInput, transformedOutputGradient);
+    ML2_LayerCacheBackwardState(*ML2_ModelAt(model, 0), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
 }
 
-ML2_FN bool ML2_ModelBackwardFullOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Operations operations) {
+ML2_FN bool ML2_ModelBackwardFullOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        !ML2_LayerCacheInfoSame(input, inputGradient) ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int operationIndex = operations.count - 1;
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, i, modelCacheGradient, inputGradient) ||
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+    }
+    if (
+        !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, 0, modelCacheGradient, inputGradient) ||
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0))) ||
+        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    if (
+        operationIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardFullOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardFullOperationsCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), operations)
+    );
+    ML2_Int operationIndex = operations.count - 1;
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, i, modelCacheGradient, inputGradient);
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+    }
+    ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, 0, modelCacheGradient, inputGradient);
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0));
+}
+
+ML2_FN bool ML2_ModelBackwardFullStateOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Operations operations) {
     if (
         model.count <= 0 ||
         model.count != modelState.count ||
@@ -22835,15 +22222,15 @@ ML2_FN bool ML2_ModelBackwardFullOperationsCompatible(ML2_Model model, ML2_Model
     ML2_Int operationIndex = operations.count - 1;
     for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_OperationsCacheBackwardFullAtCompatibleIterate(operations, &operationIndex, i, modelCacheGradient, inputGradient) ||
-            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
-            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+            !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, i, modelCacheGradient, inputGradient) ||
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i))) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
         ) return false;
     }
     if (
-        !ML2_OperationsCacheBackwardFullAtCompatibleIterate(operations, &operationIndex, 0, modelCacheGradient, inputGradient) ||
-        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0))) ||
-        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+        !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, 0, modelCacheGradient, inputGradient) ||
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0))) ||
+        !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
     ) return false;
     if (
         operationIndex != -1
@@ -22851,133 +22238,164 @@ ML2_FN bool ML2_ModelBackwardFullOperationsCompatible(ML2_Model model, ML2_Model
     return true;
 }
 
-ML2_FN void ML2_ModelBackwardFullOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Operations operations) {
+ML2_FN void ML2_ModelBackwardFullStateOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Operations operations) {
     ML2_HARD_ASSERT(
-        ML2_ModelBackwardFullOperationsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), operations)
+        ML2_ModelBackwardFullStateOperationsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), operations)
     );
     ML2_Int operationIndex = operations.count - 1;
     for (ML2_Int i = model.count - 1; i > 0; i--) {
-        ML2_OperationsCacheBackwardFullAtIterate(operations, &operationIndex, i, modelCacheGradient, inputGradient);
-        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
-        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, i, modelCacheGradient, inputGradient);
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i));
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i));
     }
-    ML2_OperationsCacheBackwardFullAtIterate(operations, &operationIndex, 0, modelCacheGradient, inputGradient);
-    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
-    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, 0, modelCacheGradient, inputGradient);
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), *ML2_ModelStateAt(modelState, 0), input, *ML2_ModelCacheAt(modelCacheGradient, 0));
+    ML2_LayerCacheBackwardState(*ML2_ModelAt(model, 0), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0));
 }
 
-ML2_FN bool ML2_ModelPredictCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input) {
-    if (
-        model.count <= 0 ||
-        model.count != modelCache.count
-    ) return false;
-    if (
-        !ML2_LayerPredictCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
-    ) return false;
-    for (ML2_Int i = 1; i < model.count; i++) {
-        if (
-            !ML2_LayerPredictCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
-        ) return false;
-    }
-    return true;
-}
-
-ML2_FN void ML2_ModelPredict(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input) {
-    ML2_HARD_ASSERT(
-        ML2_ModelPredictCompatible(model, modelCache, ML2_LayerCacheAsInfo(input))
-    );
-    ML2_LayerPredict(*ML2_ModelAt(model, 0), input, *ML2_ModelCacheAt(modelCache, 0));
-    for (ML2_Int i = 1; i < model.count; i++) {
-        ML2_LayerPredict(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
-    }
-}
-
-ML2_FN bool ML2_ModelPredictTransformsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Transforms transforms) {
+ML2_FN bool ML2_ModelBackwardFullTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms, ML2_Operations operations) {
     if (
         model.count <= 0 ||
         model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        !ML2_LayerCacheInfoSame(input, inputGradient) ||
         transforms.count <= 0 ||
         !ML2_TransformsIsSorted(transforms) ||
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1
-    ) return false;
-    ML2_Int transformIndex = 0;
-    ML2_Int compatibleTransformIndex = 0;
-    ML2_LayerCacheInfo transformedInput = {};
-    ML2_LayerCacheInfo transformedOutput = {};
-    if (
-        !ML2_TransformsPredictAtCompatibleIterate(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)))
-    ) return false;
-    ML2_TransformsInfoPredictAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), &transformedInput, &transformedOutput);
-    if (
-        !ML2_LayerPredictCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedInput, transformedOutput)
-    ) return false;
-    for (ML2_Int i = 1; i < model.count; i++) {
-        if (
-            !ML2_TransformsPredictAtCompatibleIterate(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)))
-        ) return false;
-        ML2_TransformsInfoPredictAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), &transformedInput, &transformedOutput);
-        if (
-            !ML2_LayerPredictCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedOutput)
-        ) return false;
-    }
-    if (
-        transformIndex != transforms.count ||
-        compatibleTransformIndex != transforms.count
-    ) return false;
-    return true;
-}
-
-ML2_FN void ML2_ModelPredictTransforms(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Transforms transforms) {
-    ML2_HARD_ASSERT(
-        ML2_ModelPredictTransformsCompatible(model, modelCache, ML2_LayerCacheAsInfo(input), transforms)
-    );
-    ML2_Int transformIndex = 0;
-    ML2_LayerCache transformedInput = {};
-    ML2_LayerCache transformedOutput = {};
-    ML2_TransformsPredictAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, *ML2_ModelCacheAt(modelCache, 0), &transformedInput, &transformedOutput);
-    ML2_LayerPredict(*ML2_ModelAt(model, 0), transformedInput, transformedOutput);
-    for (ML2_Int i = 1; i < model.count; i++) {
-        ML2_TransformsPredictAtIterate(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i), &transformedInput, &transformedOutput);
-        ML2_LayerPredict(*ML2_ModelAt(model, i), transformedInput, transformedOutput);
-    }
-}
-
-ML2_FN bool ML2_ModelPredictOperationsCompatible(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCacheInfo input, ML2_Operations operations) {
-    if (
-        model.count <= 0 ||
-        model.count != modelCache.count ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1 ||
         operations.count <= 0 ||
         !ML2_OperationsIsSorted(operations) ||
         ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
     ) return false;
-    ML2_Int operationIndex = 0;
-    if (
-        !ML2_LayerPredictCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0))) ||
-        !ML2_OperationsPredictAtCompatibleIterate(operations, &operationIndex, 0, modelCache, input)
-    ) return false;
-    for (ML2_Int i = 1; i < model.count; i++) {
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int compatibleTransformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedInputGradient = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    ML2_LayerCacheInfo transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
         if (
-            !ML2_LayerPredictCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i))) ||
-            !ML2_OperationsPredictAtCompatibleIterate(operations, &operationIndex, i, modelCache, input)
+            !ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+        ML2_TransformsInfoBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        if (
+            !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, i, modelCacheGradient, inputGradient) ||
+            !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
         ) return false;
     }
     if (
-        operationIndex != operations.count
+        !ML2_TransformsBackwardFullAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    ML2_TransformsInfoBackwardFullAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    if (
+        !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, 0, modelCacheGradient, inputGradient) ||
+        !ML2_LayerBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedInput, transformedOutputGradient) ||
+        !ML2_LayerCacheBackwardCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+    ) return false;
+    if (
+        transformIndex != -1 ||
+        compatibleTransformIndex != -1 ||
+        operationIndex != -1
     ) return false;
     return true;
 }
 
-ML2_FN void ML2_ModelPredictOperations(ML2_Model model, ML2_ModelCache modelCache, ML2_LayerCache input, ML2_Operations operations) {
+ML2_FN void ML2_ModelBackwardFullTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms, ML2_Operations operations) {
     ML2_HARD_ASSERT(
-        ML2_ModelPredictOperationsCompatible(model, modelCache, ML2_LayerCacheAsInfo(input), operations)
+        ML2_ModelBackwardFullTransformsOperationsCompatible(model, modelGradient, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), transforms, operations)
     );
-    ML2_Int operationIndex = 0;
-    ML2_LayerPredict(*ML2_ModelAt(model, 0), input, *ML2_ModelCacheAt(modelCache, 0));
-    ML2_OperationsPredictAtIterate(operations, &operationIndex, 0, modelCache, input);
-    for (ML2_Int i = 1; i < model.count; i++) {
-        ML2_LayerPredict(*ML2_ModelAt(model, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCache, i));
-        ML2_OperationsPredictAtIterate(operations, &operationIndex, i, modelCache, input);
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedInputGradient = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_LayerCache transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_TransformsBackwardFullAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, i, modelCacheGradient, inputGradient);
+        ML2_LayerBackward(*ML2_ModelAt(modelGradient, i), transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackward(*ML2_ModelAt(model, i), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
     }
+    ML2_TransformsBackwardFullAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, 0, modelCacheGradient, inputGradient);
+    ML2_LayerBackward(*ML2_ModelAt(modelGradient, 0), transformedInput, transformedOutputGradient);
+    ML2_LayerCacheBackward(*ML2_ModelAt(model, 0), transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+}
+
+ML2_FN bool ML2_ModelBackwardFullStateTransformsOperationsCompatible(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCacheInfo input, ML2_LayerCacheInfo inputGradient, ML2_Transforms transforms, ML2_Operations operations) {
+    if (
+        model.count <= 0 ||
+        model.count != modelState.count ||
+        model.count != modelCache.count ||
+        !ML2_ModelInfoSame(model, modelGradient) ||
+        !ML2_ModelCacheInfoSame(modelCache, modelCacheGradient) ||
+        !ML2_LayerCacheInfoSame(input, inputGradient) ||
+        transforms.count <= 0 ||
+        !ML2_TransformsIsSorted(transforms) ||
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) >= modelCache.count - 1 ||
+        operations.count <= 0 ||
+        !ML2_OperationsIsSorted(operations) ||
+        ML2_OperationExecuteIndex(*ML2_OperationsAt(operations, operations.count - 1)) >= modelCache.count
+    ) return false;
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int compatibleTransformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerStateInfo transformedState = {};
+    ML2_LayerCacheInfo transformedInput = {};
+    ML2_LayerCacheInfo transformedInputGradient = {};
+    ML2_LayerCacheInfo transformedOutput = {};
+    ML2_LayerCacheInfo transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        if (
+            !ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i)))
+        ) return false;
+        ML2_TransformsInfoBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, i - 1)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, i - 1)), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        if (
+            !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, i, modelCacheGradient, inputGradient) ||
+            !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, i)), transformedState, transformedInput, transformedOutputGradient) ||
+            !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, i)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+        ) return false;
+    }
+    if (
+        !ML2_TransformsBackwardFullStateAtCompatible(transforms, &compatibleTransformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), ML2_LayerStateAsInfo(*ML2_ModelStateAt(modelState, 0)), input, inputGradient, ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCache, 0)), ML2_LayerCacheAsInfo(*ML2_ModelCacheAt(modelCacheGradient, 0)))
+    ) return false;
+    ML2_TransformsInfoBackwardFullStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), input, inputGradient, &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    if (
+        !ML2_OperationsCacheBackwardFullAtCompatible(operations, &operationIndex, 0, modelCacheGradient, inputGradient) ||
+        !ML2_LayerBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(modelGradient, 0)), transformedState, transformedInput, transformedOutputGradient) ||
+        !ML2_LayerCacheBackwardStateCompatible(ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient)
+    ) return false;
+    if (
+        transformIndex != -1 ||
+        compatibleTransformIndex != -1 ||
+        operationIndex != -1
+    ) return false;
+    return true;
+}
+
+ML2_FN void ML2_ModelBackwardFullStateTransformsOperations(ML2_Model model, ML2_Model modelGradient, ML2_ModelState modelState, ML2_ModelCache modelCache, ML2_ModelCache modelCacheGradient, ML2_LayerCache input, ML2_LayerCache inputGradient, ML2_Transforms transforms, ML2_Operations operations) {
+    ML2_HARD_ASSERT(
+        ML2_ModelBackwardFullStateTransformsOperationsCompatible(model, modelGradient, modelState, modelCache, modelCacheGradient, ML2_LayerCacheAsInfo(input), ML2_LayerCacheAsInfo(inputGradient), transforms, operations)
+    );
+    ML2_Int transformIndex = transforms.count - 1;
+    ML2_Int operationIndex = operations.count - 1;
+    ML2_LayerState transformedState = {};
+    ML2_LayerCache transformedInput = {};
+    ML2_LayerCache transformedInputGradient = {};
+    ML2_LayerCache transformedOutput = {};
+    ML2_LayerCache transformedOutputGradient = {};
+    for (ML2_Int i = model.count - 1; i > 0; i--) {
+        ML2_TransformsBackwardFullStateAt(transforms, &transformIndex, i - 1, ML2_LayerAsInfo(*ML2_ModelAt(model, i)), *ML2_ModelStateAt(modelState, i), *ML2_ModelCacheAt(modelCache, i - 1), *ML2_ModelCacheAt(modelCacheGradient, i - 1), *ML2_ModelCacheAt(modelCache, i), *ML2_ModelCacheAt(modelCacheGradient, i), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+        ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, i, modelCacheGradient, inputGradient);
+        ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, i), transformedState, transformedInput, transformedOutputGradient);
+        ML2_LayerCacheBackwardState(*ML2_ModelAt(model, i), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
+    }
+    ML2_TransformsBackwardFullStateAt(transforms, &transformIndex, ML2_TransformInputIndex, ML2_LayerAsInfo(*ML2_ModelAt(model, 0)), *ML2_ModelStateAt(modelState, 0), input, inputGradient, *ML2_ModelCacheAt(modelCache, 0), *ML2_ModelCacheAt(modelCacheGradient, 0), &transformedState, &transformedInput, &transformedInputGradient, &transformedOutput, &transformedOutputGradient);
+    ML2_OperationsCacheBackwardFullAt(operations, &operationIndex, 0, modelCacheGradient, inputGradient);
+    ML2_LayerBackwardState(*ML2_ModelAt(modelGradient, 0), transformedState, transformedInput, transformedOutputGradient);
+    ML2_LayerCacheBackwardState(*ML2_ModelAt(model, 0), transformedState, transformedInput, transformedInputGradient, transformedOutput, transformedOutputGradient);
 }
 
 ML2_FN bool ML2_ModelGradientDescentOptimizeCompatible(ML2_Model model, ML2_Model modelGradient) {
@@ -23105,12 +22523,43 @@ ML2_FN ML2_ModelState ML2_ModelStateNew(ML2_Device device, ML2_Arch arch, ML2_Ba
     return modelState;
 }
 
-ML2_FN ML2_ModelState ML2_ModelStateNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput) {
+ML2_FN ML2_ModelState ML2_ModelStateNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms) {
     ML2_HARD_ASSERT(
         arch.count > 0 &&
         transforms.count > 0 &&
         ML2_TransformsIsSorted(transforms) &&
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) < arch.count - 1 &&
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) < arch.count - 1
+    );
+    ML2_ModelState modelState = {
+        arch.count,
+        ML2_Allocate(arch.count * sizeof(*modelState.states)),
+    };
+
+    ML2_LayerCacheInfo prevInfo = {};
+    ML2_Int transformIndex = 0;
+    ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, ML2_TransformInputIndex, info.input, &prevInfo);
+    for (ML2_Int i = 0; i < modelState.count; i++) {
+        *ML2_ModelStateAt(modelState, i) = ML2_LayerStateNew(device, ML2_LayerStateInfoForward(arch.infos[i], prevInfo));
+
+        ML2_LayerCacheInfo nextInfo = ML2_LayerInfoForward(arch.infos[i], prevInfo);
+
+        ML2_LayerCacheInfo transformedInfo = {};
+        ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, i, nextInfo, &transformedInfo);
+
+        prevInfo = transformedInfo;
+    }
+    ML2_HARD_ASSERT(
+        ML2_LayerCacheInfoSame(info.output, prevInfo)
+    );
+    return modelState;
+}
+
+ML2_FN ML2_ModelState ML2_ModelStateNewTransformsOutput(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput) {
+    ML2_HARD_ASSERT(
+        arch.count > 0 &&
+        transforms.count >= 0 &&
+        ML2_TransformsIsSorted(transforms) &&
+        (transforms.count > 0 ? ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) < arch.count - 1 : true) &&
         ML2_TransformExecuteIndex(transformOutput) == arch.count - 1
     );
     ML2_ModelState modelState = {
@@ -23121,9 +22570,12 @@ ML2_FN ML2_ModelState ML2_ModelStateNewTransforms(ML2_Device device, ML2_Arch ar
     ML2_LayerCacheInfo prevInfo = {};
     ML2_Int transformIndex = 0;
     if (transformIndex < transforms.count) {
-        ML2_TransformsInfoForwardInputAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, info.input, &prevInfo);
-    } else {
+        ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, ML2_TransformInputIndex, info.input, &prevInfo);
+    } else if (transformIndex == transforms.count && ML2_TransformExecuteIndex(transformOutput) == ML2_TransformInputIndex) {
         ML2_TransformInfoForwardInput(transformOutput, info.input, &prevInfo);
+        transformIndex += 1;
+    } else {
+        prevInfo = info.input;
     }
     for (ML2_Int i = 0; i < modelState.count; i++) {
         *ML2_ModelStateAt(modelState, i) = ML2_LayerStateNew(device, ML2_LayerStateInfoForward(arch.infos[i], prevInfo));
@@ -23132,9 +22584,12 @@ ML2_FN ML2_ModelState ML2_ModelStateNewTransforms(ML2_Device device, ML2_Arch ar
 
         ML2_LayerCacheInfo transformedInfo = {};
         if (transformIndex < transforms.count) {
-            ML2_TransformsInfoForwardInputAtIterate(transforms, &transformIndex, i, nextInfo, &transformedInfo);
-        } else {
+            ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, i, nextInfo, &transformedInfo);
+        } else if (transformIndex == transforms.count && ML2_TransformExecuteIndex(transformOutput) == ML2_TransformInputIndex) {
             ML2_TransformInfoForwardInput(transformOutput, nextInfo, &transformedInfo);
+            transformIndex += 1;
+        } else {
+            transformedInfo = nextInfo;
         }
 
         prevInfo = transformedInfo;
@@ -23177,7 +22632,7 @@ ML2_FN ML2_LayerState *ML2_ModelStateAt(ML2_ModelState modelState, ML2_Int s) {
     return &modelState.states[s];
 }
 
-ML2_FN void ML2_ModelStatePrint(ML2_ModelState modelState, ML2_Int indent) {
+ML2_FN void ML2_ModelStatePrint(ML2_ModelState modelState [[maybe_unused]], ML2_Int indent [[maybe_unused]]) {
     ML2_TODO();
 }
 
@@ -23187,23 +22642,23 @@ ML2_FN void ML2_ModelStateClear(ML2_ModelState modelState) {
     }
 }
 
-ML2_FN bool ML2_ModelStateCompare(ML2_ModelState a, ML2_ModelState b, ML2_Scalar threshold) {
+ML2_FN bool ML2_ModelStateCompare(ML2_ModelState a [[maybe_unused]], ML2_ModelState b [[maybe_unused]], ML2_Scalar threshold [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN void ML2_ModelStateCopyHostToDevice(ML2_ModelState dstDevice, ML2_ModelState srcHost) {
+ML2_FN void ML2_ModelStateCopyHostToDevice(ML2_ModelState dstDevice [[maybe_unused]], ML2_ModelState srcHost [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN void ML2_ModelStateCopyDeviceToHost(ML2_ModelState dstHost, ML2_ModelState srcDevice) {
+ML2_FN void ML2_ModelStateCopyDeviceToHost(ML2_ModelState dstHost [[maybe_unused]], ML2_ModelState srcDevice [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN ML2_LayerCache ML2_ModelStateOutput(ML2_ModelState modelState) {
+ML2_FN ML2_LayerCache ML2_ModelStateOutput(ML2_ModelState modelState [[maybe_unused]]) {
     ML2_TODO();
 }
 
-ML2_FN ML2_Size ML2_ModelStateSizeof(ML2_ModelState modelState) {
+ML2_FN ML2_Size ML2_ModelStateSizeof(ML2_ModelState modelState [[maybe_unused]]) {
     ML2_TODO();
 }
 
@@ -23234,12 +22689,43 @@ ML2_FN ML2_ModelCache ML2_ModelCacheNew(ML2_Device device, ML2_Arch arch, ML2_Ba
     return modelCache;
 }
 
-ML2_FN ML2_ModelCache ML2_ModelCacheNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput) {
+ML2_FN ML2_ModelCache ML2_ModelCacheNewTransforms(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms) {
     ML2_HARD_ASSERT(
         arch.count > 0 &&
         transforms.count > 0 &&
         ML2_TransformsIsSorted(transforms) &&
-        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) < arch.count - 1 &&
+        ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) < arch.count - 1
+    );
+    ML2_ModelCache modelCache = {
+        arch.count,
+        ML2_Allocate(arch.count * sizeof(*modelCache.caches)),
+    };
+
+    ML2_LayerCacheInfo prevInfo = {};
+    ML2_Int transformIndex = 0;
+    ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, ML2_TransformInputIndex, info.input, &prevInfo);
+    for (ML2_Int i = 0; i < modelCache.count; i++) {
+        ML2_LayerCacheInfo nextInfo = ML2_LayerInfoForward(arch.infos[i], prevInfo);
+
+        ML2_LayerCacheInfo transformedInfo = {};
+        ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, i, nextInfo, &transformedInfo);
+
+        *ML2_ModelCacheAt(modelCache, i) = ML2_LayerCacheNew(device, transformedInfo);
+
+        prevInfo = transformedInfo;
+    }
+    ML2_HARD_ASSERT(
+        ML2_LayerCacheInfoSame(info.output, prevInfo)
+    );
+    return modelCache;
+}
+
+ML2_FN ML2_ModelCache ML2_ModelCacheNewTransformsOutput(ML2_Device device, ML2_Arch arch, ML2_BatchInfo info, ML2_Transforms transforms, ML2_Transform transformOutput) {
+    ML2_HARD_ASSERT(
+        arch.count > 0 &&
+        transforms.count >= 0 &&
+        ML2_TransformsIsSorted(transforms) &&
+        (transforms.count > 0 ? ML2_TransformExecuteIndex(*ML2_TransformsAt(transforms, transforms.count - 1)) < arch.count - 1 : true) &&
         ML2_TransformExecuteIndex(transformOutput) == arch.count - 1
     );
     ML2_ModelCache modelCache = {
@@ -23250,18 +22736,24 @@ ML2_FN ML2_ModelCache ML2_ModelCacheNewTransforms(ML2_Device device, ML2_Arch ar
     ML2_LayerCacheInfo prevInfo = {};
     ML2_Int transformIndex = 0;
     if (transformIndex < transforms.count) {
-        ML2_TransformsInfoForwardInputAtIterate(transforms, &transformIndex, ML2_TransformInputIndex, info.input, &prevInfo);
-    } else {
+        ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, ML2_TransformInputIndex, info.input, &prevInfo);
+    } else if (transformIndex == transforms.count && ML2_TransformExecuteIndex(transformOutput) == ML2_TransformInputIndex) {
         ML2_TransformInfoForwardInput(transformOutput, info.input, &prevInfo);
+        transformIndex += 1;
+    } else {
+        prevInfo = info.input;
     }
     for (ML2_Int i = 0; i < modelCache.count; i++) {
         ML2_LayerCacheInfo nextInfo = ML2_LayerInfoForward(arch.infos[i], prevInfo);
 
         ML2_LayerCacheInfo transformedInfo = {};
         if (transformIndex < transforms.count) {
-            ML2_TransformsInfoForwardInputAtIterate(transforms, &transformIndex, i, nextInfo, &transformedInfo);
-        } else {
+            ML2_TransformsInfoForwardInputAt(transforms, &transformIndex, i, nextInfo, &transformedInfo);
+        } else if (transformIndex == transforms.count && ML2_TransformExecuteIndex(transformOutput) == i) {
             ML2_TransformInfoForwardInput(transformOutput, nextInfo, &transformedInfo);
+            transformIndex += 1;
+        } else {
+            transformedInfo = nextInfo;
         }
 
         *ML2_ModelCacheAt(modelCache, i) = ML2_LayerCacheNew(device, transformedInfo);
@@ -24375,7 +23867,6 @@ ML2_FN void ML2_LossBackwardBinaryCrossEntropy(ML2_LayerCache predicted, ML2_Lay
 
     #define Arch ML2_Arch
 
-    #define ArchMake ML2_ArchMake
     #define ArchNew ML2_ArchNew
     #define ArchDestroy ML2_ArchDestroy
 

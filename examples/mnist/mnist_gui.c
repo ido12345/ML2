@@ -259,94 +259,374 @@ constexpr int DIGITS_HEIGHT = 7;
 
 constexpr uint8_t DIGITS[10][DIGITS_WIDTH * DIGITS_HEIGHT] = {
     [0] = {
-        0, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        1, 0, 0, 1, 1,
-        1, 0, 1, 0, 1,
-        1, 1, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
     },
     [1] = {
-        0, 0, 1, 0, 0,
-        0, 1, 1, 0, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 1, 0, 0,
-        1, 1, 1, 1, 1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
     },
     [2] = {
-        0, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        0, 0, 0, 0, 1,
-        0, 0, 1, 1, 0,
-        0, 1, 0, 0, 0,
-        1, 0, 0, 0, 1,
-        1, 1, 1, 1, 1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
     },
     [3] = {
-        0, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        0, 0, 0, 0, 1,
-        0, 0, 1, 1, 0,
-        0, 0, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
     },
     [4] = {
-        0, 0, 0, 1, 1,
-        0, 0, 1, 0, 1,
-        0, 1, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        1, 1, 1, 1, 1,
-        0, 0, 0, 0, 1,
-        0, 0, 0, 0, 1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
     },
     [5] = {
-        1, 1, 1, 1, 1,
-        1, 0, 0, 0, 0,
-        1, 1, 1, 1, 0,
-        0, 0, 0, 0, 1,
-        0, 0, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
     },
     [6] = {
-        0, 0, 1, 1, 0,
-        0, 1, 0, 0, 0,
-        1, 0, 0, 0, 0,
-        1, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
     },
     [7] = {
-        1, 1, 1, 1, 1,
-        1, 0, 0, 0, 1,
-        0, 0, 0, 0, 1,
-        0, 0, 0, 1, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 1, 0, 0,
+        1,
+        1,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
     },
     [8] = {
-        0, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        0,
     },
     [9] = {
-        0, 1, 1, 1, 0,
-        1, 0, 0, 0, 1,
-        1, 0, 0, 0, 1,
-        0, 1, 1, 1, 1,
-        0, 0, 0, 0, 1,
-        0, 0, 0, 1, 0,
-        0, 1, 1, 0, 0,
+        0,
+        1,
+        1,
+        1,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        1,
+        1,
+        0,
+        0,
     },
 };
 
@@ -418,7 +698,7 @@ void DrawLabelPredictionBars(Rect boundary, ML2_LayerCacheScalars *sampleTrainin
         init = true;
     }
     ML2_LayerCacheClear(output);
-    ModelEval(modelCacheSample, input, output);
+    ModelEval(modelCacheSingle, input, output, transformsSingle);
     ML2_LayerCacheScalars modelOutput = ML2_LayerCacheAsScalars(output);
 
     for (int i = 0; i < outputs; i++) {
@@ -489,9 +769,9 @@ void DrawSampleImage(Rect boundary) {
 void DrawImagePrediction(Rect boundary) {
     ML2_LayerCache sampleTrainingInput = ModelBatchTrainingInputSample(sampleIndex);
     ML2_LayerCacheScalars sampleTrainingOutput = ModelBatchTrainingOutputSample(sampleIndex);
-    ML2_LayerCacheCopy(inputSampleSingle, sampleTrainingInput);
+    ML2_LayerCacheCopy(inputSingle, sampleTrainingInput);
 
-    DrawLabelPredictionBars(boundary, &sampleTrainingOutput, inputSampleSingle);
+    DrawLabelPredictionBars(boundary, &sampleTrainingOutput, inputSingle);
 }
 
 uint8_t TestPixels[imageWidth * imageHeight] = {};
@@ -520,13 +800,13 @@ void DrawImageTest(Rect boundary) {
 }
 
 void DrawImageTestPrediction(Rect boundary) {
-    ML2_Scalar *rawInput = ML2_LayerCacheRaw(inputSampleSingle);
+    ML2_Scalar *rawInput = ML2_LayerCacheRaw(inputSingle);
 
     for (int i = 0; i < imageWidth * imageHeight; i++) {
         rawInput[i] = (ML2_Scalar)TestPixels[i] / 255.0f;
     }
 
-    DrawLabelPredictionBars(boundary, nullptr, inputSampleSingle);
+    DrawLabelPredictionBars(boundary, nullptr, inputSingle);
 }
 
 enum : int {
@@ -562,13 +842,34 @@ static Color Rainbow(float t) {
 
     float r = 0.0f, g = 0.0f, b = 0.0f;
     switch (i) {
-        case 0: r = 1.0f;     g = u;        break;
-        case 1: r = 1.0f - u; g = 1.0f;     break;
-        case 2: g = 1.0f;     b = u;        break;
-        case 3: g = 1.0f - u; b = 1.0f;     break;
-        case 4: r = u;        b = 1.0f;     break;
-        case 5: r = 1.0f;     b = 1.0f - u; break;
-        case 6: r = 1.0f;     b = 0.0f;     break;
+        case 0:
+            r = 1.0f;
+            g = u;
+            break;
+        case 1:
+            r = 1.0f - u;
+            g = 1.0f;
+            break;
+        case 2:
+            g = 1.0f;
+            b = u;
+            break;
+        case 3:
+            g = 1.0f - u;
+            b = 1.0f;
+            break;
+        case 4:
+            r = u;
+            b = 1.0f;
+            break;
+        case 5:
+            r = 1.0f;
+            b = 1.0f - u;
+            break;
+        case 6:
+            r = 1.0f;
+            b = 0.0f;
+            break;
     }
     uint8_t R = min(0xff, (int)floorf(r * 255.0f));
     uint8_t G = min(0xff, (int)floorf(g * 255.0f));
@@ -620,23 +921,23 @@ static void DrawLossGraph(RECT boundary, bool loglog) {
             float loss2 = circular_at(&losses, i + 1, j);
             float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
             if (loglog) {
-                #define X(i) (((log10f((i) - start + 1) / log10f(end - start)) * (1.0f - 2.0f * padding) + padding) * width)
-                #define Y(loss) (((1.0f - log10f((loss) / min) / log10f(max / min)) * (1.0f - 2.0f * padding) + padding) * height)
+#define X(i) (((log10f((i) - start + 1) / log10f(end - start)) * (1.0f - 2.0f * padding) + padding) * width)
+#define Y(loss) (((1.0f - log10f((loss) / min) / log10f(max / min)) * (1.0f - 2.0f * padding) + padding) * height)
                 x1 = X(i);
                 y1 = Y(loss1);
                 x2 = X(i + 1);
                 y2 = Y(loss2);
-                #undef X
-                #undef Y
+#undef X
+#undef Y
             } else {
-                #define X(i) (((float)((i) - start) / (float)(end - 1 - start)) * (1.0f - 2.0f * padding) + padding) * width
-                #define Y(loss) ((1.0f - (loss) / max) * (1.0f - 2.0f * padding) + padding) * height
+#define X(i) (((float)((i) - start) / (float)(end - 1 - start)) * (1.0f - 2.0f * padding) + padding) * width
+#define Y(loss) ((1.0f - (loss) / max) * (1.0f - 2.0f * padding) + padding) * height
                 x1 = X(i);
                 y1 = Y(loss1);
                 x2 = X(i + 1);
                 y2 = Y(loss2);
-                #undef X
-                #undef Y
+#undef X
+#undef Y
             }
             Color color = {};
             static_assert(LossCount == 2);
@@ -917,7 +1218,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance [[maybe_unused]]
 
     Rect windowRect = {0, 0, WindowWidth, WindowHeight};
     AdjustWindowRectEx(&windowRect, dwStyle, false, dwExStyle);
-    
+
     HWND hwnd = CreateWindowEx(
         dwExStyle,
         WindowClassName,
